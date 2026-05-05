@@ -66,7 +66,44 @@ Once the intake is complete, generate these files (or update if re-running). Bac
 5. **`connections.md`** — populate the 7-row table from Q4-Q7 answers. Each row gets `mechanism: not yet connected`, `auth: —`, `last checked: —`. The user wires connections on Day 2.
 6. **`CLAUDE.md`** — fill all `{{...}}` placeholders. Substitute the user's name, stated priority, voice register summary, and a brief connections summary.
 
-### Step 4: The closing screen
+### Step 4: Git safety check
+
+Before printing the closing screen, run:
+
+```
+git remote -v
+```
+
+Branch on the result:
+
+- **No remote configured** → proceed to Step 5 silently. No extra output.
+- **One or more remotes configured** → print the warning below verbatim
+  and pause for the user to acknowledge before continuing to Step 5.
+
+```
+WARNING — this repo has a git remote.
+
+Onboarding just wrote personal business data into:
+  - aios-intake.md       (identity, ICP, priorities)
+  - CLAUDE.md            (your operating manual)
+  - connections.md       (every tool you reach + how it auths)
+  - context/             (about you, business, priorities)
+  - references/voice.md  (verbatim writing samples — impersonation risk)
+  - decisions/log.md     (your decision history, from now on)
+
+Before pushing:
+  1. Confirm this repo is PRIVATE on the remote host.
+  2. Run `git status` and audit what's staged.
+  3. If you want to keep tracking upstream template updates without
+     committing your local edits, run:
+        git update-index --skip-worktree CLAUDE.md aios-intake.md \
+                                         connections.md decisions/log.md
+```
+
+Do not push, commit, or stage anything on the user's behalf — this step
+is informational. The user owns the decision.
+
+### Step 5: The closing screen
 
 Print one screen. Three lines max:
 
@@ -95,11 +132,13 @@ The Default Shift question seeds the Mindset framework before `/level-up` formal
 6. **No extra skills generated.** Don't scaffold `/today`, `/draft`, `/connect`, etc. The kit ships 3 skills; the user authors more via `/level-up`.
 7. **Read-only on `references/3ms-framework.md`.** It already ships in the kit. Don't overwrite.
 8. **No `.env` writes.** Don't ask for API keys on Day 1. Connections come Day 2.
+9. **Git safety check is unconditional.** Step 4 runs every time, including idempotent re-runs. Print the warning when a remote is configured; stay silent when none is.
 
 ## Verification (for the implementer)
 
 - Cold-test: clone a fresh kit, run `/onboard`, fill 7 answers, scaffold runs, ask the wow prompt, response cites Q1 + Q3 + Q7 specifically. Generic = fail.
 - Idempotency: re-run `/onboard` with one Q3 priority changed. Expected: only `context/priorities.md` and `CLAUDE.md`'s priority section update; backup created in `archives/intake-{ts}/`.
 - Voice rejection: type a sample mid-chat. Expected: skill refuses, asks for paste.
+- Git remote present: configure a remote, run `/onboard`, expected: warning printed before closing screen. Remove remote, re-run, expected: no extra output between Step 3 and the closing screen.
 
 > *Adapted from The Three Ms of AI™ © 2026 Nate Herk. The Mindset language used in the closing screen comes from `references/3ms-framework.md`.*
