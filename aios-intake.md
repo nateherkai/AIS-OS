@@ -1,3 +1,13 @@
+> **WARNING — You are about to type personal business data and
+> verbatim writing samples into this file.** Voice samples in
+> particular enable accurate impersonation if exposed. Keep this
+> repo **private** if you push it. To edit locally without
+> committing on a public fork:
+>
+> ```
+> git update-index --skip-worktree aios-intake.md
+> ```
+
 # AIS-OS Intake
 
 This is the source-of-truth file for your AIOS. Fill it in by typing, voice-pasting (Wispr Flow / OS dictation), or running `/onboard` for a guided conversation. Whichever mode, this file is what `/onboard` reads to scaffold your Day-1 setup.

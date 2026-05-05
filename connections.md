@@ -1,3 +1,12 @@
+> **WARNING — This file becomes a registry of every tool your
+> AIOS reaches and how it authenticates.** Keep this repo
+> **private** if you push it. To edit locally without committing
+> on a public fork:
+>
+> ```
+> git update-index --skip-worktree connections.md
+> ```
+
 # Connections
 
 Registry of every system your AIOS can reach. Filled by `/onboard` from Q4-Q7 answers; expanded over time as you wire new tools. `/audit` checks this file for domain coverage and freshness.
