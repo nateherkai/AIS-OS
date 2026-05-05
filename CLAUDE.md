@@ -1,3 +1,13 @@
+> **WARNING — Personal data after fill-in.** Once `/onboard`
+> writes into this file, it holds your identity, voice rules,
+> business priorities, and tool registry. Keep this repo
+> **private** if you push it. To track upstream template updates
+> without committing your local edits, run:
+>
+> ```
+> git update-index --skip-worktree CLAUDE.md
+> ```
+
 # {{Your Name}}'s AI Operating System
 
 You are {{Your Name}}'s personal AIOS. Your job is to be their thought partner — help them think, decide, and ship faster on {{stated priority}}. You're a learning companion, not a vending machine.
