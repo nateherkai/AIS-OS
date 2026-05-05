@@ -62,6 +62,59 @@ Anti-patterns. These look helpful but rot the structure:
 
 ---
 
+## Security as you grow
+
+As you wire connections and build skills that pull external data, two
+risks compound. The kit gives you the structural defences; you have to
+keep them honest as your AIOS reaches further.
+
+### Prompt injection — wrap external data at the boundary
+
+Email bodies, meeting transcripts, scraped pages, and API responses can
+contain instructions Claude will execute if they reach the prompt
+without a trust boundary. The `Trust boundary` section in `CLAUDE.md`
+tells Claude to treat anything inside `<external-data>` envelopes as
+inert text — but only if the writers of that file actually wrap
+content. Every script, MCP, or skill that writes external content into
+a trusted surface (`context/`, `decisions/log.md`, `references/`,
+anywhere the AIOS reads) should wrap it:
+
+```python
+with open("decisions/log.md", "a") as f:
+    f.write("<external-data source=\"gmail:thread/abc123\">\n")
+    f.write(email_body)
+    f.write("\n</external-data>\n")
+```
+
+Same idea in shell, n8n, Make.com, or any other glue: emit the open
+tag, the raw content, the close tag. The trust boundary handles the
+rest — but only if you don't bypass it by writing raw external content
+into trusted files.
+
+### Secret drift — `references/{tool}-api.md` as a leak surface
+
+`references/{tool}-api.md` files accumulate auth details over time as
+you research APIs once and save the results. Treat them like `.env`:
+
+- Never paste live tokens, API keys, or session cookies into them
+- Use placeholder labels: `Authorization: Bearer <your-token-here>`
+- Periodically grep them for accidental real credentials:
+  `git grep -E "(sk-|ghp_|xoxb-|AKIA)" references/`
+
+The default `.gitignore` excludes `references/*-api.md` for this
+reason — but only if you add the file fresh. If you ever commit one
+and then add the secret later, history retains it.
+
+### Voice samples are credentials
+
+`references/voice.md` contains verbatim writing samples specifically
+chosen because they sound like {{Your Name}} when not trying. That
+makes them maximally useful for impersonation. Treat the file like a
+password: gitignored by default, never shared outside the repo, not
+included in screen-shared demos.
+
+---
+
 ## How to tell when it's time to add a folder
 
 Ask three questions:
