@@ -12,10 +12,24 @@ from datetime import datetime
 IMPORTS_DIR = os.path.join(os.path.dirname(__file__), "..", "imports")
 EXPENSES_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "expenses.json")
 
+_MONTHS = {"january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
+           "july":7,"august":8,"september":9,"october":10,"november":11,"december":12}
+
+def _filename_date(path: str) -> tuple:
+    """Extract (year, month) from 'Apple Card Transactions - April 2026.csv'."""
+    name = os.path.basename(path).lower()
+    for month, num in _MONTHS.items():
+        if month in name:
+            import re
+            m = re.search(r"\b(20\d\d)\b", name)
+            year = int(m.group(1)) if m else 0
+            return (year, num)
+    return (0, 0)
+
 def find_latest_csv() -> str | None:
     pattern = os.path.join(IMPORTS_DIR, "*.csv")
     files = glob.glob(pattern)
-    return max(files, key=os.path.getmtime) if files else None
+    return max(files, key=_filename_date) if files else None
 
 def match_vendor(description: str, merchant: str, vendor_keywords: list[str]) -> bool:
     text = (description + " " + merchant).upper()
