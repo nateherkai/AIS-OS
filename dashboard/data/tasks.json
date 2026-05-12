@@ -1,0 +1,7 @@
+{
+  "tasks": [
+    {"id": 1, "text": "Follow up with 5 trial schools", "tag": "Sales", "done": false},
+    {"id": 2, "text": "Reply to Trinity — livestock feedback", "tag": "Support", "done": false},
+    {"id": 3, "text": "Send MailerLite blast to 560 teachers", "tag": "Marketing", "done": false}
+  ]
+}

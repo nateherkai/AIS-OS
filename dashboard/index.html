@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ag Coach Pro — AIOS Dashboard</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; height:100vh; display:flex; overflow:hidden; }
+.glass { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(20px); }
+.glass-gold { background:rgba(212,165,116,0.08); border:1px solid rgba(212,165,116,0.25); backdrop-filter:blur(20px); }
+
+/* SIDEBAR */
+.sidebar { width:220px; min-width:220px; height:100vh; background:rgba(0,0,0,0.5); border-right:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; padding:24px 16px; gap:2px; }
+.sidebar-logo { display:flex; align-items:center; gap:10px; padding:0 8px 20px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:10px; }
+.logo-mark { width:32px; height:32px; background:linear-gradient(135deg,#D4A574,#c4855a); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#001F4D; }
+.logo-text { font-size:13px; font-weight:600; color:#fff; }
+.logo-sub { font-size:10px; color:rgba(255,255,255,0.35); }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; font-size:13px; color:rgba(255,255,255,0.45); cursor:pointer; transition:all 0.15s; border:1px solid transparent; user-select:none; }
+.nav-item:hover { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.8); }
+.nav-item.active { background:rgba(212,165,116,0.12); color:#D4A574; border-color:rgba(212,165,116,0.2); }
+.nav-icon { font-size:14px; width:18px; text-align:center; }
+.nav-label { flex:1; }
+.nav-badge { background:#D4A574; color:#001F4D; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; }
+.sidebar-section { font-size:10px; font-weight:600; letter-spacing:0.08em; color:rgba(255,255,255,0.2); text-transform:uppercase; padding:14px 12px 5px; }
+.sidebar-spacer { flex:1; }
+.sidebar-bottom { font-size:11px; color:rgba(255,255,255,0.3); padding:12px 12px 0; border-top:1px solid rgba(255,255,255,0.06); line-height:1.9; }
+.action-btn { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; font-size:12px; color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.15s; border:1px solid rgba(255,255,255,0.06); margin-top:2px; background:rgba(255,255,255,0.02); }
+.action-btn:hover { background:rgba(212,165,116,0.1); color:#D4A574; border-color:rgba(212,165,116,0.25); transform:translateX(2px); }
+
+/* MAIN */
+.main { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:16px; }
+.page-header { display:flex; align-items:center; justify-content:space-between; }
+.page-title { font-size:22px; font-weight:700; color:#fff; }
+.page-date { font-size:12px; color:rgba(255,255,255,0.3); }
+.refresh-btn { font-size:11px; color:rgba(212,165,116,0.6); border:1px solid rgba(212,165,116,0.2); border-radius:6px; padding:4px 10px; cursor:pointer; background:rgba(212,165,116,0.05); }
+.refresh-btn:hover { background:rgba(212,165,116,0.12); color:#D4A574; }
+
+/* NET BANNER */
+.net-banner { border-radius:12px; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+.net-banner.negative { background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.2); }
+.net-banner.positive { background:rgba(74,222,128,0.07); border:1px solid rgba(74,222,128,0.2); }
+.net-label { font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:2px; }
+.net-value { font-size:22px; font-weight:700; }
+.net-value.red { color:#f87171; }
+.net-value.green { color:#4ade80; }
+.net-note { font-size:11px; color:rgba(255,255,255,0.3); }
+
+/* KPI */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.kpi-card { border-radius:14px; padding:16px 18px; }
+.kpi-label { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px; }
+.kpi-value { font-size:26px; font-weight:700; color:#fff; line-height:1; }
+.kpi-value.gold { color:#D4A574; }
+.kpi-value.red { color:#f87171; }
+.kpi-value.yellow { color:#facc15; }
+.kpi-sub { font-size:10px; color:rgba(255,255,255,0.3); margin-top:5px; }
+.kpi-progress { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; margin-top:9px; }
+.kpi-progress-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,#D4A574,#c4855a); transition:width 0.6s ease; }
+
+/* GRID */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.panel { border-radius:14px; padding:18px; }
+.panel-title { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+.panel-title span { color:#D4A574; font-size:9px; }
+
+/* PIPELINE */
+.pipeline-item { display:flex; align-items:center; gap:9px; padding:8px 4px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; cursor:pointer; border-radius:4px; transition:background 0.1s; }
+.pipeline-item:hover { background:rgba(255,255,255,0.03); }
+.pipeline-item:last-child { border:none; }
+.pipeline-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot-paid { background:#4ade80; box-shadow:0 0 6px rgba(74,222,128,0.4); }
+.dot-trial { background:#facc15; }
+.pipeline-name { flex:1; color:rgba(255,255,255,0.75); }
+.pipeline-tier { font-size:9px; padding:2px 7px; border-radius:5px; background:rgba(212,165,116,0.12); color:#D4A574; }
+.pipeline-tier.trial { background:rgba(250,204,21,0.1); color:#facc15; }
+
+/* EXPENSES */
+.expense-item { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.expense-item:last-child { border:none; }
+.expense-bar-wrap { flex:1; }
+.expense-name { color:rgba(255,255,255,0.65); margin-bottom:3px; font-size:11px; }
+.expense-bar { height:3px; background:rgba(255,255,255,0.05); border-radius:2px; }
+.expense-bar-fill { height:100%; border-radius:2px; background:rgba(248,113,113,0.5); }
+.expense-amt { font-size:12px; color:#f87171; font-weight:500; min-width:40px; text-align:right; }
+
+/* TASKS */
+.task-item { display:flex; align-items:flex-start; gap:10px; padding:8px 4px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; border-radius:4px; transition:all 0.2s; }
+.task-item:hover { background:rgba(255,255,255,0.02); }
+.task-item:last-child { border:none; }
+.task-item.done .task-text { text-decoration:line-through; color:rgba(255,255,255,0.25); }
+.task-check { width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(212,165,116,0.35); flex-shrink:0; margin-top:2px; transition:all 0.2s; display:flex; align-items:center; justify-content:center; font-size:9px; }
+.task-item.done .task-check { background:rgba(74,222,128,0.2); border-color:#4ade80; color:#4ade80; }
+.task-text { color:rgba(255,255,255,0.72); flex:1; font-size:12px; }
+.task-tag { font-size:9px; padding:2px 6px; border-radius:5px; background:rgba(212,165,116,0.08); color:rgba(212,165,116,0.7); }
+
+/* DEBT */
+.debt-amount { font-size:28px; font-weight:700; color:#4ade80; text-align:center; padding:8px 0 4px; }
+.debt-label { font-size:10px; color:rgba(255,255,255,0.3); text-align:center; }
+.debt-progress { height:6px; background:rgba(255,255,255,0.05); border-radius:3px; margin-top:10px; }
+.debt-progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#4ade80,#22c55e); transition:width 0.6s ease; }
+.debt-stats { display:flex; justify-content:space-between; margin-top:6px; font-size:10px; color:rgba(255,255,255,0.25); }
+.debt-input-row { display:flex; gap:6px; margin-top:12px; }
+.debt-input { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; color:#fff; font-size:11px; padding:6px 10px; outline:none; }
+.debt-input:focus { border-color:rgba(212,165,116,0.3); }
+.debt-log-btn { background:rgba(212,165,116,0.15); border:1px solid rgba(212,165,116,0.3); color:#D4A574; border-radius:6px; font-size:11px; padding:6px 10px; cursor:pointer; }
+.debt-log-btn:hover { background:rgba(212,165,116,0.25); }
+
+/* MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); z-index:100; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:#0d0d1f; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:28px; max-width:520px; width:90%; max-height:80vh; overflow-y:auto; }
+.modal-title { font-size:16px; font-weight:600; color:#fff; margin-bottom:4px; }
+.modal-sub { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:18px; }
+.modal-close { float:right; background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:20px; margin-top:-4px; }
+.modal-result { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:14px; font-size:12px; line-height:1.8; color:rgba(255,255,255,0.7); white-space:pre-wrap; font-family:monospace; }
+.modal-action { margin-top:16px; display:flex; gap:8px; }
+.btn-primary { flex:1; background:rgba(212,165,116,0.2); border:1px solid rgba(212,165,116,0.4); color:#D4A574; border-radius:8px; font-size:12px; padding:9px; cursor:pointer; font-weight:500; }
+.btn-primary:hover { background:rgba(212,165,116,0.3); }
+.btn-secondary { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); border-radius:8px; font-size:12px; padding:9px 14px; cursor:pointer; }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; right:24px; background:rgba(212,165,116,0.15); border:1px solid rgba(212,165,116,0.35); color:#D4A574; border-radius:10px; padding:10px 16px; font-size:12px; z-index:200; opacity:0; transform:translateY(10px); transition:all 0.25s; pointer-events:none; }
+.toast.show { opacity:1; transform:translateY(0); }
+
+/* LOADING */
+.loading { color:rgba(255,255,255,0.2); font-size:11px; text-align:center; padding:20px; }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="modal-result" id="modal-body"></div>
+    <div class="modal-action">
+      <button class="btn-primary" onclick="closeModal()">Done</button>
+      <button class="btn-secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">AC</div>
+    <div><div class="logo-text">Ag Coach Pro</div><div class="logo-sub">Business OS</div></div>
+  </div>
+  <div class="nav-item active"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></div>
+  <div class="nav-item"><span class="nav-icon">$</span><span class="nav-label">Revenue</span></div>
+  <div class="nav-item"><span class="nav-icon">🏫</span><span class="nav-label">Schools</span><span class="nav-badge" id="sb-trials">—</span></div>
+  <div class="nav-item"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
+  <div class="nav-item"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span></div>
+  <div class="sidebar-section">Skills</div>
+  <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Pipeline Check</span></div>
+  <div class="action-btn" onclick="openModal('✍ Draft Reply','Run /draft-reply in Claude Code and paste the incoming email.','Skill: /draft-reply\n\nHow to use:\n1. Open Claude Code in the AIS-OS directory\n2. Type: /draft-reply\n3. Paste the incoming email when prompted\n4. Review draft — copy and send manually')"><span class="nav-icon">✍</span><span>Draft Reply</span></div>
+  <div class="action-btn" onclick="runTrialFollowUp()"><span class="nav-icon">↑</span><span>Trial Follow-Up</span></div>
+  <div class="action-btn" onclick="syncExpenses()"><span class="nav-icon">⟳</span><span>Sync Receipts</span></div>
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-bottom">
+    Burn: <span id="sb-burn" style="color:#f87171;font-weight:600;">—</span><br>
+    Revenue: <span id="sb-rev" style="color:#4ade80;font-weight:600;">—</span><br>
+    Net: <span id="sb-net" style="font-weight:600;">—</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="page-header">
+    <div class="page-title" id="greeting">Good morning, Bryan</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+      <div class="page-date" id="live-date"></div>
+    </div>
+  </div>
+
+  <!-- Net banner -->
+  <div class="net-banner negative" id="net-banner">
+    <div>
+      <div class="net-label">Current Net Income</div>
+      <div class="net-note" id="net-note">Loading...</div>
+    </div>
+    <div class="net-value red" id="net-value">—</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card glass-gold">
+      <div class="kpi-label">Monthly Revenue</div>
+      <div class="kpi-value gold" id="kpi-revenue">—</div>
+      <div class="kpi-sub" id="kpi-revenue-sub">loading...</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-revenue" style="width:0%"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">School Goal</div>
+      <div class="kpi-value" id="kpi-schools">—</div>
+      <div class="kpi-sub">goal: 50 · deadline Aug 2026</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-schools" style="width:0%"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Monthly Burn</div>
+      <div class="kpi-value red" id="kpi-burn">—</div>
+      <div class="kpi-sub" id="kpi-burn-sub">loading...</div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Active Trials</div>
+      <div class="kpi-value yellow" id="kpi-trials">—</div>
+      <div class="kpi-sub" id="kpi-trials-sub">loading...</div>
+    </div>
+  </div>
+
+  <!-- Schools + Expenses -->
+  <div class="grid-2">
+    <div class="panel glass">
+      <div class="panel-title">School Pipeline <span>LIVE · SUPABASE</span></div>
+      <div id="pipeline-list"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Monthly Expenses <span id="expense-total-label">loading...</span></div>
+      <div id="expense-list"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Tasks + Debt -->
+  <div class="grid-2">
+    <div class="panel glass">
+      <div class="panel-title">Today's Focus <span id="tasks-done-label">0/3 DONE</span></div>
+      <div id="task-list"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Debt Payoff <span>GOAL: DEC 2026</span></div>
+      <div class="debt-amount" id="debt-paid">$0</div>
+      <div class="debt-label">paid off this year</div>
+      <div class="debt-progress"><div class="debt-progress-fill" id="debt-bar" style="width:0%"></div></div>
+      <div class="debt-stats"><span id="debt-pct">0% complete</span><span>Dec 31, 2026</span></div>
+      <div class="debt-input-row">
+        <input class="debt-input" id="debt-input" placeholder="Log payment amount ($)" type="number" min="1">
+        <button class="debt-log-btn" onclick="logDebt()">Log</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Init ──────────────────────────────────────────────────────
+
+const now = new Date();
+const hour = now.getHours();
+const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+document.getElementById('greeting').textContent = `${greeting}, Bryan`;
+document.getElementById('live-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function openModal(title, sub, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent = sub;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function api(path, opts={}) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+
+async function loadKPIs() {
+  const d = await api('/api/kpis');
+  const rev = d.monthly_revenue;
+  const burn = d.monthly_burn;
+  const net = d.net;
+  const paidPct = Math.min((d.paid_schools / d.school_goal) * 100, 100);
+  const revGoalPct = Math.min((rev / 10000) * 100, 100);
+
+  document.getElementById('kpi-revenue').textContent = `$${rev.toFixed(0)}`;
+  document.getElementById('kpi-revenue-sub').textContent = `${d.paid_schools} school${d.paid_schools !== 1 ? 's' : ''} paid`;
+  document.getElementById('prog-revenue').style.width = revGoalPct + '%';
+
+  document.getElementById('kpi-schools').innerHTML = `${d.paid_schools}<span style="font-size:14px;color:rgba(255,255,255,0.25)">/${d.school_goal}</span>`;
+  document.getElementById('prog-schools').style.width = paidPct + '%';
+
+  document.getElementById('kpi-burn').textContent = `$${burn.toFixed(0)}`;
+  document.getElementById('kpi-burn-sub').textContent = 'monthly total';
+
+  document.getElementById('kpi-trials').textContent = d.trial_count;
+  document.getElementById('kpi-trials-sub').textContent = d.trial_count === 0 ? 'no active trials' : `${d.trial_count} school${d.trial_count !== 1 ? 's' : ''} in trial`;
+
+  // Net banner
+  const netEl = document.getElementById('net-value');
+  const banner = document.getElementById('net-banner');
+  const needed = Math.ceil(Math.abs(net) / 124.58);
+  netEl.textContent = (net >= 0 ? '+' : '') + `$${net.toFixed(0)}/mo`;
+  netEl.className = 'net-value ' + (net >= 0 ? 'green' : 'red');
+  banner.className = 'net-banner ' + (net >= 0 ? 'positive' : 'negative');
+  document.getElementById('net-note').textContent = net < 0
+    ? `Close ${needed} more school${needed !== 1 ? 's' : ''} to break even. ${d.school_goal - d.paid_schools} to hit goal.`
+    : `Profitable. ${d.school_goal - d.paid_schools} schools to hit goal.`;
+
+  // Sidebar summary
+  document.getElementById('sb-burn').textContent = `$${burn.toFixed(0)}/mo`;
+  document.getElementById('sb-rev').textContent = `$${rev.toFixed(0)}/mo`;
+  const sbNet = document.getElementById('sb-net');
+  sbNet.textContent = (net >= 0 ? '+' : '') + `$${net.toFixed(0)}/mo`;
+  sbNet.style.color = net >= 0 ? '#4ade80' : '#f87171';
+}
+
+// ── Pipeline ──────────────────────────────────────────────────
+
+async function loadPipeline() {
+  const d = await api('/api/pipeline');
+  document.getElementById('sb-trials').textContent = d.trial_count || '0';
+
+  const all = [...d.paid, ...d.trials];
+  const list = document.getElementById('pipeline-list');
+  if (all.length === 0) {
+    list.innerHTML = '<div class="loading">No schools yet</div>';
+    return;
+  }
+  list.innerHTML = all.map(s => {
+    const isPaid = s.subscription_status === 'active';
+    const tier = isPaid ? (s.subscription_tier === 'enterprise' ? 'Lone Star Elite' : 'Blue & Gold') : `Trial · ${s.days_in_trial || 0}d`;
+    const tierClass = isPaid ? '' : 'trial';
+    return `<div class="pipeline-item" onclick="showSchool('${s.name.replace(/'/g,"\\'")}','${(s.advisor_name||'').replace(/'/g,"\\'")}','${tier}','${s.advisor_email||'No email on file'}')">
+      <div class="pipeline-dot ${isPaid ? 'dot-paid' : 'dot-trial'}"></div>
+      <div class="pipeline-name">${s.name}${s.advisor_name ? ' — ' + s.advisor_name : ''}</div>
+      <div class="pipeline-tier ${tierClass}">${tier}</div>
+    </div>`;
+  }).join('');
+}
+
+function showSchool(name, advisor, tier, email) {
+  openModal(name, `${advisor} · ${tier}`, `Email: ${email}\nTier: ${tier}\n\nRun /trial-follow-up in Claude Code to draft a personalized close email.`);
+}
+
+// ── Expenses ──────────────────────────────────────────────────
+
+async function loadExpenses() {
+  const d = await api('/api/expenses');
+  const max = Math.max(...d.expenses.map(e => e.amount), 1);
+  document.getElementById('expense-total-label').textContent = `$${d.total.toFixed(0)} TOTAL BURN`;
+  const sorted = [...d.expenses].sort((a,b) => b.amount - a.amount).filter(e => e.amount > 0);
+  document.getElementById('expense-list').innerHTML = sorted.map(e =>
+    `<div class="expense-item">
+      <div class="expense-bar-wrap">
+        <div class="expense-name">${e.name}</div>
+        <div class="expense-bar"><div class="expense-bar-fill" style="width:${(e.amount/max*100).toFixed(0)}%"></div></div>
+      </div>
+      <div class="expense-amt">$${e.amount}</div>
+    </div>`
+  ).join('');
+}
+
+async function syncExpenses() {
+  showToast('Syncing receipts...');
+  const r = await api('/api/expenses/sync', {method:'POST'});
+  if (r.updated) {
+    showToast(`Updated: ${r.updated_vendors.join(', ')}`);
+    loadExpenses();
+  } else {
+    showToast(r.reason || 'No CSV found in dashboard/imports/');
+  }
+}
+
+// ── Tasks ─────────────────────────────────────────────────────
+
+let tasks = [];
+
+async function loadTasks() {
+  const d = await api('/api/tasks');
+  tasks = d.tasks;
+  renderTasks();
+}
+
+function renderTasks() {
+  const done = tasks.filter(t => t.done).length;
+  document.getElementById('tasks-done-label').textContent = `${done}/${tasks.length} DONE`;
+  document.getElementById('task-list').innerHTML = tasks.map(t =>
+    `<div class="task-item ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})">
+      <div class="task-check">${t.done ? '✓' : ''}</div>
+      <div class="task-text">${t.text}</div>
+      <div class="task-tag">${t.tag}</div>
+    </div>`
+  ).join('');
+}
+
+async function toggleTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  renderTasks();
+  await api('/api/tasks/update', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, done: t.done})});
+  showToast(t.done ? 'Task complete' : 'Task unchecked');
+  if (tasks.every(t => t.done)) showToast('All tasks done today!');
+}
+
+// ── Debt ──────────────────────────────────────────────────────
+
+async function loadDebt() {
+  const d = await api('/api/debt');
+  updateDebtUI(d.total_paid, d.goal);
+}
+
+function updateDebtUI(paid, goal) {
+  const pct = Math.min((paid / goal) * 100, 100).toFixed(1);
+  document.getElementById('debt-paid').textContent = '$' + paid.toLocaleString();
+  document.getElementById('debt-bar').style.width = pct + '%';
+  document.getElementById('debt-pct').textContent = pct + '% complete';
+}
+
+async function logDebt() {
+  const val = parseFloat(document.getElementById('debt-input').value);
+  if (!val || val <= 0) { showToast('Enter a valid amount'); return; }
+  const d = await api('/api/debt/log', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({amount: val, note: ''})});
+  updateDebtUI(d.total_paid, 50000);
+  document.getElementById('debt-input').value = '';
+  showToast(`Logged: $${val.toLocaleString()}`);
+}
+
+// ── Skills ────────────────────────────────────────────────────
+
+async function runPipelineCheck() {
+  showToast('Running pipeline check...');
+  const d = await api('/api/skills/pipeline-check');
+  openModal('▶ Weekly Pipeline Check', 'Live data from Supabase', d.output);
+}
+
+async function runTrialFollowUp() {
+  const d = await api('/api/pipeline');
+  const trials = d.trials;
+  if (trials.length === 0) {
+    openModal('↑ Trial Follow-Up', 'No active trials', 'No schools in trial right now.\n\nRun a new MailerLite blast to build pipeline.');
+    return;
+  }
+  const lines = trials.map(s =>
+    `• ${s.name}\n  ${s.advisor_name || 'No advisor'} — ${s.advisor_email || 'no email'}\n  ${s.days_in_trial || 0} days in trial`
+  ).join('\n\n');
+  openModal('↑ Trial Follow-Up', `${trials.length} active trial${trials.length !== 1 ? 's' : ''}`, `Run /trial-follow-up in Claude Code for personalized close emails.\n\n${lines}`);
+}
+
+// ── Load all ──────────────────────────────────────────────────
+
+async function loadAll() {
+  await Promise.all([loadKPIs(), loadPipeline(), loadExpenses(), loadTasks(), loadDebt()]);
+}
+
+loadAll();
+
+// Auto-refresh every 5 minutes
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>

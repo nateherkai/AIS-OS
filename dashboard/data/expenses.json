@@ -1,0 +1,14 @@
+{
+  "expenses": [
+    {"name": "Claude Max", "category": "AI Tools", "amount": 130, "vendor_match": ["ANTHROPIC", "CLAUDE"]},
+    {"name": "Supabase", "category": "Infrastructure", "amount": 25, "vendor_match": ["SUPABASE"]},
+    {"name": "Vercel", "category": "Infrastructure", "amount": 20, "vendor_match": ["VERCEL"]},
+    {"name": "Google Workspace", "category": "Productivity", "amount": 20, "vendor_match": ["GOOGLE"]},
+    {"name": "ChatGPT Plus", "category": "AI Tools", "amount": 20, "vendor_match": ["OPENAI"]},
+    {"name": "Firecrawl", "category": "AI API", "amount": 19, "vendor_match": ["FIRECRAWL"]},
+    {"name": "MailerLite", "category": "Marketing", "amount": 15, "vendor_match": ["MAILERLITE"]},
+    {"name": "Pinecone", "category": "AI Infrastructure", "amount": 0, "vendor_match": ["PINECONE"]},
+    {"name": "Fal.ai", "category": "AI API", "amount": 0, "vendor_match": ["FAL"]}
+  ],
+  "last_updated": null
+}
