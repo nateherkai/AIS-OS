@@ -41,6 +41,8 @@ from supabase_widget import (
     advisors as sb_advisors,
 )
 from pinecone_widget import stats as pc_stats, recent as pc_recent, query as pc_query
+from usage_tracker import usage_stats
+import personal_agent as agent_mod
 
 # Ensure BRIDGE_TOKEN exists (generate once, persist to .env)
 if not os.environ.get("BRIDGE_TOKEN"):
@@ -418,6 +420,28 @@ def api_pinecone_query(body: PineconeQuery):
         return pc_query(body.text, body.top_k)
     except Exception as e:
         return {"matches": [], "error": str(e)}
+
+# ── Usage Tracking ────────────────────────────────────────────
+
+@app.get("/api/usage")
+def api_usage():
+    try:
+        return usage_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ── Personal Agent ─────────────────────────────────────────────
+
+class AgentAsk(BaseModel):
+    question: str
+    mode: str = "full"
+
+@app.post("/api/agent/ask")
+def api_agent_ask(body: AgentAsk):
+    try:
+        return agent_mod.ask(body.question, body.mode)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ── Entry point ───────────────────────────────────────────────
 

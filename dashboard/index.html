@@ -237,6 +237,24 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .sb-status-dot.ok { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.5); }
 .sb-status-dot.error { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,0.5); }
 
+/* USAGE VIEW */
+.usage-sub-card { border-radius:12px; padding:16px 20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); }
+.usage-sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.usage-sub-name { font-size:15px; font-weight:600; color:#fff; }
+.usage-sub-meta { font-size:13px; color:rgba(255,255,255,0.4); }
+.usage-bar-wrap { position:relative; height:6px; background:rgba(255,255,255,0.07); border-radius:3px; }
+.usage-bar-fill { height:100%; border-radius:3px; transition:width 0.6s ease; }
+.usage-bar-fill.green { background:linear-gradient(90deg,#4ade80,#22c55e); }
+.usage-bar-fill.yellow { background:linear-gradient(90deg,#facc15,#f59e0b); }
+.usage-bar-fill.red { background:linear-gradient(90deg,#f87171,#ef4444); }
+.usage-bar-label { display:flex; justify-content:space-between; margin-top:5px; font-size:13px; color:rgba(255,255,255,0.4); }
+.usage-api-line { font-size:13px; margin-top:8px; color:rgba(255,255,255,0.5); }
+.usage-api-line .save { color:#4ade80; font-weight:600; }
+.usage-api-line .cost { color:#f87171; font-weight:600; }
+
+/* AGENT VIEW */
+.agent-typing { color:rgba(255,255,255,0.4); font-style:italic; }
+
 /* PINECONE VIEW */
 .pc-stats-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
 .pc-stat { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 18px; flex:1; min-width:120px; }
@@ -294,7 +312,9 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('bridge',this)"><span class="nav-icon">🔗</span><span class="nav-label">GC Bridge</span></div>
   <div class="nav-item" onclick="showView('supabase',this)"><span class="nav-icon">🗄</span><span class="nav-label">Supabase</span></div>
   <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
+  <div class="nav-item" onclick="showView('usage',this)"><span class="nav-icon">📊</span><span class="nav-label">Usage</span></div>
   <div class="sidebar-section">Skills</div>
+  <div class="nav-item" onclick="showView('agent',this)"><span class="nav-icon">🤖</span><span class="nav-label">Personal Agent</span></div>
   <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Pipeline Check</span></div>
   <div class="action-btn" onclick="openModal('✍ Draft Reply','Run /draft-reply in Claude Code and paste the incoming email.','Skill: /draft-reply\n\nHow to use:\n1. Open Claude Code in the AIS-OS directory\n2. Type: /draft-reply\n3. Paste the incoming email when prompted\n4. Review draft — copy and send manually')"><span class="nav-icon">✍</span><span>Draft Reply</span></div>
   <div class="action-btn" onclick="runTrialFollowUp()"><span class="nav-icon">↑</span><span>Trial Follow-Up</span></div>
@@ -479,6 +499,56 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     </div>
   </div>
 
+  <!-- ══ USAGE VIEW ══ -->
+  <div id="view-usage" class="view">
+    <div class="panel-title">Token Usage <span id="usage-gen-ts">—</span></div>
+
+    <!-- Subscription bar cards -->
+    <div id="usage-sub-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
+
+    <!-- Savings summary -->
+    <div class="panel glass" id="usage-savings-panel" style="padding:18px 22px;">
+      <div class="panel-title" style="margin-bottom:12px;">Monthly Savings Summary</div>
+      <div id="usage-savings-detail" style="font-size:15px;color:rgba(255,255,255,0.65);line-height:2;"></div>
+    </div>
+
+    <!-- Daily burn line chart (14d) -->
+    <div class="panel glass">
+      <div class="panel-title" style="margin-bottom:12px;">Daily Token Burn — Last 14 Days</div>
+      <canvas id="usage-burn-chart" height="120" style="width:100%;max-width:900px;display:block;"></canvas>
+    </div>
+
+    <!-- Top sessions -->
+    <div class="panel glass">
+      <div class="panel-title" style="margin-bottom:12px;">Top Token Consumers (Sessions)</div>
+      <div id="usage-top-sessions"></div>
+    </div>
+  </div>
+
+  <!-- ══ AGENT VIEW ══ -->
+  <div id="view-agent" class="view">
+    <div class="panel-title">Personal Agent <span style="font-size:13px;color:rgba(255,255,255,0.3);font-weight:400;letter-spacing:0;text-transform:none;">Haiku · vault+dream+skill context</span></div>
+    <div class="panel glass" style="max-width:780px;">
+      <!-- Input -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;">
+        <input id="agent-input" class="pc-search-input" placeholder="Ask anything about your AIOS…" onkeydown="if(event.key==='Enter')agentAsk()" style="flex:1;">
+        <button class="btn-primary" onclick="agentAsk()" style="flex-shrink:0;padding:9px 18px;" id="agent-send-btn">Ask</button>
+      </div>
+      <!-- Quick actions -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn-secondary" onclick="agentQuick('What should I work on today?')" style="font-size:13px;padding:6px 12px;">What should I work on?</button>
+        <button class="btn-secondary" onclick="agentQuickSkill()" style="font-size:13px;padding:6px 12px;">Find a skill for: ___</button>
+        <button class="btn-secondary" onclick="agentQuick('What is my pipeline status?')" style="font-size:13px;padding:6px 12px;">Pipeline status</button>
+        <button class="btn-secondary" onclick="agentQuick('Summarize today for me based on recent activity')" style="font-size:13px;padding:6px 12px;">Summarize today</button>
+      </div>
+      <!-- Output -->
+      <div id="agent-output" style="min-height:120px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.7;white-space:pre-wrap;">
+        <span style="color:rgba(255,255,255,0.3);">Type a question or tap a quick action above.</span>
+      </div>
+      <div id="agent-meta" style="margin-top:8px;font-size:12px;color:rgba(255,255,255,0.25);"></div>
+    </div>
+  </div>
+
   <div id="view-dashboard" class="view active">
 
   <!-- Net banner -->
@@ -585,6 +655,13 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div style="font-size:14px;color:rgba(255,255,255,0.6);" id="sb-mini-ts">—</div>
     </div>
     <a onclick="showView('supabase')" style="cursor:pointer;font-size:14px;color:rgba(212,165,116,0.7);text-decoration:none;margin-left:auto;white-space:nowrap;">View all →</a>
+  </div>
+
+  <!-- Usage mini-card on Dashboard -->
+  <div class="panel glass" id="card-usage" style="padding:16px 20px;">
+    <div class="panel-title" style="margin-bottom:10px;">Token Usage <span id="usage-savings-badge" style="font-size:12px;color:#4ade80;font-weight:600;letter-spacing:0;text-transform:none;"></span></div>
+    <div id="usage-mini-bars"><div class="loading" style="font-size:13px;">Loading…</div></div>
+    <a onclick="showView('usage')" style="cursor:pointer;font-size:13px;color:rgba(212,165,116,0.7);text-decoration:none;display:block;margin-top:8px;">Full usage breakdown →</a>
   </div>
 
   </div><!-- /view-dashboard -->
@@ -831,6 +908,7 @@ async function runTrialFollowUp() {
 
 async function loadAll() {
   await Promise.all([loadKPIs(), loadPipeline(), loadExpenses(), loadTasks(), loadDebt()]);
+  loadUsageMiniCard(); // fire-and-forget: non-blocking, slower endpoint
 }
 
 async function refreshCurrentView() {
@@ -863,6 +941,8 @@ const VIEW_LOADERS = {
   wizard: loadWizard,
   supabase: loadSupabase,
   pinecone: loadPinecone,
+  usage: loadUsage,
+  agent: loadAgent,
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},
@@ -1828,6 +1908,218 @@ async function runPcQuery() {
   } catch (e) {
     results.innerHTML = `<div style="color:#f87171;font-size:14px;">Error: ${e.message}</div>`;
   }
+}
+
+// ── USAGE VIEW ────────────────────────────────────────────────
+
+function usageBarColor(pct) {
+  if (pct < 50) return 'green';
+  if (pct < 80) return 'yellow';
+  return 'red';
+}
+
+function renderUsageMiniBar(sub) {
+  const color = usageBarColor(sub.pct);
+  return `<div style="margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:3px;">
+      <span>${escapeHtml(sub.name)}</span>
+      <span style="color:rgba(255,255,255,0.4);">${sub.pct}% · ${sub.days_left}d left</span>
+    </div>
+    <div class="usage-bar-wrap">
+      <div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div>
+    </div>
+  </div>`;
+}
+
+async function loadUsage() {
+  let d;
+  try {
+    d = await api('/api/usage');
+  } catch (e) {
+    document.getElementById('usage-sub-cards').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+    return;
+  }
+  document.getElementById('usage-gen-ts').textContent = (d.generated_at || '').slice(0,16);
+
+  // Sub cards
+  const subCards = document.getElementById('usage-sub-cards');
+  subCards.innerHTML = (d.subscriptions || []).map(sub => {
+    const color = usageBarColor(sub.pct);
+    const savings = sub.net_savings_usd;
+    const savingsHtml = savings >= 0
+      ? `<span class="save">saving $${savings.toFixed(2)}</span>`
+      : `<span class="cost">overpaying $${Math.abs(savings).toFixed(2)}</span>`;
+    return `<div class="usage-sub-card">
+      <div class="usage-sub-header">
+        <span class="usage-sub-name">${escapeHtml(sub.name)}</span>
+        <span class="usage-sub-meta">${(sub.used_tokens||0).toLocaleString()} / ${(sub.plan_tokens||0).toLocaleString()} tokens · ${sub.days_left}d left</span>
+      </div>
+      <div class="usage-bar-wrap"><div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div></div>
+      <div class="usage-bar-label"><span>${sub.pct}% used</span><span>${(sub.daily_burn||0).toLocaleString()} tok/day avg</span></div>
+      <div class="usage-api-line">$${sub.monthly_usd}/mo sub · $${sub.api_equivalent_usd} API equivalent · ${savingsHtml}</div>
+    </div>`;
+  }).join('');
+
+  // Savings summary
+  const savPanel = document.getElementById('usage-savings-detail');
+  const netSav = d.net_savings_usd || 0;
+  savPanel.innerHTML = `
+    Total subscriptions: <strong style="color:#D4A574;">$${d.total_subscription_usd}/mo</strong><br>
+    API equivalent (at standard rates): <strong style="color:#D4A574;">$${d.total_api_equivalent_usd}</strong><br>
+    Net ${netSav >= 0 ? '<span style="color:#4ade80;">savings</span>' : '<span style="color:#f87171;">overspend</span>'}:
+      <strong style="${netSav >= 0 ? 'color:#4ade80;' : 'color:#f87171;'}">$${Math.abs(netSav).toFixed(2)}/mo</strong><br>
+    Sessions (30d): <strong style="color:#D4A574;">${d.total_sessions_30d}</strong> ·
+    Tokens (30d): <strong style="color:#D4A574;">${(d.total_tokens_30d||0).toLocaleString()}</strong>
+  `;
+
+  // Savings badge on mini-card
+  const badge = document.getElementById('usage-savings-badge');
+  if (badge) badge.textContent = netSav >= 0 ? `saving $${netSav.toFixed(0)}/mo` : `overpaying $${Math.abs(netSav).toFixed(0)}/mo`;
+
+  // Daily burn chart (canvas)
+  drawBurnChart(d.daily_burn_14d || []);
+
+  // Top sessions
+  const sessEl = document.getElementById('usage-top-sessions');
+  const sessions = d.top_sessions || [];
+  if (sessions.length === 0) {
+    sessEl.innerHTML = '<div class="loading" style="font-size:14px;">No session data yet</div>';
+  } else {
+    const maxTok = Math.max(...sessions.map(s => s.tokens), 1);
+    sessEl.innerHTML = sessions.map(s => `
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name" style="font-family:monospace;font-size:13px;">${escapeHtml(s.session_id)}</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:${(s.tokens/maxTok*100).toFixed(0)}%;background:rgba(212,165,116,0.5);"></div></div>
+        </div>
+        <div class="expense-amt" style="color:#D4A574;">${s.tokens.toLocaleString()}</div>
+      </div>`).join('');
+  }
+}
+
+function drawBurnChart(data) {
+  const canvas = document.getElementById('usage-burn-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 800;
+  const H = 120;
+  canvas.width = W;
+  canvas.height = H;
+  const values = data.map(d => d.tokens);
+  const maxVal = Math.max(...values, 1);
+  const pad = { top: 10, right: 16, bottom: 28, left: 56 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+  ctx.clearRect(0, 0, W, H);
+  // Grid line
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + cH - (i / 4) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(((maxVal * i / 4) / 1000).toFixed(0) + 'K', pad.left - 4, y + 4);
+  }
+  // Line
+  if (values.length > 1) {
+    const grad = ctx.createLinearGradient(pad.left, 0, pad.left + cW, 0);
+    grad.addColorStop(0, 'rgba(212,165,116,0.6)');
+    grad.addColorStop(1, 'rgba(212,165,116,1)');
+    ctx.beginPath();
+    values.forEach((v, i) => {
+      const x = pad.left + (i / (values.length - 1)) * cW;
+      const y = pad.top + cH - (v / maxVal) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Fill under
+    ctx.lineTo(pad.left + cW, pad.top + cH);
+    ctx.lineTo(pad.left, pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(212,165,116,0.08)';
+    ctx.fill();
+  }
+  // X labels (every other)
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  data.forEach((d, i) => {
+    if (i % 2 === 0) {
+      const x = pad.left + (i / Math.max(values.length - 1, 1)) * cW;
+      ctx.fillText((d.date || '').slice(5), x, H - 6);
+    }
+  });
+}
+
+// Load usage mini-card on dashboard
+async function loadUsageMiniCard() {
+  try {
+    const d = await api('/api/usage');
+    const subs = d.subscriptions || [];
+    const mini = document.getElementById('usage-mini-bars');
+    if (mini) mini.innerHTML = subs.map(s => renderUsageMiniBar(s)).join('');
+    const badge = document.getElementById('usage-savings-badge');
+    if (badge) {
+      const net = d.net_savings_usd || 0;
+      badge.textContent = net >= 0 ? `saving $${net.toFixed(0)}/mo` : `overpaying $${Math.abs(net).toFixed(0)}/mo`;
+    }
+  } catch (e) {}
+}
+
+// ── AGENT VIEW ────────────────────────────────────────────────
+
+function loadAgent() {
+  // Nothing to auto-load — agent is interactive only
+  const out = document.getElementById('agent-output');
+  if (out && out.children.length === 0) {
+    out.innerHTML = '<span style="color:rgba(255,255,255,0.3);">Type a question or tap a quick action above.</span>';
+  }
+}
+
+async function agentAsk(questionOverride) {
+  const input = document.getElementById('agent-input');
+  const question = questionOverride || input.value.trim();
+  if (!question) return;
+  const out = document.getElementById('agent-output');
+  const meta = document.getElementById('agent-meta');
+  const btn = document.getElementById('agent-send-btn');
+  out.innerHTML = '<span class="agent-typing">Thinking…</span>';
+  meta.textContent = '';
+  if (btn) btn.disabled = true;
+  if (!questionOverride) input.value = '';
+  try {
+    const d = await api('/api/agent/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question, mode: 'full'}),
+    });
+    // Render answer (basic markdown: **bold**, newlines)
+    const html = escapeHtml(d.answer || '(empty response)')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+    out.innerHTML = html;
+    const srcText = (d.sources || []).join(', ') || 'general';
+    meta.textContent = `Sources: ${srcText} · model: ${d.model || '—'}${d.action_suggestion ? ' · suggested action: ' + d.action_suggestion : ''}`;
+  } catch (e) {
+    out.innerHTML = `<span style="color:#f87171;">Error: ${escapeHtml(e.message)}</span>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function agentQuick(q) {
+  const input = document.getElementById('agent-input');
+  if (input) input.value = q;
+  agentAsk(q);
+}
+
+function agentQuickSkill() {
+  const topic = prompt('Find a skill for: (enter topic)');
+  if (topic) agentAsk(`Find me a skill for: ${topic}`);
 }
 
 // Load Supabase mini-card on dashboard init

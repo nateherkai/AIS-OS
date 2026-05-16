@@ -10,6 +10,8 @@ import json
 import re
 import sys
 import time
+import urllib.request
+import urllib.parse
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -116,6 +118,58 @@ def _extract_tool_calls(ev: dict) -> list:
 
 def _model_used(ev: dict) -> str:
     return (ev.get("message") or {}).get("model", "") or ""
+
+
+def _load_config() -> dict:
+    """Load dashboard config.json. Returns {} on failure."""
+    cfg = BASE / "config.json"
+    try:
+        return json.loads(cfg.read_text())
+    except Exception:
+        return {}
+
+
+def _ddg_search(query: str, max_results: int = 3) -> list:
+    """Fetch DuckDuckGo HTML results for query. Returns [{title, url}] best-effort."""
+    try:
+        url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote_plus(query)
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible)"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            html = resp.read().decode("utf-8", errors="replace")
+        # Extract result titles and URLs via regex (no beautiful soup needed)
+        titles = re.findall(r'class="result__a"[^>]*>(.*?)</a>', html, re.DOTALL)
+        links = re.findall(r'class="result__url"[^>]*>(.*?)</span>', html, re.DOTALL)
+        results = []
+        for i, title in enumerate(titles[:max_results]):
+            clean_title = re.sub(r"<[^>]+>", "", title).strip()
+            url_text = links[i].strip() if i < len(links) else ""
+            if clean_title:
+                results.append({"title": clean_title[:120], "url": url_text[:200]})
+        return results
+    except Exception:
+        return []
+
+
+def _search_external_opportunities(repeated_tasks: list) -> list:
+    """Search DuckDuckGo for top-3 repeated task patterns. Returns aggregated results.
+
+    Only called when config.json dream_prefs.web_search is True.
+    Returns [] if disabled or all fetches fail.
+    """
+    cfg = _load_config()
+    if not cfg.get("dream_prefs", {}).get("web_search", False):
+        return []
+    if not repeated_tasks:
+        return []
+    results = []
+    for task in repeated_tasks[:3]:
+        snippet = task.get("snippet", "")
+        if not snippet or len(snippet) < 5:
+            continue
+        query = f"AI skill for {snippet}"
+        hits = _ddg_search(query, max_results=3)
+        results.extend(hits)
+    return results[:9]  # cap at 9 total results
 
 
 def analyze() -> dict:
@@ -232,6 +286,17 @@ def analyze() -> dict:
                      "headline": f'Asked about external store ({si["term"]})',
                      "detail": _sanitize_detail(si)})
 
+    # Dimension 9: External opportunities — DuckDuckGo search for top repeated tasks
+    # Only runs if config.json dream_prefs.web_search is True
+    external_opps = _search_external_opportunities(repeated)
+    if external_opps:
+        recs.append({
+            "dimension": "external-opportunities",
+            "priority": "medium",
+            "headline": f"Found {len(external_opps)} tools matching your repeated work patterns",
+            "detail": {"results": external_opps, "query_count": len(external_opps)},
+        })
+
     out = {
         "date": datetime.now().strftime("%Y-%m-%d"),
         "generated_at": datetime.now().isoformat(),
@@ -246,6 +311,7 @@ def analyze() -> dict:
             "tool_overuse": overused,
             "cross_tool_friction": friction,
             "knowledge_silos": silos,
+            "external_opportunities": external_opps,
         },
         "recommendations": recs[:20],
         "top_3": recs[:3],
