@@ -53,9 +53,8 @@ AIS-OS/                              ← Roberts OS layer
 ├── dashboard/                       ← 6-pillar dashboard (existing scaffold)
 │   ├── index.html
 │   ├── config.json                  ← $hourly_value + paths
-│   ├── data/dreams/                 ← existing dream JSON
+│   ├── data/dreams/                 ← canonical dream JSON (dream.py writes here)
 │   └── scripts/memory_graph.py
-├── dreams/                          ← dream output JSON (mirrored)
 ├── skills/ (.claude/skills/)        ← Herk machine
 ├── scripts/
 │   ├── ingest.py                    ← raw → wiki pipeline trigger
@@ -70,7 +69,7 @@ AIS-OS/                              ← Roberts OS layer
 2. `/ingest` (skill) → Claude reads raw → writes wiki pages w/ `[[links]]` → updates index + log + hot.
 3. Wiki crosslinks to 01-07 via `[[01-AG-COACH-PRO/...]]` syntax. Domain folders never overwritten.
 4. Dashboard reads `vault/wiki/{index,log,hot}.md` + `dreams/*.json` + `.claude/skills/*` + `connections.md`.
-5. Dream engine runs nightly (cron), scans 8 dims, writes ≤4 cards to `AIS-OS/dreams/YYYY-MM-DD.json`.
+5. Dream engine runs nightly (cron), scans 8 dims, writes ≤4 cards to `AIS-OS/dashboard/data/dreams/YYYY-MM-DD.json`.
 
 ### Rules
 
@@ -184,7 +183,7 @@ updated: YYYY-MM-DD
 - wiki_path: ./Bryan-Aaron-Master/wiki/
 - raw_path: ./Bryan-Aaron-Master/raw/
 - Dashboard reads vault/wiki/{index,log,hot}.md (never writes).
-- Dream engine writes to AIS-OS/dreams/, may suggest vault changes (Bryan executes).
+- Dream engine writes to AIS-OS/dashboard/data/dreams/, may suggest vault changes (Bryan executes).
 - Ingest skill writes to vault. AIS-OS scripts never touch 01-07.
 ```
 
@@ -238,7 +237,7 @@ Bryan sets `$hourly_value` in `AIS-OS/dashboard/config.json`. Each skill invocat
 
 - File: `AIS-OS/scripts/dream.py` (Python, calls Claude API).
 - Trigger: cron nightly (default 02:00). Manual via `/dream`.
-- Output: `AIS-OS/dreams/YYYY-MM-DD.json` (and mirror to `dashboard/data/dreams/`).
+- Output: `AIS-OS/dashboard/data/dreams/YYYY-MM-DD.json` (canonical, existing path).
 - Cap: ≤4 cards per night (Roberts pattern).
 
 ### 8 dimensions
@@ -346,7 +345,7 @@ Routed by existing `three-brain` skill.
 vault/wiki/index.md      → dashboard "Knowledge" card
 vault/wiki/log.md        → dashboard "Recent ingests" widget
 vault/wiki/hot.md        → dashboard "Hot cache" preview tile
-AIS-OS/dreams/*.json     → dashboard "Tonight's dreams" card
+AIS-OS/dashboard/data/dreams/*.json → dashboard "Tonight's dreams" card
 .claude/skills/*/SKILL.md → dashboard "Skills" card
 connections.md           → dashboard "Connections" card
 ```
