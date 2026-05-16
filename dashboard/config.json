@@ -1,5 +1,5 @@
 {
-  "hourly_value_usd": 100,
+  "hourly_value_usd": 120.0,
   "vault_path": "../Bryan-Aaron-Master",
   "wiki_path": "../Bryan-Aaron-Master/wiki",
   "dreams_dir": "./data/dreams",
@@ -8,9 +8,25 @@
   "lint_report": "./lint-report.md",
   "skill_suggestions": "./skill-suggestions.md",
   "subscriptions": [
-    {"name": "Claude Pro Max", "monthly_usd": 200, "model": "claude"},
-    {"name": "ChatGPT Pro", "monthly_usd": 200, "model": "openai"},
-    {"name": "Gemini Advanced", "monthly_usd": 20, "model": "gemini"}
+    {
+      "name": "Claude Pro Max",
+      "monthly_usd": 200,
+      "model": "claude"
+    },
+    {
+      "name": "ChatGPT Pro",
+      "monthly_usd": 200,
+      "model": "openai"
+    },
+    {
+      "name": "Gemini Advanced",
+      "monthly_usd": 20,
+      "model": "gemini"
+    }
   ],
-  "dream_cron": "0 2 * * *"
+  "dream_cron": "0 2 * * *",
+  "dream_prefs": {},
+  "memory": {},
+  "storage": [],
+  "models": []
 }

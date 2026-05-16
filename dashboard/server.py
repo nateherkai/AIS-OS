@@ -33,6 +33,14 @@ try:
     import gmail_client
 except ImportError:
     gmail_client = None
+from wizard_detect import detect_all, save_wizard
+from supabase_widget import (
+    status as sb_status,
+    list_tables as sb_tables,
+    preview_table as sb_preview,
+    advisors as sb_advisors,
+)
+from pinecone_widget import stats as pc_stats, recent as pc_recent, query as pc_query
 
 # Ensure BRIDGE_TOKEN exists (generate once, persist to .env)
 if not os.environ.get("BRIDGE_TOKEN"):
@@ -331,6 +339,85 @@ def serve_install_md():
     if not p.exists():
         raise HTTPException(404)
     return FileResponse(p, media_type="text/markdown")
+
+# ── Wizard ────────────────────────────────────────────────────
+
+@app.get("/api/wizard/detect")
+def api_wizard_detect():
+    try:
+        return detect_all()
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+class WizardSave(BaseModel):
+    models: list = []
+    storage: list = []
+    memory: dict = {}
+    hourly_value: float | None = None
+    dream_prefs: dict = {}
+
+@app.post("/api/wizard/save")
+def api_wizard_save(body: WizardSave):
+    try:
+        return save_wizard(body.model_dump(), BASE / "config.json")
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+# ── Supabase ──────────────────────────────────────────────────
+
+@app.get("/api/supabase/status")
+def api_supabase_status():
+    try:
+        return sb_status()
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@app.get("/api/supabase/tables")
+def api_supabase_tables():
+    try:
+        return {"tables": sb_tables()}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.get("/api/supabase/table/{name}")
+def api_supabase_table(name: str, limit: int = 20):
+    try:
+        return sb_preview(name, limit)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.get("/api/supabase/advisors")
+def api_supabase_advisors():
+    return {"advisors": sb_advisors()}
+
+# ── Pinecone ──────────────────────────────────────────────────
+
+@app.get("/api/pinecone/stats")
+def api_pinecone_stats():
+    try:
+        return pc_stats()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/pinecone/recent")
+def api_pinecone_recent(limit: int = 50):
+    try:
+        return pc_recent(limit)
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+class PineconeQuery(BaseModel):
+    text: str
+    top_k: int = 10
+
+@app.post("/api/pinecone/query")
+def api_pinecone_query(body: PineconeQuery):
+    try:
+        return pc_query(body.text, body.top_k)
+    except Exception as e:
+        return {"matches": [], "error": str(e)}
 
 # ── Entry point ───────────────────────────────────────────────
 

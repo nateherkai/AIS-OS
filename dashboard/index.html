@@ -193,6 +193,67 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .graph-node { cursor:pointer; }
 .graph-edge { stroke-linecap:round; }
 .graph-pulse { pointer-events:none; mix-blend-mode:screen; }
+
+/* GEAR ICON */
+.gear-btn { position:absolute; top:18px; right:18px; z-index:5; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:16px; transition:all 0.15s; }
+.gear-btn:hover { background:rgba(212,165,116,0.12); color:#D4A574; border-color:rgba(212,165,116,0.3); }
+.view-header-wrap { position:relative; }
+
+/* WIZARD */
+.wiz-progress { display:flex; gap:8px; margin-bottom:20px; align-items:center; }
+.wiz-dot { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.15); transition:background 0.2s; }
+.wiz-dot.active { background:#D4A574; box-shadow:0 0 8px rgba(212,165,116,0.5); }
+.wiz-dot.done { background:rgba(74,222,128,0.7); }
+.wiz-step-title { font-size:18px; font-weight:600; color:#fff; margin-bottom:16px; }
+.wiz-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); margin-bottom:8px; }
+.wiz-item-label { flex:1; font-size:16px; color:rgba(255,255,255,0.8); }
+.wiz-item-path { font-size:13px; color:rgba(255,255,255,0.35); margin-top:2px; }
+.wiz-pill { font-size:12px; padding:3px 8px; border-radius:6px; font-weight:600; }
+.wiz-pill.ok { background:rgba(74,222,128,0.15); color:#4ade80; }
+.wiz-pill.missing { background:rgba(248,113,113,0.12); color:#f87171; }
+.wiz-toggle { cursor:pointer; width:36px; height:20px; border-radius:10px; border:none; transition:background 0.2s; flex-shrink:0; }
+.wiz-toggle.on { background:rgba(74,222,128,0.6); }
+.wiz-toggle.off { background:rgba(255,255,255,0.1); }
+.wiz-nav { display:flex; gap:10px; margin-top:20px; }
+.wiz-input { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:8px 12px; font-size:15px; width:100%; margin-bottom:10px; outline:none; }
+.wiz-input:focus { border-color:rgba(212,165,116,0.4); }
+.wiz-label { font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.06em; }
+.wiz-review-block { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:14px; font-family:monospace; font-size:13px; color:rgba(255,255,255,0.65); white-space:pre-wrap; overflow:auto; max-height:320px; }
+
+/* SUPABASE VIEW */
+.sb-stats-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+.sb-stat { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 18px; flex:1; min-width:140px; }
+.sb-stat-label { font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.35); margin-bottom:5px; }
+.sb-stat-value { font-size:22px; font-weight:700; color:#D4A574; }
+.sb-table-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; transition:background 0.15s; border-bottom:1px solid rgba(255,255,255,0.04); }
+.sb-table-row:hover { background:rgba(255,255,255,0.04); }
+.sb-table-name { flex:1; font-size:15px; color:rgba(255,255,255,0.8); }
+.sb-table-count { font-size:14px; color:#D4A574; font-weight:600; }
+.sb-preview { background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.07); border-radius:10px; overflow:auto; margin-top:14px; }
+.sb-preview table { width:100%; border-collapse:collapse; font-size:13px; }
+.sb-preview th { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); font-weight:600; padding:8px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.07); }
+.sb-preview td { padding:7px 12px; color:rgba(255,255,255,0.75); border-bottom:1px solid rgba(255,255,255,0.04); }
+.sb-status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+.sb-status-dot.ok { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.5); }
+.sb-status-dot.error { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,0.5); }
+
+/* PINECONE VIEW */
+.pc-stats-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+.pc-stat { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 18px; flex:1; min-width:120px; }
+.pc-stat-label { font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.35); margin-bottom:5px; }
+.pc-stat-value { font-size:22px; font-weight:700; color:#4ade80; }
+.pc-search-row { display:flex; gap:10px; margin-bottom:16px; }
+.pc-search-input { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:9px 14px; font-size:15px; outline:none; }
+.pc-search-input:focus { border-color:rgba(74,222,128,0.4); }
+.pc-match { padding:12px 14px; border-radius:8px; border-bottom:1px solid rgba(255,255,255,0.05); }
+.pc-match-score-bar { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; margin:6px 0; }
+.pc-match-score-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,#4ade80,#22c55e); }
+.pc-match-id { font-size:12px; color:rgba(255,255,255,0.3); font-family:monospace; }
+.pc-match-summary { font-size:15px; color:rgba(255,255,255,0.8); margin-top:4px; line-height:1.5; }
+.pc-activity-row { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); align-items:flex-start; }
+.pc-activity-ts { font-size:12px; color:rgba(255,255,255,0.3); flex-shrink:0; min-width:80px; }
+.pc-activity-summary { font-size:14px; color:rgba(255,255,255,0.75); flex:1; line-height:1.4; }
+.pc-activity-count { font-size:12px; color:#4ade80; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
@@ -225,11 +286,14 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showDashboardSection('expenses',this)"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
   <div class="nav-item" onclick="showView('inbox',this)"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span><span class="nav-badge" id="sb-unread" style="display:none;">—</span></div>
   <div class="sidebar-section">OS Layer</div>
+  <div class="nav-item" onclick="showView('wizard',this)"><span class="nav-icon">⚙</span><span class="nav-label">Wizard</span></div>
   <div class="nav-item" onclick="showView('pillars',this)"><span class="nav-icon">🏛</span><span class="nav-label">Six Pillars</span></div>
   <div class="nav-item" onclick="showView('memory',this)"><span class="nav-icon">🧬</span><span class="nav-label">Memory</span></div>
   <div class="nav-item" onclick="showView('roi',this)"><span class="nav-icon">📈</span><span class="nav-label">ROI</span></div>
   <div class="nav-item" onclick="showView('dreams',this)"><span class="nav-icon">🌙</span><span class="nav-label">Dreams</span></div>
   <div class="nav-item" onclick="showView('bridge',this)"><span class="nav-icon">🔗</span><span class="nav-label">GC Bridge</span></div>
+  <div class="nav-item" onclick="showView('supabase',this)"><span class="nav-icon">🗄</span><span class="nav-label">Supabase</span></div>
+  <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
   <div class="sidebar-section">Skills</div>
   <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Pipeline Check</span></div>
   <div class="action-btn" onclick="openModal('✍ Draft Reply','Run /draft-reply in Claude Code and paste the incoming email.','Skill: /draft-reply\n\nHow to use:\n1. Open Claude Code in the AIS-OS directory\n2. Type: /draft-reply\n3. Paste the incoming email when prompted\n4. Review draft — copy and send manually')"><span class="nav-icon">✍</span><span>Draft Reply</span></div>
@@ -248,6 +312,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="page-header">
     <div class="page-title" id="greeting">Good morning, Bryan</div>
     <div style="display:flex;align-items:center;gap:12px;">
+      <button class="gear-btn" onclick="showView('wizard')" title="Open Setup Wizard">⚙</button>
       <button class="refresh-btn" onclick="refreshCurrentView()">↺ Refresh</button>
       <div class="page-date" id="live-date"></div>
     </div>
@@ -260,6 +325,19 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-memory" class="view">
+    <!-- Pinecone mini-card -->
+    <div class="panel glass" id="pc-mini-card" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Pinecone Index</div>
+        <div style="font-size:18px;font-weight:600;color:#4ade80;" id="pc-mini-index">loading…</div>
+      </div>
+      <div>
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Vectors</div>
+        <div style="font-size:18px;font-weight:600;color:#4ade80;" id="pc-mini-count">—</div>
+      </div>
+      <div style="flex:1;min-width:200px;" id="pc-mini-recent"></div>
+      <a onclick="showView('pinecone')" style="cursor:pointer;font-size:14px;color:rgba(74,222,128,0.7);text-decoration:none;white-space:nowrap;">Open Pinecone view →</a>
+    </div>
     <div class="graph-wrap">
       <div class="graph-title">Memory Graph<b id="graph-headline">— · — · —</b></div>
       <div class="graph-stats" id="graph-stats">loading…</div>
@@ -337,6 +415,67 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     <div class="panel glass">
       <div class="panel-title">Install Snippet — paste into GC's CLAUDE.md</div>
       <pre id="bridge-install" style="font-family:monospace;font-size:15px;color:rgba(255,255,255,0.55);white-space:pre-wrap;max-height:300px;overflow:auto;">Loading...</pre>
+    </div>
+  </div>
+
+  <!-- ══ WIZARD VIEW ══ -->
+  <div id="view-wizard" class="view">
+    <div class="view-header-wrap" style="position:relative;">
+      <div class="panel-title">Setup Wizard</div>
+    </div>
+    <div class="panel glass" style="max-width:720px;">
+      <div class="wiz-progress" id="wiz-progress"></div>
+      <div id="wiz-card"></div>
+      <div class="wiz-nav">
+        <button class="btn-secondary" id="wiz-back" onclick="wizBack()" style="display:none;">← Back</button>
+        <button class="btn-primary" id="wiz-next" onclick="wizNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUPABASE VIEW ══ -->
+  <div id="view-supabase" class="view">
+    <div class="panel-title">Supabase <span id="sb-view-status"></span></div>
+    <div class="sb-stats-row" id="sb-stats-row">
+      <div class="sb-stat"><div class="sb-stat-label">Project ID</div><div class="sb-stat-value" id="sb-pid" style="font-size:16px;">—</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Status</div><div class="sb-stat-value" id="sb-status-val">—</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Tables</div><div class="sb-stat-value" id="sb-tbl-count">—</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Last Insert</div><div class="sb-stat-value" id="sb-last-ts" style="font-size:15px;">—</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Tables</div>
+      <div id="sb-table-list"><div class="loading">Loading…</div></div>
+    </div>
+    <div class="panel glass" id="sb-preview-panel" style="display:none;">
+      <div class="panel-title">Preview: <span id="sb-preview-name">—</span> <button class="refresh-btn" onclick="closeSbPreview()" style="float:right;">✕ Close</button></div>
+      <div class="sb-preview" id="sb-preview-wrap"></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Advisors <span style="font-size:13px;color:rgba(255,255,255,0.3);">MCP-only — connect via Claude Code</span></div>
+      <div id="sb-advisors" style="font-size:14px;color:rgba(255,255,255,0.4);padding:8px 0;">Advisor analysis is available via Claude Code MCP. Run get_advisors in a CC session.</div>
+    </div>
+  </div>
+
+  <!-- ══ PINECONE VIEW ══ -->
+  <div id="view-pinecone" class="view">
+    <div class="panel-title">Pinecone Memory</div>
+    <div class="pc-stats-row" id="pc-stats-row">
+      <div class="pc-stat"><div class="pc-stat-label">Index</div><div class="pc-stat-value" id="pc-index" style="font-size:16px;">—</div></div>
+      <div class="pc-stat"><div class="pc-stat-label">Namespace</div><div class="pc-stat-value" id="pc-ns" style="font-size:16px;">—</div></div>
+      <div class="pc-stat"><div class="pc-stat-label">Vectors</div><div class="pc-stat-value" id="pc-total">—</div></div>
+      <div class="pc-stat"><div class="pc-stat-label">Dimension</div><div class="pc-stat-value" id="pc-dim">—</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Vector Search</div>
+      <div class="pc-search-row">
+        <input class="pc-search-input" id="pc-query-input" placeholder="Search memory… (e.g. 'Ag Coach pricing strategy')" onkeydown="if(event.key==='Enter')runPcQuery()">
+        <button class="btn-primary" onclick="runPcQuery()" style="flex-shrink:0;padding:9px 18px;">Query</button>
+      </div>
+      <div id="pc-results"><div style="font-size:14px;color:rgba(255,255,255,0.3);">Enter a search query above to find relevant memories.</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Recent Activity</div>
+      <div id="pc-activity"><div class="loading">Loading…</div></div>
     </div>
   </div>
 
@@ -426,6 +565,26 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="panel glass" id="card-dreams">
     <div class="panel-title">Tonight's Dreams <small id="dream-date" style="font-size:15px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></small></div>
     <ol id="dream-cards" style="padding-left:20px;font-size:15px;color:rgba(255,255,255,0.7);line-height:1.9;"><li>loading…</li></ol>
+  </div>
+
+  <!-- Supabase mini-card on Dashboard -->
+  <div class="panel glass" id="card-supabase" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Supabase</div>
+      <div style="font-size:16px;font-weight:600;color:#D4A574;display:flex;align-items:center;gap:6px;">
+        <span class="sb-status-dot" id="sb-mini-dot"></span>
+        <span id="sb-mini-pid">loading…</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Tables</div>
+      <div style="font-size:18px;font-weight:600;color:#D4A574;" id="sb-mini-tables">—</div>
+    </div>
+    <div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:4px;">Last Insert</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.6);" id="sb-mini-ts">—</div>
+    </div>
+    <a onclick="showView('supabase')" style="cursor:pointer;font-size:14px;color:rgba(212,165,116,0.7);text-decoration:none;margin-left:auto;white-space:nowrap;">View all →</a>
   </div>
 
   </div><!-- /view-dashboard -->
@@ -701,6 +860,9 @@ const VIEW_LOADERS = {
   dreams: loadDreams,
   bridge: loadBridge,
   inbox: loadInbox,
+  wizard: loadWizard,
+  supabase: loadSupabase,
+  pinecone: loadPinecone,
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},
@@ -799,6 +961,23 @@ async function loadPillars() {
 }
 
 async function loadMemory() {
+  // Load Pinecone mini-card
+  try {
+    const ps = await api('/api/pinecone/stats');
+    const miniIdx = document.getElementById('pc-mini-index');
+    if (miniIdx) miniIdx.textContent = (ps.index || '—') + ' / ' + (ps.namespace || '—');
+    const miniCnt = document.getElementById('pc-mini-count');
+    if (miniCnt) miniCnt.textContent = ps.total_vectors != null ? ps.total_vectors.toLocaleString() : '—';
+    const r = await api('/api/pinecone/recent?limit=3');
+    const miniRecent = document.getElementById('pc-mini-recent');
+    if (miniRecent && r.items && r.items.length > 0) {
+      miniRecent.innerHTML = r.items.map(it =>
+        `<div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">${(it.ts||'').slice(0,10)} — ${escapeHtml((it.summary||'').slice(0,60))}</div>`
+      ).join('');
+    } else if (miniRecent) {
+      miniRecent.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.3);">No recent activity yet</div>';
+    }
+  } catch (e) {}
   const d = await fetch('/api/memory-feed?limit=40').then(r => r.json());
   document.getElementById('memory-ts').textContent = d.ts || '';
   const feed = document.getElementById('memory-feed');
@@ -1359,6 +1538,313 @@ async function testBridge() {
     el.textContent = 'ERROR: ' + e;
   }
 }
+
+// ── WIZARD ────────────────────────────────────────────────────
+
+let wizState = null;
+let wizStep = 0;
+const WIZ_STEPS = ['Models', 'Storage', 'Memory', 'Hourly Value', 'Dream Prefs', 'Review'];
+
+async function loadWizard() {
+  wizStep = 0;
+  try {
+    wizState = await api('/api/wizard/detect');
+  } catch (e) {
+    wizState = { models: [], storage: [], memory: {obsidian:'',pinecone:{index:'',namespace:'knowledge'},supabase:{project_id:''}}, hourly_value: 100, dream_prefs: {web_search:false,image_per_card:false,frequency:'PM'} };
+  }
+  wizRender();
+}
+
+function wizRender() {
+  // Progress dots
+  const prog = document.getElementById('wiz-progress');
+  prog.innerHTML = WIZ_STEPS.map((s, i) =>
+    `<div class="wiz-dot ${i < wizStep ? 'done' : i === wizStep ? 'active' : ''}" title="${s}"></div>`
+  ).join('') + `<span style="font-size:13px;color:rgba(255,255,255,0.4);margin-left:8px;">Step ${wizStep + 1} of ${WIZ_STEPS.length}: ${WIZ_STEPS[wizStep]}</span>`;
+
+  // Back/Next buttons
+  document.getElementById('wiz-back').style.display = wizStep > 0 ? '' : 'none';
+  const nextBtn = document.getElementById('wiz-next');
+  nextBtn.textContent = wizStep === WIZ_STEPS.length - 1 ? '💾 Save' : 'Next →';
+
+  // Card content
+  const card = document.getElementById('wiz-card');
+  if (wizStep === 0) {
+    card.innerHTML = `<div class="wiz-step-title">AI Models</div>` +
+      (wizState.models || []).map((m, i) => `
+        <div class="wiz-item">
+          <div style="flex:1">
+            <div class="wiz-item-label">${m.label}</div>
+            <div class="wiz-item-path">${m.path || ''}</div>
+          </div>
+          <span class="wiz-pill ${m.detected ? 'ok' : 'missing'}">${m.detected ? 'Detected' : 'Not found'}</span>
+          <button class="wiz-toggle ${m.enabled ? 'on' : 'off'}" onclick="wizToggle('models',${i})" title="Toggle">${m.enabled ? 'ON' : 'OFF'}</button>
+        </div>`).join('');
+  } else if (wizStep === 1) {
+    card.innerHTML = `<div class="wiz-step-title">Storage Paths</div>` +
+      (wizState.storage || []).map((s, i) => `
+        <div class="wiz-item">
+          <div style="flex:1">
+            <div class="wiz-item-label">${s.label}</div>
+            <div class="wiz-item-path">${s.path}</div>
+          </div>
+          <span class="wiz-pill ${s.detected ? 'ok' : 'missing'}">${s.detected ? 'Found' : 'Missing'}</span>
+          <button class="wiz-toggle ${s.enabled ? 'on' : 'off'}" onclick="wizToggle('storage',${i})" title="Toggle">${s.enabled ? 'ON' : 'OFF'}</button>
+        </div>`).join('');
+  } else if (wizStep === 2) {
+    const mem = wizState.memory || {};
+    const pc = mem.pinecone || {};
+    const sb = mem.supabase || {};
+    card.innerHTML = `<div class="wiz-step-title">Memory Systems</div>
+      <div class="wiz-label">Obsidian Vault Path</div>
+      <input class="wiz-input" id="wiz-obsidian" value="${escapeHtml(mem.obsidian || '')}" oninput="wizState.memory.obsidian=this.value">
+      <div class="wiz-label">Pinecone Index Name</div>
+      <input class="wiz-input" id="wiz-pc-index" value="${escapeHtml(pc.index || '')}" oninput="wizState.memory.pinecone.index=this.value">
+      <div class="wiz-label">Pinecone Namespace</div>
+      <input class="wiz-input" id="wiz-pc-ns" value="${escapeHtml(pc.namespace || 'knowledge')}" oninput="wizState.memory.pinecone.namespace=this.value">
+      <div class="wiz-label">Supabase Project ID</div>
+      <input class="wiz-input" id="wiz-sb-pid" value="${escapeHtml(sb.project_id || '')}" oninput="wizState.memory.supabase.project_id=this.value">`;
+  } else if (wizStep === 3) {
+    card.innerHTML = `<div class="wiz-step-title">Hourly Value</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;">What is your time worth per hour? Used by ROI calculations.</div>
+      <div class="wiz-label">Value (USD/hr)</div>
+      <input class="wiz-input" type="number" id="wiz-hourly" min="25" max="500" value="${wizState.hourly_value || 100}" oninput="wizState.hourly_value=parseFloat(this.value)||100" style="font-size:22px;max-width:200px;">
+      <input type="range" min="25" max="500" step="5" value="${wizState.hourly_value || 100}" oninput="wizState.hourly_value=parseFloat(this.value);document.getElementById('wiz-hourly').value=this.value" style="width:100%;margin-top:12px;accent-color:#D4A574;">`;
+  } else if (wizStep === 4) {
+    const dp = wizState.dream_prefs || {};
+    const freq = dp.frequency || 'PM';
+    card.innerHTML = `<div class="wiz-step-title">Dream Preferences</div>
+      <div class="wiz-item" style="cursor:pointer;" onclick="wizState.dream_prefs.web_search=!wizState.dream_prefs.web_search;wizRender()">
+        <div class="wiz-item-label">Web search during dream</div>
+        <button class="wiz-toggle ${dp.web_search ? 'on' : 'off'}">${dp.web_search ? 'ON' : 'OFF'}</button>
+      </div>
+      <div class="wiz-item" style="cursor:pointer;" onclick="wizState.dream_prefs.image_per_card=!wizState.dream_prefs.image_per_card;wizRender()">
+        <div class="wiz-item-label">AI image per card (requires OpenAI key)</div>
+        <button class="wiz-toggle ${dp.image_per_card ? 'on' : 'off'}">${dp.image_per_card ? 'ON' : 'OFF'}</button>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="wiz-label">Dream Frequency</div>
+        ${['AM','PM','Both','Disabled'].map(f => `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer;font-size:15px;color:rgba(255,255,255,0.75);">
+            <input type="radio" name="wiz-freq" value="${f}" ${freq === f ? 'checked' : ''} onchange="wizState.dream_prefs.frequency=this.value" style="accent-color:#D4A574;">
+            ${f}
+          </label>`).join('')}
+      </div>`;
+  } else if (wizStep === 5) {
+    card.innerHTML = `<div class="wiz-step-title">Review & Save</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Review your settings below. Click Save to write to config.json.</div>
+      <div class="wiz-review-block">${escapeHtml(JSON.stringify({
+        models: (wizState.models||[]).map(m=>({name:m.name,enabled:m.enabled})),
+        storage: (wizState.storage||[]).map(s=>({path:s.path,enabled:s.enabled})),
+        memory: wizState.memory,
+        hourly_value: wizState.hourly_value,
+        dream_prefs: wizState.dream_prefs,
+      }, null, 2))}</div>`;
+  }
+}
+
+function wizToggle(key, idx) {
+  if (wizState[key] && wizState[key][idx]) {
+    wizState[key][idx].enabled = !wizState[key][idx].enabled;
+    wizRender();
+  }
+}
+
+function wizBack() {
+  if (wizStep > 0) { wizStep--; wizRender(); }
+}
+
+async function wizNext() {
+  if (wizStep < WIZ_STEPS.length - 1) {
+    wizStep++;
+    wizRender();
+  } else {
+    // Save
+    try {
+      await api('/api/wizard/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          models: wizState.models || [],
+          storage: wizState.storage || [],
+          memory: wizState.memory || {},
+          hourly_value: wizState.hourly_value,
+          dream_prefs: wizState.dream_prefs || {},
+        }),
+      });
+      showToast('Wizard saved — config.json updated');
+    } catch (e) {
+      showToast('Save failed: ' + e.message);
+    }
+  }
+}
+
+// ── SUPABASE ──────────────────────────────────────────────────
+
+async function loadSupabase() {
+  // Stats
+  try {
+    const s = await api('/api/supabase/status');
+    const dot = document.getElementById('sb-mini-dot');
+    if (dot) {
+      dot.className = 'sb-status-dot ' + (s.status === 'ok' ? 'ok' : 'error');
+    }
+    const pid = s.project_id || '—';
+    const el = document.getElementById('sb-mini-pid');
+    if (el) el.textContent = pid.length > 12 ? pid.slice(0,6) + '…' + pid.slice(-3) : pid;
+    const tblEl = document.getElementById('sb-mini-tables');
+    if (tblEl) tblEl.textContent = s.tables_count ?? '—';
+    const tsEl = document.getElementById('sb-mini-ts');
+    if (tsEl) tsEl.textContent = s.last_insert_ts ? s.last_insert_ts.slice(0,16) : '—';
+
+    // Full view stats
+    document.getElementById('sb-pid').textContent = s.project_id || '—';
+    const statusVal = document.getElementById('sb-status-val');
+    statusVal.innerHTML = `<span class="sb-status-dot ${s.status === 'ok' ? 'ok' : 'error'}"></span>${s.status}`;
+    document.getElementById('sb-tbl-count').textContent = s.tables_count ?? '—';
+    document.getElementById('sb-last-ts').textContent = s.last_insert_ts ? s.last_insert_ts.slice(0,16) : '—';
+  } catch (e) {
+    document.getElementById('sb-pid').textContent = 'error';
+  }
+
+  // Tables
+  try {
+    const t = await api('/api/supabase/tables');
+    const list = document.getElementById('sb-table-list');
+    if (t.tables && t.tables.length) {
+      list.innerHTML = t.tables.map(tbl => `
+        <div class="sb-table-row" onclick="loadSbPreview('${tbl.name}')">
+          <span class="sb-table-name">${tbl.name}</span>
+          <span class="sb-table-count">${tbl.rows >= 0 ? tbl.rows + ' rows' : '—'}</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.25);">${(tbl.last_modified||'').slice(0,10) || ''}</span>
+          <span style="font-size:13px;color:rgba(255,255,255,0.3);">→</span>
+        </div>`).join('');
+    } else {
+      list.innerHTML = '<div class="loading">No tables found</div>';
+    }
+  } catch (e) {
+    document.getElementById('sb-table-list').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+async function loadSbPreview(name) {
+  const panel = document.getElementById('sb-preview-panel');
+  const wrap = document.getElementById('sb-preview-wrap');
+  const nameEl = document.getElementById('sb-preview-name');
+  panel.style.display = '';
+  nameEl.textContent = name;
+  wrap.innerHTML = '<div class="loading">Loading…</div>';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  try {
+    const d = await api(`/api/supabase/table/${name}?limit=20`);
+    if (!d.columns || d.columns.length === 0) {
+      wrap.innerHTML = '<div class="loading">No data</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr>${d.columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>
+      <tbody>${(d.rows || []).map(row => `<tr>${d.columns.map(c => `<td>${escapeHtml(String(row[c] ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+function closeSbPreview() {
+  document.getElementById('sb-preview-panel').style.display = 'none';
+}
+
+// ── PINECONE ──────────────────────────────────────────────────
+
+async function loadPinecone() {
+  // Stats
+  try {
+    const s = await api('/api/pinecone/stats');
+    document.getElementById('pc-index').textContent = s.index || '—';
+    document.getElementById('pc-ns').textContent = s.namespace || '—';
+    document.getElementById('pc-total').textContent = s.total_vectors != null ? s.total_vectors.toLocaleString() : '—';
+    document.getElementById('pc-dim').textContent = s.dimension || '—';
+    // Mini card on memory view
+    const miniIdx = document.getElementById('pc-mini-index');
+    if (miniIdx) miniIdx.textContent = (s.index || '—') + ' / ' + (s.namespace || '—');
+    const miniCnt = document.getElementById('pc-mini-count');
+    if (miniCnt) miniCnt.textContent = s.total_vectors != null ? s.total_vectors.toLocaleString() : '—';
+  } catch (e) {
+    document.getElementById('pc-index').textContent = 'error';
+  }
+
+  // Recent activity
+  try {
+    const r = await api('/api/pinecone/recent?limit=50');
+    const actEl = document.getElementById('pc-activity');
+    if (r.items && r.items.length > 0) {
+      actEl.innerHTML = r.items.map(it => `
+        <div class="pc-activity-row">
+          <span class="pc-activity-ts">${(it.ts || '').slice(0,16)}</span>
+          <span class="pc-activity-summary">${escapeHtml(it.summary || it.action || '')}</span>
+          <span class="pc-activity-count">${it.count != null ? '+' + it.count : ''}</span>
+        </div>`).join('');
+    } else {
+      actEl.innerHTML = `<div style="font-size:14px;color:rgba(255,255,255,0.35);padding:8px 0;">${r.message || 'No activity logged yet.'}</div>`;
+    }
+    // Mini recent (top 3) for memory view
+    const miniRecent = document.getElementById('pc-mini-recent');
+    if (miniRecent && r.items && r.items.length > 0) {
+      miniRecent.innerHTML = r.items.slice(0,3).map(it =>
+        `<div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">${(it.ts||'').slice(0,10)} — ${escapeHtml((it.summary||'').slice(0,60))}</div>`
+      ).join('');
+    }
+  } catch (e) {
+    document.getElementById('pc-activity').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
+  }
+}
+
+async function runPcQuery() {
+  const input = document.getElementById('pc-query-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const results = document.getElementById('pc-results');
+  results.innerHTML = '<div class="loading">Querying Pinecone…</div>';
+  try {
+    const d = await api('/api/pinecone/query', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, top_k: 10}),
+    });
+    if (d.error) {
+      results.innerHTML = `<div style="color:#f87171;font-size:14px;">Error: ${escapeHtml(d.error)}</div>`;
+      return;
+    }
+    if (!d.matches || d.matches.length === 0) {
+      results.innerHTML = '<div style="font-size:14px;color:rgba(255,255,255,0.4);">No matches found.</div>';
+      return;
+    }
+    results.innerHTML = d.matches.map(m => `
+      <div class="pc-match">
+        <div class="pc-match-id">${escapeHtml(m.id)} <span style="color:#4ade80;margin-left:8px;">${(m.score*100).toFixed(1)}%</span></div>
+        <div class="pc-match-score-bar"><div class="pc-match-score-fill" style="width:${(m.score*100).toFixed(1)}%"></div></div>
+        <div class="pc-match-summary">${escapeHtml(m.summary || '')}</div>
+      </div>`).join('');
+  } catch (e) {
+    results.innerHTML = `<div style="color:#f87171;font-size:14px;">Error: ${e.message}</div>`;
+  }
+}
+
+// Load Supabase mini-card on dashboard init
+(async function loadSbMiniCard() {
+  try {
+    const s = await api('/api/supabase/status');
+    const dot = document.getElementById('sb-mini-dot');
+    if (dot) dot.className = 'sb-status-dot ' + (s.status === 'ok' ? 'ok' : 'error');
+    const pid = s.project_id || '—';
+    const el = document.getElementById('sb-mini-pid');
+    if (el) el.textContent = pid.length > 12 ? pid.slice(0,6) + '…' + pid.slice(-3) : pid;
+    const tblEl = document.getElementById('sb-mini-tables');
+    if (tblEl) tblEl.textContent = s.tables_count ?? '—';
+    const tsEl = document.getElementById('sb-mini-ts');
+    if (tsEl) tsEl.textContent = s.last_insert_ts ? s.last_insert_ts.slice(0,16) : '—';
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
