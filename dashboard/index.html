@@ -34,7 +34,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .action-btn:hover { background:rgba(212,165,116,0.1); color:#D4A574; border-color:rgba(212,165,116,0.25); transform:translateX(2px); }
 
 /* MAIN */
-.main { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:16px; }
+.main { flex:1; overflow:auto; padding:24px 28px; display:flex; flex-direction:column; gap:16px; }
 .page-header { display:flex; align-items:center; justify-content:space-between; }
 .page-title { font-size:22px; font-weight:700; color:#fff; }
 .page-date { font-size:15px; color:rgba(255,255,255,0.3); }
@@ -54,6 +54,8 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 /* KPI */
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
 .kpi-card { border-radius:14px; padding:16px 18px; }
+.kpi-card.clickable { cursor:pointer; transition:all 0.15s; }
+.kpi-card.clickable:hover { transform:translateY(-1px); border-color:rgba(212,165,116,0.25); background:rgba(212,165,116,0.07); }
 .kpi-label { font-size:15px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px; }
 .kpi-value { font-size:26px; font-weight:700; color:#fff; line-height:1; }
 .kpi-value.gold { color:#D4A574; }
@@ -66,6 +68,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 /* GRID */
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .panel { border-radius:14px; padding:18px; }
+.panel.section-focus, .kpi-card.section-focus { outline:1px solid rgba(212,165,116,0.55); box-shadow:0 0 0 4px rgba(212,165,116,0.08); }
 .panel-title { font-size:15px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
 .panel-title span { color:#D4A574; font-size:15px; }
 
@@ -81,7 +84,9 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .pipeline-tier.trial { background:rgba(250,204,21,0.1); color:#facc15; }
 
 /* EXPENSES */
-.expense-item { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.expense-item { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); border-radius:6px; }
+.expense-item.clickable { cursor:pointer; transition:background 0.15s; }
+.expense-item.clickable:hover { background:rgba(255,255,255,0.035); }
 .expense-item:last-child { border:none; }
 .expense-bar-wrap { flex:1; }
 .expense-name { color:rgba(255,255,255,0.65); margin-bottom:3px; font-size:15px; }
@@ -172,7 +177,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .dream-head { font-size:21px; color:#fff; font-weight:500; line-height:1.4; }
 
 /* Memory Graph — force-directed glow viz */
-.graph-wrap { position:relative; height:760px; overflow:hidden; border-radius:14px; background:radial-gradient(ellipse at center, rgba(15,15,30,0.95), #050510 70%); border:1px solid rgba(255,255,255,0.06); }
+.graph-wrap { position:relative; height:820px; overflow:hidden; border-radius:14px; background:
+  radial-gradient(ellipse at 50% 48%, rgba(32,44,75,0.28), transparent 46%),
+  radial-gradient(ellipse at center, rgba(15,15,30,0.95), #050510 72%);
+  border:1px solid rgba(255,255,255,0.06); min-width:980px; }
 .graph-svg { width:100%; height:100%; cursor:grab; }
 .graph-svg:active { cursor:grabbing; }
 .graph-legend { position:absolute; bottom:14px; left:14px; display:flex; gap:14px; font-size:15px; color:rgba(255,255,255,0.7); background:rgba(0,0,0,0.4); padding:8px 14px; border-radius:8px; backdrop-filter:blur(8px); }
@@ -184,6 +192,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .graph-title b { display:block; color:#fff; font-size:18px; text-transform:none; letter-spacing:0; margin-top:4px; }
 .graph-node { cursor:pointer; }
 .graph-edge { stroke-linecap:round; }
+.graph-pulse { pointer-events:none; mix-blend-mode:screen; }
 </style>
 </head>
 <body>
@@ -210,9 +219,9 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     <div><div class="logo-text">Ag Coach Pro</div><div class="logo-sub">Business OS</div></div>
   </div>
   <div class="nav-item active" onclick="showView('dashboard',this)"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></div>
-  <div class="nav-item"><span class="nav-icon">$</span><span class="nav-label">Revenue</span></div>
-  <div class="nav-item"><span class="nav-icon">🏫</span><span class="nav-label">Schools</span><span class="nav-badge" id="sb-trials">—</span></div>
-  <div class="nav-item"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
+  <div class="nav-item" onclick="showDashboardSection('revenue',this)"><span class="nav-icon">$</span><span class="nav-label">Revenue</span></div>
+  <div class="nav-item" onclick="showDashboardSection('schools',this)"><span class="nav-icon">🏫</span><span class="nav-label">Schools</span><span class="nav-badge" id="sb-trials">—</span></div>
+  <div class="nav-item" onclick="showDashboardSection('expenses',this)"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
   <div class="nav-item" onclick="showView('inbox',this)"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span><span class="nav-badge" id="sb-unread" style="display:none;">—</span></div>
   <div class="sidebar-section">OS Layer</div>
   <div class="nav-item" onclick="showView('pillars',this)"><span class="nav-icon">🏛</span><span class="nav-label">Six Pillars</span></div>
@@ -238,7 +247,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="page-header">
     <div class="page-title" id="greeting">Good morning, Bryan</div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+      <button class="refresh-btn" onclick="refreshCurrentView()">↺ Refresh</button>
       <div class="page-date" id="live-date"></div>
     </div>
   </div>
@@ -255,14 +264,14 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div class="graph-stats" id="graph-stats">loading…</div>
       <svg class="graph-svg" id="graph-svg"></svg>
       <div class="graph-legend">
-        <span><i style="background:#4ade80;box-shadow:0 0 8px #4ade80;"></i>Memory Core</span>
-        <span><i style="background:#a78bfa;box-shadow:0 0 8px #a78bfa;"></i>Workspace</span>
-        <span><i style="background:#60a5fa;box-shadow:0 0 8px #60a5fa;"></i>File</span>
-        <span><i style="background:#D4A574;box-shadow:0 0 8px #D4A574;"></i>Decision</span>
-        <span><i style="background:#22d3ee;box-shadow:0 0 8px #22d3ee;"></i>Session</span>
-        <span><i style="background:#f472b6;box-shadow:0 0 8px #f472b6;"></i>Skill</span>
-        <span><i style="background:#facc15;box-shadow:0 0 8px #facc15;"></i>Vector</span>
-        <span><i style="background:#6b7280;"></i>Stale</span>
+        <span><i style="background:#00E676;box-shadow:0 0 10px #00E676;"></i>Memory Core</span>
+        <span><i style="background:#0077FF;box-shadow:0 0 10px #0077FF;"></i>Workspace</span>
+        <span><i style="background:#00C2FF;box-shadow:0 0 10px #00C2FF;"></i>File</span>
+        <span><i style="background:#FFD000;box-shadow:0 0 10px #FFD000;"></i>Decision</span>
+        <span><i style="background:#FF3B30;box-shadow:0 0 10px #FF3B30;"></i>Session</span>
+        <span><i style="background:#FF7A00;box-shadow:0 0 10px #FF7A00;"></i>Skill</span>
+        <span><i style="background:#D4A574;box-shadow:0 0 10px #D4A574;"></i>Vector</span>
+        <span><i style="background:#7A8799;box-shadow:0 0 8px #7A8799;"></i>Stale</span>
       </div>
     </div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
@@ -335,19 +344,19 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 
   <!-- KPIs -->
   <div class="kpi-row">
-    <div class="kpi-card glass-gold">
+    <div class="kpi-card glass-gold clickable" id="section-revenue" onclick="showDashboardSection('revenue')">
       <div class="kpi-label">Monthly Revenue</div>
       <div class="kpi-value gold" id="kpi-revenue">—</div>
       <div class="kpi-sub" id="kpi-revenue-sub">loading...</div>
       <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-revenue" style="width:0%"></div></div>
     </div>
-    <div class="kpi-card glass">
+    <div class="kpi-card glass clickable" onclick="showDashboardSection('schools')">
       <div class="kpi-label">School Goal</div>
       <div class="kpi-value" id="kpi-schools">—</div>
       <div class="kpi-sub">goal: 50 · deadline Aug 2026</div>
       <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-schools" style="width:0%"></div></div>
     </div>
-    <div class="kpi-card glass">
+    <div class="kpi-card glass clickable" onclick="showDashboardSection('expenses')">
       <div class="kpi-label">Monthly Burn</div>
       <div class="kpi-value red" id="kpi-burn">—</div>
       <div class="kpi-sub" id="kpi-burn-sub">loading...</div>
@@ -361,11 +370,11 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 
   <!-- Schools + Expenses -->
   <div class="grid-2">
-    <div class="panel glass">
+    <div class="panel glass" id="section-schools">
       <div class="panel-title">School Pipeline <span>LIVE · SUPABASE</span></div>
       <div id="pipeline-list"><div class="loading">Loading...</div></div>
     </div>
-    <div class="panel glass">
+    <div class="panel glass" id="section-expenses">
       <div class="panel-title">Monthly Expenses <span id="expense-total-label">loading...</span></div>
       <div id="expense-list"><div class="loading">Loading...</div></div>
     </div>
@@ -389,11 +398,37 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       </div>
     </div>
   </div>
+  <!-- Knowledge + Hot Cache + Dreams cards -->
+  <div class="grid-2">
+    <div class="panel glass" id="card-knowledge">
+      <div class="panel-title">Knowledge (Vault Wiki)</div>
+      <ul style="list-style:none;font-size:15px;color:rgba(255,255,255,0.65);line-height:2;">
+        <li>Pages: <span id="wiki-page-count" style="color:#D4A574;font-weight:600;">—</span></li>
+        <li>Last ingest: <span id="wiki-last-ingest" style="color:#D4A574;font-weight:600;">—</span></li>
+        <li>Orphans: <span id="wiki-orphans" style="color:#D4A574;font-weight:600;">—</span></li>
+      </ul>
+      <a href="../Bryan-Aaron-Master/wiki/index.md" target="_blank" style="font-size:15px;color:rgba(212,165,116,0.7);text-decoration:none;">Open wiki index →</a>
+    </div>
+    <div class="panel glass" id="card-hot">
+      <div class="panel-title">Hot Cache</div>
+      <pre id="hot-cache-preview" style="font-family:monospace;font-size:15px;color:rgba(255,255,255,0.6);white-space:pre-wrap;max-height:120px;overflow:auto;">loading…</pre>
+    </div>
+  </div>
+  <div class="panel glass" id="card-dreams">
+    <div class="panel-title">Tonight's Dreams <small id="dream-date" style="font-size:15px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></small></div>
+    <ol id="dream-cards" style="padding-left:20px;font-size:15px;color:rgba(255,255,255,0.7);line-height:1.9;"><li>loading…</li></ol>
+  </div>
+
   </div><!-- /view-dashboard -->
 </div>
 
 <script>
 // ── Init ──────────────────────────────────────────────────────
+
+const SERVED_FROM_FILE = location.protocol === 'file:';
+if (SERVED_FROM_FILE) {
+  location.replace('http://localhost:8080/' + location.hash);
+}
 
 const now = new Date();
 const hour = now.getHours();
@@ -422,6 +457,16 @@ async function api(path, opts={}) {
   const r = await fetch(path, opts);
   if (!r.ok) throw new Error(await r.text());
   return r.json();
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch]));
 }
 
 // ── KPIs ──────────────────────────────────────────────────────
@@ -504,15 +549,27 @@ async function loadExpenses() {
   const max = Math.max(...d.expenses.map(e => e.amount), 1);
   document.getElementById('expense-total-label').textContent = `$${d.total.toFixed(0)} TOTAL BURN`;
   const sorted = [...d.expenses].sort((a,b) => b.amount - a.amount).filter(e => e.amount > 0);
-  document.getElementById('expense-list').innerHTML = sorted.map(e =>
-    `<div class="expense-item">
+  window.expenseRows = sorted.map(e => ({...e, total: d.total}));
+  document.getElementById('expense-list').innerHTML = sorted.map((e, i) =>
+    `<div class="expense-item clickable" onclick="showExpenseByIndex(${i})">
       <div class="expense-bar-wrap">
-        <div class="expense-name">${e.name}</div>
+        <div class="expense-name">${escapeHtml(e.name)}</div>
         <div class="expense-bar"><div class="expense-bar-fill" style="width:${(e.amount/max*100).toFixed(0)}%"></div></div>
       </div>
       <div class="expense-amt">$${e.amount}</div>
     </div>`
   ).join('');
+}
+
+function showExpenseByIndex(i) {
+  const e = (window.expenseRows || [])[i];
+  if (!e) return;
+  showExpense(e.name, Number(e.amount) || 0, Number(e.total) || 0);
+}
+
+function showExpense(name, amount, total) {
+  const pct = total ? (amount / total * 100).toFixed(1) : '0.0';
+  openModal(name, 'Monthly expense', `$${amount.toFixed(2)} / month\n${pct}% of current burn\n\nUse Sync Receipts after dropping a new Apple Card CSV into dashboard/imports.`);
 }
 
 async function syncExpenses() {
@@ -608,10 +665,23 @@ async function loadAll() {
   await Promise.all([loadKPIs(), loadPipeline(), loadExpenses(), loadTasks(), loadDebt()]);
 }
 
-loadAll();
+async function refreshCurrentView() {
+  const current = (location.hash || '#dashboard').slice(1) || 'dashboard';
+  showToast('Refreshing...');
+  if (current === 'dashboard' || DASHBOARD_SECTIONS[current]) {
+    await loadAll();
+    if (DASHBOARD_SECTIONS[current]) showDashboardSection(current);
+  } else {
+    const loader = VIEW_LOADERS[current];
+    if (loader) await loader();
+  }
+  showToast('Updated');
+}
+
+if (!SERVED_FROM_FILE) loadAll();
 
 // Auto-refresh every 5 minutes
-setInterval(loadAll, 5 * 60 * 1000);
+if (!SERVED_FROM_FILE) setInterval(loadAll, 5 * 60 * 1000);
 
 // ── OS LAYER ──────────────────────────────────────────────────
 
@@ -623,11 +693,25 @@ const VIEW_LOADERS = {
   bridge: loadBridge,
   inbox: loadInbox,
   dashboard: () => {},
+  revenue: () => {},
+  schools: () => {},
+  expenses: () => {},
+};
+
+const DASHBOARD_SECTIONS = {
+  revenue: 'section-revenue',
+  schools: 'section-schools',
+  expenses: 'section-expenses',
 };
 
 function showView(name, el) {
+  if (DASHBOARD_SECTIONS[name]) {
+    showDashboardSection(name, el);
+    return;
+  }
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  clearSectionFocus();
   const v = document.getElementById('view-' + name);
   if (v) v.classList.add('active');
   if (el) {
@@ -644,6 +728,31 @@ function showView(name, el) {
   history.replaceState(null, '', '#' + name);
   const loader = VIEW_LOADERS[name];
   if (loader) loader();
+}
+
+function showDashboardSection(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-dashboard')?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) {
+    el.classList.add('active');
+  } else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      const label = (n.querySelector('.nav-label')?.textContent || '').toLowerCase();
+      if (label === name) n.classList.add('active');
+    });
+  }
+  history.replaceState(null, '', '#' + name);
+  clearSectionFocus();
+  const target = document.getElementById(DASHBOARD_SECTIONS[name]);
+  if (!target) return;
+  target.classList.add('section-focus');
+  target.scrollIntoView({behavior:'smooth', block:'center'});
+  setTimeout(() => target.classList.remove('section-focus'), 1600);
+}
+
+function clearSectionFocus() {
+  document.querySelectorAll('.section-focus').forEach(el => el.classList.remove('section-focus'));
 }
 
 // Honor URL hash on load + hashchange
@@ -699,14 +808,14 @@ async function loadMemory() {
 }
 
 const KIND_COLORS = {
-  core: '#4ade80',
-  workspace: '#a78bfa',
-  file: '#60a5fa',
-  decision: '#D4A574',
-  session: '#22d3ee',
-  skill: '#f472b6',
-  vector: '#facc15',
-  stale: '#6b7280',
+  core: '#00E676',
+  workspace: '#0077FF',
+  file: '#00C2FF',
+  decision: '#FFD000',
+  session: '#FF3B30',
+  skill: '#FF7A00',
+  vector: '#D4A574',
+  stale: '#7A8799',
 };
 
 function hexToRgba(hex, a) {
@@ -737,16 +846,48 @@ function runForceGraph(nodes, edges) {
   const H = svg.clientHeight || 640;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  // Init positions
+  // Init positions in separated neural rings so the graph starts readable.
   const idx = {};
   nodes.forEach((n, i) => {
     idx[n.id] = i;
-    n.x = W/2 + (Math.random() - 0.5) * 100;
-    n.y = H/2 + (Math.random() - 0.5) * 100;
     n.vx = 0; n.vy = 0;
-    if (n.kind === 'core') { n.fixed = true; n.x = W/2; n.y = H/2; }
   });
   const links = edges.map(e => ({ s: idx[e.source], t: idx[e.target] })).filter(l => l.s !== undefined && l.t !== undefined);
+  const grouped = nodes.reduce((acc, n) => {
+    (acc[n.kind] = acc[n.kind] || []).push(n);
+    return acc;
+  }, {});
+  const ringFor = {
+    workspace: { r: 0.30, start: -0.95 * Math.PI, span: 1.35 * Math.PI },
+    file: { r: 0.42, start: -0.18 * Math.PI, span: 1.4 * Math.PI },
+    skill: { r: 0.38, start: 0.35 * Math.PI, span: 0.85 * Math.PI },
+    session: { r: 0.25, start: -0.08 * Math.PI, span: 0.38 * Math.PI },
+    decision: { r: 0.35, start: 1.08 * Math.PI, span: 0.35 * Math.PI },
+    vector: { r: 0.46, start: -0.02 * Math.PI, span: 0.16 * Math.PI },
+    stale: { r: 0.48, start: 0.82 * Math.PI, span: 0.46 * Math.PI },
+  };
+  Object.entries(grouped).forEach(([kind, group]) => {
+    if (kind === 'core') return;
+    const ring = ringFor[kind] || { r: 0.36, start: 0, span: Math.PI * 2 };
+    const radius = Math.min(W, H) * ring.r;
+    group.forEach((n, i) => {
+      const denom = Math.max(group.length - 1, 1);
+      const angle = ring.start + ring.span * (i / denom) + (Math.random() - 0.5) * 0.08;
+      const jitter = (Math.random() - 0.5) * 34;
+      n.x = W/2 + Math.cos(angle) * (radius + jitter);
+      n.y = H/2 + Math.sin(angle) * (radius + jitter);
+    });
+  });
+  nodes.forEach(n => {
+    if (n.kind === 'core') {
+      n.fixed = true;
+      n.x = W/2;
+      n.y = H/2;
+    } else {
+      n.x = Math.max(80, Math.min(W-80, n.x || W/2));
+      n.y = Math.max(80, Math.min(H-80, n.y || H/2));
+    }
+  });
 
   // SVG content — glow filters + star field
   let stars = '';
@@ -770,42 +911,64 @@ function runForceGraph(nodes, edges) {
   svg.innerHTML = defs +
     `<g id="g-stars">${stars}</g>` +
     '<g id="g-edges"></g>' +
+    '<g id="g-pulses"></g>' +
     '<g id="g-nodes"></g>';
   const gEdges = document.getElementById('g-edges');
+  const gPulses = document.getElementById('g-pulses');
   const gNodes = document.getElementById('g-nodes');
 
   // Pre-create elements — edges w/ glow + random "fire" timing
   const edgeEls = links.map(l => {
     const e = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     e.setAttribute('class', 'graph-edge');
-    e.setAttribute('stroke', 'rgba(255,255,255,0.12)');
-    e.setAttribute('stroke-width', '1');
+    e.setAttribute('stroke', 'rgba(160,190,255,0.11)');
+    e.setAttribute('stroke-width', '0.9');
     e.setAttribute('fill', 'none');
     e.setAttribute('filter', 'url(#ge)');
     gEdges.appendChild(e);
-    l._fireAt = Math.random() * 200;
-    l._fireDur = 0;
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    p.setAttribute('class', 'graph-pulse');
+    p.setAttribute('r', '0');
+    p.setAttribute('fill', '#fff');
+    p.setAttribute('filter', 'url(#g)');
+    p.setAttribute('opacity', '0');
+    gPulses.appendChild(p);
+    l._pulse = p;
+    l._fireAt = Math.random() * 80;
+    l._fireDur = Math.random() < 0.18 ? 46 : 0;
     return e;
   });
   const nodeEls = nodes.map(n => {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'graph-node');
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', '0');
     const color = KIND_COLORS[n.kind] || '#999';
     g.innerHTML = `
-      <circle r="${n.size+8}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.15 : 0.35}"/>
-      <circle r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.5 : 1}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
-      ${n.size > 9 ? `<text dy="${n.size+22}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="16" font-weight="500" style="text-shadow:0 0 6px rgba(0,0,0,0.95);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
+      <circle r="${n.size+18}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.08 : 0.2}"/>
+      <circle r="${n.size+7}" fill="none" stroke="${color}" stroke-width="1.2" opacity="${n.kind === 'stale' ? 0.18 : 0.45}"/>
+      <circle r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.45 : 0.88}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
+      <circle r="${Math.max(2, n.size * 0.36)}" fill="rgba(255,255,255,0.82)" opacity="${n.kind === 'stale' ? 0.18 : 0.65}"/>
+      ${n.size > 9 ? `<text dy="${n.size+24}" text-anchor="middle" fill="rgba(245,248,255,0.88)" font-size="15" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,0.95);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
     `;
+    g.addEventListener('click', () => showGraphNode(n));
+    g.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        showGraphNode(n);
+      }
+    });
     gNodes.appendChild(g);
     return g;
   });
 
   // Force simulation — keeps running for "live" feel
-  const REPULSION = 6000;
-  const LINK_K = 0.05;
-  const LINK_LEN = 160;
-  const CENTER_K = 0.006;
-  let DAMP = 0.82;
+  const REPULSION = 14500;
+  const LINK_K = 0.026;
+  const LINK_LEN = Math.min(250, Math.max(190, Math.min(W, H) * 0.28));
+  const CENTER_K = 0.003;
+  const COLLISION_PAD = 42;
+  let DAMP = 0.86;
 
   let ticks = 0;
   function step() {
@@ -834,6 +997,21 @@ function runForceGraph(nodes, edges) {
       if (!a.fixed) { a.vx += fx; a.vy += fy; }
       if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
     });
+    // Keep neuron bodies from stacking on top of each other.
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let d = Math.sqrt(dx*dx + dy*dy) || 1;
+        const min = a.size + b.size + COLLISION_PAD;
+        if (d < min) {
+          const push = (min - d) * 0.018;
+          const fx = (dx / d) * push, fy = (dy / d) * push;
+          if (!a.fixed) { a.vx -= fx; a.vy -= fy; }
+          if (!b.fixed) { b.vx += fx; b.vy += fy; }
+        }
+      }
+    }
     // Light center pull
     nodes.forEach(n => {
       if (n.fixed) return;
@@ -871,17 +1049,27 @@ function runForceGraph(nodes, edges) {
       // Fire animation
       if (l._fireDur > 0) {
         l._fireDur--;
-        const alpha = 0.7 + 0.3 * Math.sin((40 - l._fireDur) / 40 * Math.PI);
+        const progress = (46 - l._fireDur) / 46;
+        const alpha = 0.42 + 0.42 * Math.sin(progress * Math.PI);
         const color = nodes[l.s].kind === 'core' ? KIND_COLORS[nodes[l.t].kind] : KIND_COLORS[nodes[l.s].kind] || '#fff';
         e.setAttribute('stroke', hexToRgba(color, alpha));
-        e.setAttribute('stroke-width', '2.2');
+        e.setAttribute('stroke-width', '2.5');
+        const qx = (1-progress)*(1-progress)*a.x + 2*(1-progress)*progress*mx + progress*progress*b.x;
+        const qy = (1-progress)*(1-progress)*a.y + 2*(1-progress)*progress*my + progress*progress*b.y;
+        l._pulse.setAttribute('cx', qx);
+        l._pulse.setAttribute('cy', qy);
+        l._pulse.setAttribute('r', 4 + 5 * Math.sin(progress * Math.PI));
+        l._pulse.setAttribute('fill', color);
+        l._pulse.setAttribute('opacity', alpha);
       } else {
-        e.setAttribute('stroke', 'rgba(255,255,255,0.08)');
-        e.setAttribute('stroke-width', '0.8');
+        e.setAttribute('stroke', 'rgba(155,185,255,0.09)');
+        e.setAttribute('stroke-width', '0.9');
+        l._pulse.setAttribute('opacity', '0');
+        l._pulse.setAttribute('r', '0');
       }
       if (ticks > l._fireAt) {
-        l._fireDur = 40;
-        l._fireAt = ticks + 100 + Math.random() * 400;
+        l._fireDur = 46;
+        l._fireAt = ticks + 52 + Math.random() * 220;
       }
     });
     nodeEls.forEach((el, i) => {
@@ -892,6 +1080,19 @@ function runForceGraph(nodes, edges) {
     graphSim = requestAnimationFrame(step);
   }
   step();
+}
+
+function showGraphNode(n) {
+  const label = n.label || n.id || 'Memory node';
+  const lines = [
+    `Type: ${n.kind || 'unknown'}`,
+    `ID: ${n.id || 'unknown'}`,
+  ];
+  if (n.id?.startsWith('file:')) lines.push(`Path: ${n.id.slice(5)}`);
+  if (n.kind === 'core') lines.push('This is the AIS-OS center node.');
+  if (n.kind === 'workspace') lines.push('Workspace scanned from ~/.claude/projects.');
+  if (n.kind === 'vector') lines.push('Vector index found from the connected Gravity Claw environment.');
+  openModal(label, 'Memory graph node', lines.join('\n'));
 }
 
 function drawGraph(items) {
@@ -1052,6 +1253,38 @@ async function openThread(id) {
   const m = d.messages[d.messages.length - 1];
   openModal(m.subject || '(no subject)', m.from + ' → ' + m.to, m.body || '(empty)');
 }
+
+// ── Vault Cards (Knowledge / Hot Cache / Dreams) ──────────────
+
+(async function loadVaultCards() {
+  try {
+    const idx = await fetch('../Bryan-Aaron-Master/wiki/index.md').then(r => r.text());
+    const pageCount = (idx.match(/\[\[/g) || []).length;
+    document.getElementById('wiki-page-count').textContent = pageCount;
+  } catch (e) { /* file load fail OK locally */ }
+
+  try {
+    const hot = await fetch('../Bryan-Aaron-Master/wiki/hot.md').then(r => r.text());
+    document.getElementById('hot-cache-preview').textContent = hot;
+  } catch (e) {}
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const dream = await fetch(`./data/dreams/${today}.json`).then(r => r.json());
+    document.getElementById('dream-date').textContent = dream.date;
+    const ol = document.getElementById('dream-cards');
+    ol.innerHTML = '';
+    if (!dream.cards || dream.cards.length === 0) {
+      ol.innerHTML = '<li><em>No cards tonight.</em></li>';
+    } else {
+      for (const c of dream.cards) {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${c.title}</strong><br><em>${c.insight}</em><br>→ ${c.action} <small>(${c.estimated_value_minutes}m)</small>`;
+        ol.appendChild(li);
+      }
+    }
+  } catch (e) {}
+})();
 
 async function testBridge() {
   const el = document.getElementById('bridge-test-result');

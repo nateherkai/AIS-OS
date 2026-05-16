@@ -36,6 +36,8 @@ def build():
     edges = []
     now = time.time()
     STALE_AGE = 30 * 86400
+    MAX_WORKSPACES = 16
+    MAX_FILES_PER_WORKSPACE = 12
 
     # Center
     nodes.append({"id": "aios", "label": "AIOS", "kind": "core", "size": 22})
@@ -43,7 +45,12 @@ def build():
     # Workspaces — top-level dirs in .claude/projects
     projects_root = HOME / ".claude" / "projects"
     if projects_root.exists():
-        for ws in [d for d in projects_root.iterdir() if d.is_dir()][:8]:
+        workspaces = sorted(
+            [d for d in projects_root.iterdir() if d.is_dir()],
+            key=lambda d: d.stat().st_mtime,
+            reverse=True,
+        )
+        for ws in workspaces[:MAX_WORKSPACES]:
             # Clean up label: take last meaningful segment of path-encoded name
             raw = ws.name.replace("-Users-aaronfamilylivestock-", "")
             raw = raw.replace("-Volumes-Samsung-PSSD-T7-", "")
@@ -55,7 +62,8 @@ def build():
             # Memory files inside
             mem = ws / "memory"
             if mem.exists():
-                for f in list(mem.glob("*.md"))[:6]:
+                files = sorted(mem.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)
+                for f in files[:MAX_FILES_PER_WORKSPACE]:
                     fid = f"file:{f}"
                     age = now - f.stat().st_mtime
                     kind = "stale" if age > STALE_AGE else "file"
@@ -98,6 +106,17 @@ def build():
         nodes.append({"id": vid, "label": env["PINECONE_INDEX_NAME"], "kind": "vector", "size": 14})
         edges.append({"source": "aios", "target": vid})
 
+    # Vault wiki nodes
+    vault_root = Path("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master")
+    wiki_nodes_raw = load_vault_wiki_nodes(vault_root)
+    existing_ids = {n["id"] for n in nodes}
+    for wn in wiki_nodes_raw:
+        nid = f"wiki:{wn['id']}"
+        if nid not in existing_ids:
+            nodes.append({"id": nid, "label": wn["id"][:20], "kind": "wiki", "size": 7})
+            edges.append({"source": "aios", "target": nid})
+            existing_ids.add(nid)
+
     counts = defaultdict(int)
     for n in nodes:
         counts[n["kind"]] += 1
@@ -110,6 +129,7 @@ def build():
         "decisions": counts.get("decision", 0),
         "sessions": counts.get("session", 0),
         "stale": counts.get("stale", 0),
+        "wiki": counts.get("wiki", 0),
         "nodes_total": len(nodes),
         "edges_total": len(edges),
     }
@@ -117,5 +137,37 @@ def build():
     return {"nodes": nodes, "edges": edges, "stats": stats}
 
 
+def load_vault_wiki_nodes(vault_root):
+    """Walk vault wiki, return nodes with type + edges from [[links]]."""
+    from pathlib import Path
+    import re
+    vault_root = Path(vault_root)
+    wiki = vault_root / "wiki"
+    if not wiki.exists():
+        return []
+    link_re = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+    nodes = []
+    for md in wiki.rglob("*.md"):
+        if md.name in {"index.md", "log.md", "hot.md"}:
+            continue
+        try:
+            text = md.read_text()
+        except Exception:
+            continue
+        links = [m.group(1).strip().split("/")[-1] for m in link_re.finditer(text)]
+        nodes.append({
+            "id": md.stem,
+            "type": md.parent.name,  # sources/people/concepts/...
+            "edges": links,
+            "path": str(md.relative_to(vault_root)),
+        })
+    return nodes
+
+
 if __name__ == "__main__":
-    print(json.dumps(build(), indent=2))
+    result = build()
+    wiki_nodes = load_vault_wiki_nodes("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master")
+    print(f"# Vault wiki nodes: {len(wiki_nodes)}", flush=True)
+    for n in wiki_nodes:
+        print(f"  [{n['type']}] {n['id']}  edges={n['edges'][:3]}", flush=True)
+    print(json.dumps(result, indent=2))
