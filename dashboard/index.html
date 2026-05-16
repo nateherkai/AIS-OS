@@ -194,6 +194,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .graph-edge { stroke-linecap:round; }
 .graph-pulse { pointer-events:none; mix-blend-mode:screen; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
 <body>
 
@@ -853,73 +854,65 @@ async function loadMemoryGraph() {
 }
 
 function runForceGraph(nodes, edges) {
-  const svg = document.getElementById('graph-svg');
-  if (!svg) return;
-  if (graphSim) { cancelAnimationFrame(graphSim); graphSim = null; }
-  const W = svg.clientWidth || 1200;
-  const H = svg.clientHeight || 640;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const svgEl = document.getElementById('graph-svg');
+  if (!svgEl) return;
+  const W = svgEl.clientWidth || 1200;
+  const H = svgEl.clientHeight || 640;
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-  // Init positions in separated neural rings so the graph starts readable.
-  const idx = {};
-  nodes.forEach((n, i) => {
-    idx[n.id] = i;
-    n.vx = 0; n.vy = 0;
-  });
-  const links = edges.map(e => ({ s: idx[e.source], t: idx[e.target] })).filter(l => l.s !== undefined && l.t !== undefined);
-  const grouped = nodes.reduce((acc, n) => {
-    (acc[n.kind] = acc[n.kind] || []).push(n);
-    return acc;
-  }, {});
-  const ringFor = {
-    workspace: { r: 0.30, start: -0.95 * Math.PI, span: 1.35 * Math.PI },
-    file: { r: 0.42, start: -0.18 * Math.PI, span: 1.4 * Math.PI },
-    skill: { r: 0.38, start: 0.35 * Math.PI, span: 0.85 * Math.PI },
-    session: { r: 0.25, start: -0.08 * Math.PI, span: 0.38 * Math.PI },
-    decision: { r: 0.35, start: 1.08 * Math.PI, span: 0.35 * Math.PI },
-    vector: { r: 0.46, start: -0.02 * Math.PI, span: 0.16 * Math.PI },
-    stale: { r: 0.48, start: 0.82 * Math.PI, span: 0.46 * Math.PI },
-    // Karpathy wiki layer — outer ring, spread across full circle by type
-    'wiki-source':     { r: 0.62, start: -0.10 * Math.PI, span: 0.55 * Math.PI },
-    'wiki-concept':    { r: 0.62, start:  0.50 * Math.PI, span: 0.55 * Math.PI },
-    'wiki-person':     { r: 0.58, start:  1.05 * Math.PI, span: 0.30 * Math.PI },
-    'wiki-org':        { r: 0.58, start:  1.40 * Math.PI, span: 0.25 * Math.PI },
-    'wiki-comparison': { r: 0.66, start:  1.70 * Math.PI, span: 0.15 * Math.PI },
-    'wiki-analysis':   { r: 0.66, start: -0.20 * Math.PI, span: 0.15 * Math.PI },
-    wiki:              { r: 0.62, start:  0,              span: 2 * Math.PI },
-  };
-  Object.entries(grouped).forEach(([kind, group]) => {
-    if (kind === 'core') return;
-    const ring = ringFor[kind] || { r: 0.36, start: 0, span: Math.PI * 2 };
-    const radius = Math.min(W, H) * ring.r;
-    group.forEach((n, i) => {
-      const denom = Math.max(group.length - 1, 1);
-      const angle = ring.start + ring.span * (i / denom) + (Math.random() - 0.5) * 0.08;
-      const jitter = (Math.random() - 0.5) * 34;
-      n.x = W/2 + Math.cos(angle) * (radius + jitter);
-      n.y = H/2 + Math.sin(angle) * (radius + jitter);
-    });
-  });
-  nodes.forEach(n => {
-    if (n.kind === 'core') {
-      n.fixed = true;
-      n.x = W/2;
-      n.y = H/2;
-    } else {
-      n.x = Math.max(80, Math.min(W-80, n.x || W/2));
-      n.y = Math.max(80, Math.min(H-80, n.y || H/2));
-    }
+  // Tear down any prior sim
+  if (window.__graphSim) { window.__graphSim.stop(); window.__graphSim = null; }
+  if (window.__graphTick) { cancelAnimationFrame(window.__graphTick); window.__graphTick = null; }
+  if (typeof graphSim !== 'undefined' && graphSim) { cancelAnimationFrame(graphSim); graphSim = null; }
+
+  // --- Data prep ---
+  const idIndex = {};
+  nodes.forEach((n, i) => { idIndex[n.id] = i; n._size = n.size; });
+  const links = edges
+    .map(e => ({
+      source: e.source,
+      target: e.target,
+      s: idIndex[e.source],
+      t: idIndex[e.target],
+    }))
+    .filter(l => l.s !== undefined && l.t !== undefined);
+
+  // Degree map
+  const degree = {};
+  links.forEach(l => {
+    degree[l.source] = (degree[l.source] || 0) + 1;
+    degree[l.target] = (degree[l.target] || 0) + 1;
   });
 
-  // SVG content — glow filters + star field
-  let stars = '';
+  // Hubs — top-5 by degree
+  const hubIds = new Set(
+    Object.entries(degree)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => id)
+  );
+  // Always include core
+  nodes.forEach(n => { if (n.kind === 'core') hubIds.add(n.id); });
+
+  // Boost hub sizes 1.4x
+  nodes.forEach(n => { if (hubIds.has(n.id)) n.size = Math.round(n.size * 1.4); });
+
+  // Neighbors map (by index)
+  const neighbors = nodes.map(() => new Set());
+  links.forEach(l => {
+    neighbors[l.s].add(l.t);
+    neighbors[l.t].add(l.s);
+  });
+
+  // --- SVG scaffolding ---
+  let starsHtml = '';
   for (let i = 0; i < 140; i++) {
     const sx = Math.random() * W, sy = Math.random() * H;
     const sr = Math.random() * 1.2 + 0.3;
     const so = Math.random() * 0.4 + 0.1;
-    stars += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="#fff" opacity="${so}"><animate attributeName="opacity" values="${so};${so*0.3};${so}" dur="${2+Math.random()*4}s" repeatCount="indefinite"/></circle>`;
+    starsHtml += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="#fff" opacity="${so}"><animate attributeName="opacity" values="${so};${so*0.3};${so}" dur="${2+Math.random()*4}s" repeatCount="indefinite"/></circle>`;
   }
-  let defs = `<defs>
+  const defs = `<defs>
     <filter id="g" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="4" result="b1"/>
       <feGaussianBlur stdDeviation="10" in="SourceGraphic" result="b2"/>
@@ -930,215 +923,221 @@ function runForceGraph(nodes, edges) {
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>`;
-  svg.innerHTML = defs +
-    `<g id="g-stars">${stars}</g>` +
-    '<g id="g-edges"></g>' +
-    '<g id="g-pulses"></g>' +
-    '<g id="g-nodes"></g>';
+  svgEl.innerHTML = defs +
+    `<g id="zoom-root">` +
+      `<g id="g-stars">${starsHtml}</g>` +
+      '<g id="g-edges"></g>' +
+      '<g id="g-pulses"></g>' +
+      '<g id="g-nodes"></g>' +
+    `</g>`;
+
+  const zoomRoot = document.getElementById('zoom-root');
   const gEdges = document.getElementById('g-edges');
   const gPulses = document.getElementById('g-pulses');
   const gNodes = document.getElementById('g-nodes');
 
-  // Pre-create elements — edges w/ glow + random "fire" timing
+  // --- Edge + pulse elements ---
   const edgeEls = links.map(l => {
-    const e = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     e.setAttribute('class', 'graph-edge');
-    e.setAttribute('stroke', 'rgba(170,210,255,0.18)');
-    e.setAttribute('stroke-width', '0.8');
+    const srcKind = nodes[l.s].kind;
+    const tgtKind = nodes[l.t].kind;
+    const color = KIND_COLORS[srcKind] || KIND_COLORS[tgtKind] || '#7aa';
+    e.setAttribute('stroke', color);
+    e.setAttribute('stroke-opacity', '0.08');
+    e.setAttribute('stroke-width', '0.7');
     e.setAttribute('fill', 'none');
-    e.setAttribute('filter', 'url(#ge)');
     gEdges.appendChild(e);
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     p.setAttribute('class', 'graph-pulse');
     p.setAttribute('r', '0');
-    p.setAttribute('fill', '#fff');
+    p.setAttribute('fill', color);
     p.setAttribute('filter', 'url(#g)');
     p.setAttribute('opacity', '0');
     gPulses.appendChild(p);
     l._pulse = p;
+    l._color = color;
     l._fireAt = Math.random() * 60;
     l._fireDur = Math.random() < 0.55 ? 52 : 0;
     return e;
   });
-  // Compute hub set — top-5 nodes by total degree (in+out edges)
-  const degree = {};
-  links.forEach(l => {
-    degree[l.s] = (degree[l.s] || 0) + 1;
-    degree[l.t] = (degree[l.t] || 0) + 1;
-  });
-  const hubIndices = new Set(
-    Object.entries(degree)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([i]) => parseInt(i, 10))
-  );
-  // 1-hop neighbor map for hover highlights
-  const neighbors = nodes.map(() => new Set());
-  links.forEach(l => {
-    neighbors[l.s].add(l.t);
-    neighbors[l.t].add(l.s);
-  });
 
+  // --- Node elements ---
   const nodeEls = nodes.map((n, ni) => {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'graph-node');
     g.setAttribute('role', 'button');
     g.setAttribute('tabindex', '0');
-    g.setAttribute('data-idx', String(ni));
+    g.style.cursor = 'pointer';
     const color = KIND_COLORS[n.kind] || '#999';
-    const isHub = hubIndices.has(ni) || n.kind === 'core';
-    const labelHtml = `<text class="node-label" dy="${n.size+14}" text-anchor="middle" fill="rgba(245,248,255,0.95)" font-size="13" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1); pointer-events:none; opacity:${isHub ? 1 : 0}; transition:opacity 0.15s;">${(n.label||'').replace(/[<>&]/g,'').slice(0,20)}</text>`;
+    const isHub = hubIds.has(n.id);
     g.innerHTML = `
       <circle class="node-halo" r="${n.size+8}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.08 : 0.22}"/>
       <circle class="node-core" r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
       <circle class="node-hot" r="${Math.max(1.4, n.size * 0.4)}" fill="rgba(255,255,255,0.95)" opacity="${n.kind === 'stale' ? 0.25 : 0.85}"/>
-      ${labelHtml}
+      <text class="node-label" dy="${n.size+14}" text-anchor="middle" fill="rgba(245,248,255,0.95)" font-size="13" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1); pointer-events:none; opacity:${isHub ? 1 : 0}; transition:opacity 0.15s;">${(n.label||'').replace(/[<>&]/g,'').slice(0,22)}</text>
     `;
-    const showNeighborLabels = (on) => {
-      const op = on ? '1' : (isHub ? '1' : '0');
-      const lbl = g.querySelector('.node-label');
-      if (lbl) lbl.style.opacity = on ? '1' : (isHub ? '1' : '0');
-      neighbors[ni].forEach(j => {
-        const sib = nodeEls[j];
-        if (!sib) return;
-        const sibLbl = sib.querySelector('.node-label');
-        const sibIsHub = hubIndices.has(j) || nodes[j].kind === 'core';
-        if (sibLbl) sibLbl.style.opacity = on ? '1' : (sibIsHub ? '1' : '0');
-      });
-    };
-    g.addEventListener('mouseenter', () => showNeighborLabels(true));
-    g.addEventListener('mouseleave', () => showNeighborLabels(false));
-    g.addEventListener('focus', () => showNeighborLabels(true));
-    g.addEventListener('blur', () => showNeighborLabels(false));
-    g.addEventListener('click', () => showGraphNode(n));
-    g.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter' || ev.key === ' ') {
-        ev.preventDefault();
-        showGraphNode(n);
-      }
-    });
     gNodes.appendChild(g);
     return g;
   });
 
-  // Force simulation — keeps running for "live" feel
-  const REPULSION = 28000;
-  const LINK_K = 0.022;
-  const LINK_LEN = Math.min(360, Math.max(280, Math.min(W, H) * 0.42));
-  const CENTER_K = 0.0008;
-  const COLLISION_PAD = 24;
-  let DAMP = 0.92;
-
-  let ticks = 0;
-  function step() {
-    // Repulsion
-    for (let i = 0; i < nodes.length; i++) {
-      const a = nodes[i];
-      if (a.fixed) continue;
-      for (let j = 0; j < nodes.length; j++) {
-        if (i === j) continue;
-        const b = nodes[j];
-        let dx = a.x - b.x, dy = a.y - b.y;
-        let d2 = dx*dx + dy*dy + 1;
-        const f = REPULSION / d2;
-        const d = Math.sqrt(d2);
-        a.vx += (dx / d) * f * 0.001;
-        a.vy += (dy / d) * f * 0.001;
-      }
-    }
-    // Springs
-    links.forEach(l => {
-      const a = nodes[l.s], b = nodes[l.t];
-      let dx = b.x - a.x, dy = b.y - a.y;
-      const d = Math.sqrt(dx*dx + dy*dy) + 0.01;
-      const force = LINK_K * (d - LINK_LEN);
-      const fx = (dx / d) * force, fy = (dy / d) * force;
-      if (!a.fixed) { a.vx += fx; a.vy += fy; }
-      if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
-    });
-    // Keep neuron bodies from stacking on top of each other.
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i], b = nodes[j];
-        let dx = b.x - a.x, dy = b.y - a.y;
-        let d = Math.sqrt(dx*dx + dy*dy) || 1;
-        const min = a.size + b.size + COLLISION_PAD;
-        if (d < min) {
-          const push = (min - d) * 0.018;
-          const fx = (dx / d) * push, fy = (dy / d) * push;
-          if (!a.fixed) { a.vx -= fx; a.vy -= fy; }
-          if (!b.fixed) { b.vx += fx; b.vy += fy; }
-        }
-      }
-    }
-    // Light center pull
-    nodes.forEach(n => {
-      if (n.fixed) return;
-      n.vx += (W/2 - n.x) * CENTER_K * 0.01;
-      n.vy += (H/2 - n.y) * CENTER_K * 0.01;
-    });
-    // Continuous gentle jitter for "live" feel (after settle)
-    if (ticks > 200) {
-      nodes.forEach(n => {
-        if (n.fixed) return;
-        n.vx += (Math.random() - 0.5) * 0.4;
-        n.vy += (Math.random() - 0.5) * 0.4;
+  // --- Highlight logic ---
+  let selectedIdx = null;
+  function applyHighlight(focusIdx) {
+    if (focusIdx === null) {
+      nodeEls.forEach((g, i) => {
+        g.style.opacity = 1;
+        const lbl = g.querySelector('.node-label');
+        if (lbl) lbl.style.opacity = hubIds.has(nodes[i].id) ? 1 : 0;
       });
+      edgeEls.forEach(e => {
+        e.style.opacity = 0.08;
+        e.style.strokeWidth = '0.7';
+      });
+      return;
     }
-    // Integrate
-    nodes.forEach(n => {
-      if (n.fixed) return;
-      n.vx *= DAMP; n.vy *= DAMP;
-      n.x += n.vx; n.y += n.vy;
-      n.x = Math.max(60, Math.min(W-60, n.x));
-      n.y = Math.max(60, Math.min(H-60, n.y));
+    const focused = new Set([focusIdx]);
+    neighbors[focusIdx].forEach(j => focused.add(j));
+    nodeEls.forEach((g, i) => {
+      g.style.opacity = focused.has(i) ? 1 : 0.12;
+      const lbl = g.querySelector('.node-label');
+      if (lbl) lbl.style.opacity = focused.has(i) ? 1 : 0;
     });
-    // Render edges w/ fire pulses
     edgeEls.forEach((e, i) => {
       const l = links[i];
-      const a = nodes[l.s], b = nodes[l.t];
-      // Curved with perpendicular offset based on length
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const len = Math.sqrt(dx*dx + dy*dy);
-      const perpx = -dy / len, perpy = dx / len;
-      const curve = Math.min(60, len * 0.25);
-      const mx = (a.x + b.x) / 2 + perpx * curve;
-      const my = (a.y + b.y) / 2 + perpy * curve;
-      e.setAttribute('d', `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`);
-      // Fire animation
-      if (l._fireDur > 0) {
-        l._fireDur--;
-        const progress = (46 - l._fireDur) / 46;
-        const alpha = 0.42 + 0.42 * Math.sin(progress * Math.PI);
-        const color = nodes[l.s].kind === 'core' ? KIND_COLORS[nodes[l.t].kind] : KIND_COLORS[nodes[l.s].kind] || '#fff';
-        e.setAttribute('stroke', hexToRgba(color, alpha));
-        e.setAttribute('stroke-width', '2.5');
-        const qx = (1-progress)*(1-progress)*a.x + 2*(1-progress)*progress*mx + progress*progress*b.x;
-        const qy = (1-progress)*(1-progress)*a.y + 2*(1-progress)*progress*my + progress*progress*b.y;
+      const touch = focused.has(l.s) || focused.has(l.t);
+      e.style.opacity = touch ? 0.85 : 0.04;
+      e.style.strokeWidth = touch ? '1.2' : '0.7';
+    });
+  }
+
+  nodeEls.forEach((g, ni) => {
+    g.addEventListener('mouseenter', () => {
+      if (selectedIdx === null) applyHighlight(ni);
+    });
+    g.addEventListener('mouseleave', () => {
+      if (selectedIdx === null) applyHighlight(null);
+      else applyHighlight(selectedIdx);
+    });
+    g.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (selectedIdx === ni) {
+        try { showGraphNode(nodes[ni]); } catch(e) {}
+      } else {
+        selectedIdx = ni;
+        applyHighlight(ni);
+      }
+    });
+    g.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        try { showGraphNode(nodes[ni]); } catch(e) {}
+      }
+    });
+  });
+
+  // Click empty SVG to deselect
+  svgEl.addEventListener('click', () => {
+    selectedIdx = null;
+    applyHighlight(null);
+  });
+
+  // --- D3 force simulation ---
+  if (typeof d3 === 'undefined') {
+    console.error('D3 not loaded — memory graph requires d3@7');
+    return;
+  }
+
+  const linkObjs = links.map(l => ({ source: l.source, target: l.target, _link: l }));
+  const sim = d3.forceSimulation(nodes)
+    .force('charge', d3.forceManyBody().strength(-1200))
+    .force('link', d3.forceLink(linkObjs).id(d => d.id).distance(l => 160 + ((degree[l.source.id || l.source] || 0) + (degree[l.target.id || l.target] || 0)) * 4).strength(0.08))
+    .force('collide', d3.forceCollide().radius(d => d.size + 14))
+    .force('center', d3.forceCenter(W/2, H/2).strength(0.02))
+    .alphaDecay(0)
+    .alphaMin(0)
+    .alphaTarget(0.04);
+
+  window.__graphSim = sim;
+
+  // Drag behavior
+  const dragBehavior = d3.drag()
+    .on('start', function(event, d) {
+      if (!event.active) sim.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    })
+    .on('drag', function(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    })
+    .on('end', function(event, d) {
+      if (!event.active) sim.alphaTarget(0.04);
+      d.fx = null;
+      d.fy = null;
+    });
+
+  // Bind D3 datum and drag to each node element
+  nodeEls.forEach((el, i) => {
+    d3.select(el).datum(nodes[i]).call(dragBehavior);
+  });
+
+  // Pan + zoom on SVG
+  const zoomBehavior = d3.zoom()
+    .scaleExtent([0.3, 4])
+    .filter(event => {
+      if (event.type === 'wheel') return true;
+      const t = event.target;
+      if (t.closest && t.closest('.graph-node')) return false;
+      return true;
+    })
+    .on('zoom', e => {
+      zoomRoot.setAttribute('transform', e.transform.toString());
+    });
+  d3.select(svgEl).call(zoomBehavior);
+
+  // --- Tick — sync positions ---
+  let tickCount = 0;
+  function tick() {
+    tickCount++;
+    linkObjs.forEach((lo, i) => {
+      const e = edgeEls[i];
+      const a = lo.source, b = lo.target;
+      e.setAttribute('x1', a.x);
+      e.setAttribute('y1', a.y);
+      e.setAttribute('x2', b.x);
+      e.setAttribute('y2', b.y);
+    });
+    nodeEls.forEach((g, i) => {
+      const n = nodes[i];
+      g.setAttribute('transform', `translate(${n.x},${n.y})`);
+    });
+    // Pulse animation
+    linkObjs.forEach((lo, i) => {
+      const l = lo._link;
+      if (l._fireDur === 0) return;
+      const cycle = (tickCount + l._fireAt) % (l._fireDur + 80);
+      if (cycle < l._fireDur) {
+        const progress = cycle / l._fireDur;
+        const a = lo.source, b = lo.target;
+        const qx = a.x + (b.x - a.x) * progress;
+        const qy = a.y + (b.y - a.y) * progress;
+        const alpha = Math.sin(progress * Math.PI) * 0.9;
         l._pulse.setAttribute('cx', qx);
         l._pulse.setAttribute('cy', qy);
         l._pulse.setAttribute('r', 5 + 7 * Math.sin(progress * Math.PI));
-        l._pulse.setAttribute('fill', color);
+        l._pulse.setAttribute('fill', l._color);
         l._pulse.setAttribute('opacity', Math.min(1, alpha * 1.4));
       } else {
-        e.setAttribute('stroke', 'rgba(155,185,255,0.09)');
-        e.setAttribute('stroke-width', '0.9');
         l._pulse.setAttribute('opacity', '0');
         l._pulse.setAttribute('r', '0');
       }
-      if (ticks > l._fireAt) {
-        l._fireDur = 46;
-        l._fireAt = ticks + 52 + Math.random() * 220;
-      }
     });
-    nodeEls.forEach((el, i) => {
-      el.setAttribute('transform', `translate(${nodes[i].x},${nodes[i].y})`);
-    });
-    ticks++;
-    // Always-on animation — gentle perpetual motion
-    graphSim = requestAnimationFrame(step);
   }
-  step();
+  sim.on('tick', tick);
+
+  // Initial highlight state
+  applyHighlight(null);
 }
 
 function showGraphNode(n) {
