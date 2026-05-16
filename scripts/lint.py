@@ -92,15 +92,20 @@ def find_broken_links(vault: Path) -> list[dict]:
                 # Bounds check: must be inside vault root.
                 try:
                     resolved.relative_to(vault_resolved)
+                    inside_vault = True
                 except ValueError:
+                    inside_vault = False
+                if not inside_vault:
                     broken.append({"page": str(p), "target": target, "reason": "outside_vault"})
                     continue
-                if not resolved.exists() and not (resolved.parent / f"{resolved.name}.md").exists():
-                    broken.append({"page": str(p), "target": target})
+                # Inside vault — check existence. Try both as-is and with .md suffix.
+                exists = resolved.exists() or (resolved.parent / f"{resolved.name}.md").exists()
+                if not exists:
+                    broken.append({"page": str(p), "target": target, "reason": "missing_target"})
             else:
                 tail = target.split("/")[-1].replace(".md", "")
                 if tail not in page_stems and target not in {"index", "log", "hot"}:
-                    broken.append({"page": str(p), "target": target})
+                    broken.append({"page": str(p), "target": target, "reason": "missing_target"})
     return broken
 
 
