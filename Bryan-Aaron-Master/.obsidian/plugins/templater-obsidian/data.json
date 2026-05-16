@@ -1,0 +1,21 @@
+{
+  "templates_pairs": [],
+  "template_folder": "07-RESOURCES/Templates",
+  "syntax_highlighting": true,
+  "syntax_highlighting_mobile": false,
+  "auto_jump_to_cursor": true,
+  "trigger_on_file_creation": true,
+  "auto_jump_to_cursor_on_file_creation": true,
+  "enable_system_commands": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "empty_file_template": "07-RESOURCES/Templates/Daily-Note-Template",
+  "templates_folder": "07-RESOURCES/Templates",
+  "folder_templates": [
+    {
+      "folder": "00-INBOX",
+      "template": "07-RESOURCES/Templates/Daily-Note-Template"
+    }
+  ],
+  "startup_templates": []
+}
