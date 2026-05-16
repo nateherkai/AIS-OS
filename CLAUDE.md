@@ -61,3 +61,32 @@ See `connections.md` for full registry with status.
 - When I make a decision, suggest logging it via the decisions log.
 - When you spot a manual task I'm doing 3+ times, surface it next time `/level-up` runs.
 - Default Shift: when I bring a new task, ask "to what extent could AI be leveraged here?" before assuming I'll do it the old way.
+
+---
+
+## Vault bridge (Roberts OS ↔ Karpathy wiki)
+
+- `vault_root`: `./Bryan-Aaron-Master/`
+- `wiki_path`: `./Bryan-Aaron-Master/wiki/`
+- `raw_path`: `./Bryan-Aaron-Master/raw/`
+
+### Read protocol
+
+1. Domain knowledge queries → read `wiki/index.md` → follow `[[links]]`. See `wiki-query` skill.
+2. Recent context → read `wiki/hot.md` (≤500 chars).
+3. Don't crawl `raw/` or `01-07/` unless wiki insufficient.
+
+### Write protocol
+
+- Dashboard reads `wiki/{index,log,hot}.md` — NEVER writes.
+- Dream engine writes `dashboard/data/dreams/YYYY-MM-DD.json` — may suggest vault changes, never executes them.
+- Ingest skill writes to `wiki/` only. Never modifies `01-07/`.
+- AIS-OS scripts treat `01-07/` as read-only authoritative truth.
+
+### Slash commands
+
+- `/ingest` — raw → wiki (run inside vault working dir)
+- `/wiki <topic>` — query wiki
+- `/lint` — vault health
+- `/dream` — manual dream pass
+- `/hot` — refresh hot cache
