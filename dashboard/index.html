@@ -410,6 +410,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('supabase',this)"><span class="nav-icon">🗄</span><span class="nav-label">Supabase</span></div>
   <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
   <div class="nav-item" onclick="showView('usage',this)"><span class="nav-icon">📊</span><span class="nav-label">Usage</span></div>
+  <div class="nav-item" onclick="showView('settings',this)"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></div>
   <div class="sidebar-section">Skills</div>
   <div class="nav-item" onclick="showView('agent',this)"><span class="nav-icon">🤖</span><span class="nav-label">Personal Agent</span></div>
   <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Pipeline Check</span></div>
@@ -772,6 +773,130 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 
   </div><!-- /view-dashboard -->
 
+  <!-- ══ SETTINGS VIEW ══ -->
+  <div id="view-settings" class="view">
+    <div class="panel-title">Settings</div>
+
+    <!-- 1. General -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">General</div>
+      <div class="wiz-label">Hourly Value ($/hr)</div>
+      <input class="wiz-input" id="set-hourly-value" type="number" placeholder="100" style="max-width:180px;">
+      <div class="wiz-label" style="margin-top:14px;">Subscriptions</div>
+      <div id="set-subs-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input class="wiz-input" id="set-sub-name" placeholder="Name" style="max-width:160px;margin-bottom:0;">
+        <input class="wiz-input" id="set-sub-cost" type="number" placeholder="$/mo" style="max-width:100px;margin-bottom:0;">
+        <button class="btn-secondary" onclick="settingsAddSub()" style="white-space:nowrap;">+ Add</button>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn-primary" style="max-width:200px;" onclick="settingsSaveGeneral()">Save General</button>
+        <span id="set-general-status" style="margin-left:12px;font-size:13px;color:rgba(255,255,255,0.4);"></span>
+      </div>
+    </div>
+
+    <!-- 2. Models + Storage + Memory + Dream Prefs -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Models</div>
+      <div id="set-models-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Storage Paths</div>
+      <div id="set-storage-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Memory</div>
+      <div class="wiz-label">Obsidian Vault Path</div>
+      <input class="wiz-input" id="set-obsidian" placeholder="/path/to/vault">
+      <div class="wiz-label" style="margin-top:10px;">Pinecone Index</div>
+      <input class="wiz-input" id="set-pc-index" placeholder="gravityclaw">
+      <div class="wiz-label" style="margin-top:10px;">Pinecone Namespace</div>
+      <input class="wiz-input" id="set-pc-ns" placeholder="knowledge">
+      <div class="wiz-label" style="margin-top:10px;">Supabase Project ID</div>
+      <input class="wiz-input" id="set-sb-id" placeholder="nkoyotdafqllgbpuklva">
+      <div style="margin-top:14px;">
+        <button class="btn-primary" style="max-width:220px;" onclick="settingsSaveMemory()">Save Memory</button>
+        <span id="set-memory-status" style="margin-left:12px;font-size:13px;color:rgba(255,255,255,0.4);"></span>
+      </div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Dream Prefs</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;color:rgba(255,255,255,0.75);">
+          <input type="checkbox" id="set-dream-web-search" style="accent-color:#D4A574;width:16px;height:16px;">
+          Web search during dream pass
+        </label>
+        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;color:rgba(255,255,255,0.75);">
+          <input type="checkbox" id="set-dream-image-per-card" style="accent-color:#D4A574;width:16px;height:16px;">
+          AI image per dream card (requires OPENAI_API_KEY)
+        </label>
+        <div>
+          <div class="wiz-label">Dream Frequency</div>
+          <select id="set-dream-frequency" class="wiz-input" style="max-width:200px;">
+            <option value="AM">AM (6am)</option>
+            <option value="PM">PM (10pm)</option>
+            <option value="both">Both</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn-primary" style="max-width:220px;" onclick="settingsSaveDreamPrefs()">Save Dream Prefs</button>
+        <span id="set-dream-status" style="margin-left:12px;font-size:13px;color:rgba(255,255,255,0.4);"></span>
+      </div>
+    </div>
+
+    <!-- 3. Dream Scheduler -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Dream Scheduler</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Suggested cron entry based on your frequency preference. Copy and run <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">crontab -e</code> to install.</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <div class="wiz-label">Current dream_cron in config</div>
+          <code id="set-cron-current" style="font-size:14px;color:#D4A574;background:rgba(212,165,116,0.1);padding:6px 12px;border-radius:6px;display:block;margin-top:4px;">—</code>
+        </div>
+        <div>
+          <div class="wiz-label">Suggested from frequency</div>
+          <code id="set-cron-suggested" style="font-size:14px;color:#4ade80;background:rgba(74,222,128,0.08);padding:6px 12px;border-radius:6px;display:block;margin-top:4px;">—</code>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-secondary" onclick="settingsGetSchedule()">↺ Refresh</button>
+        <button class="btn-primary" onclick="settingsApplyCron()" style="max-width:200px;">Apply Suggested Cron</button>
+        <span id="set-cron-status" style="font-size:13px;color:rgba(255,255,255,0.4);"></span>
+      </div>
+    </div>
+
+    <!-- 4. Theme -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Theme</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:15px;color:rgba(255,255,255,0.7);">Dark</span>
+        <button id="set-theme-toggle" class="wiz-toggle" onclick="settingsToggleTheme()" style="width:48px;height:26px;" title="Toggle theme"></button>
+        <span style="font-size:15px;color:rgba(255,255,255,0.7);">Light</span>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.35);">Light mode applies a brightness filter. Full light theme coming later.</div>
+    </div>
+
+    <!-- 5. Re-run Wizard -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Re-run Wizard</div>
+      <p style="font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:14px;">Step through the setup wizard again. Your existing config is pre-loaded.</p>
+      <button class="btn-primary" style="max-width:200px;" onclick="showView('wizard')">Open Setup Wizard →</button>
+    </div>
+
+    <!-- 6. Reset -->
+    <div class="panel glass">
+      <div class="panel-title" style="font-size:17px;">Reset</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="settingsClearLocalStorage()">Clear localStorage</button>
+        <button class="btn-secondary" onclick="settingsRegenerateDreams()">Regenerate Dreams</button>
+        <button class="btn-secondary" onclick="settingsRecomputeLint()">Recompute Lint</button>
+      </div>
+      <span id="set-reset-status" style="display:block;margin-top:10px;font-size:13px;color:rgba(255,255,255,0.4);"></span>
+    </div>
+  </div>
+
   <!-- ══ WIKI BROWSER VIEW (N2) ══ -->
   <div id="view-wiki" class="view" style="padding-bottom:0;">
     <div class="wiki-layout">
@@ -1070,6 +1195,7 @@ const VIEW_LOADERS = {
   usage: loadUsage,
   agent: loadAgent,
   wiki: () => loadWiki && loadWiki(),
+  settings: loadSettings,
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},
@@ -1737,7 +1863,10 @@ async function openThread(id) {
     } else {
       for (const c of dream.cards) {
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${c.title}</strong><br><em>${c.insight}</em><br>→ ${c.action} <small>(${c.estimated_value_minutes}m)</small>`;
+        const thumb = c.image
+          ? `<img src="${c.image}" width="80" height="80" style="border-radius:8px;object-fit:cover;float:left;margin:0 12px 4px 0;border:1px solid rgba(212,165,116,0.25);" alt="">`
+          : '';
+        li.innerHTML = `${thumb}<strong>${c.title}</strong><br><em>${c.insight}</em><br>→ ${c.action} <small>(${c.estimated_value_minutes}m)</small>`;
         ol.appendChild(li);
       }
     }
@@ -2895,6 +3024,217 @@ _initFilterChips();
     if (tsEl) tsEl.textContent = s.last_insert_ts ? s.last_insert_ts.slice(0,16) : '—';
   } catch (e) {}
 })();
+
+// ══════════════════════════════════════════════════════════════
+// PHASE D — SETTINGS VIEW
+// ══════════════════════════════════════════════════════════════
+
+let _settingsState = null;
+
+async function loadSettings() {
+  // Load wizard state (detect) to pre-populate fields
+  try {
+    _settingsState = await api('/api/wizard/detect');
+  } catch (e) {
+    _settingsState = { models: [], storage: [], memory: {}, hourly_value: 100, dream_prefs: {}, subscriptions: [] };
+  }
+
+  // General
+  const hv = document.getElementById('set-hourly-value');
+  if (hv) hv.value = _settingsState.hourly_value || 100;
+  _renderSettingsSubs(_settingsState.subscriptions || []);
+
+  // Models
+  const mlist = document.getElementById('set-models-list');
+  if (mlist) {
+    mlist.innerHTML = (_settingsState.models || []).map((m, i) => `
+      <div class="wiz-item">
+        <div style="flex:1"><div class="wiz-item-label">${m.label}</div><div class="wiz-item-path">${m.path||''}</div></div>
+        <span class="wiz-pill ${m.detected?'ok':'missing'}">${m.detected?'Detected':'Not found'}</span>
+        <button class="wiz-toggle ${m.enabled?'on':'off'}" onclick="_settingsState.models[${i}].enabled=!_settingsState.models[${i}].enabled;loadSettings()" title="Toggle">${m.enabled?'ON':'OFF'}</button>
+      </div>`).join('') || '<div style="color:rgba(255,255,255,0.35);font-size:14px;">No models detected</div>';
+  }
+
+  // Storage
+  const slist = document.getElementById('set-storage-list');
+  if (slist) {
+    slist.innerHTML = (_settingsState.storage || []).map((s, i) => `
+      <div class="wiz-item">
+        <div style="flex:1"><div class="wiz-item-label">${s.label}</div><div class="wiz-item-path">${s.path}</div></div>
+        <span class="wiz-pill ${s.detected?'ok':'missing'}">${s.detected?'Found':'Missing'}</span>
+        <button class="wiz-toggle ${s.enabled?'on':'off'}" onclick="_settingsState.storage[${i}].enabled=!_settingsState.storage[${i}].enabled;loadSettings()" title="Toggle">${s.enabled?'ON':'OFF'}</button>
+      </div>`).join('') || '<div style="color:rgba(255,255,255,0.35);font-size:14px;">No storage paths configured</div>';
+  }
+
+  // Memory
+  const mem = _settingsState.memory || {};
+  const pc = mem.pinecone || {};
+  const obsEl = document.getElementById('set-obsidian'); if (obsEl) obsEl.value = mem.obsidian || '';
+  const pcIdx = document.getElementById('set-pc-index'); if (pcIdx) pcIdx.value = pc.index || '';
+  const pcNs = document.getElementById('set-pc-ns'); if (pcNs) pcNs.value = pc.namespace || 'knowledge';
+  const sbId = document.getElementById('set-sb-id'); if (sbId) sbId.value = (mem.supabase || {}).project_id || '';
+
+  // Dream prefs
+  const dp = _settingsState.dream_prefs || {};
+  const wsEl = document.getElementById('set-dream-web-search'); if (wsEl) wsEl.checked = !!dp.web_search;
+  const imgEl = document.getElementById('set-dream-image-per-card'); if (imgEl) imgEl.checked = !!dp.image_per_card;
+  const freqEl = document.getElementById('set-dream-frequency'); if (freqEl) freqEl.value = dp.frequency || 'PM';
+
+  // Theme toggle
+  const isLight = localStorage.getItem('theme') === 'light';
+  const tt = document.getElementById('set-theme-toggle');
+  if (tt) { tt.className = 'wiz-toggle ' + (isLight ? 'on' : 'off'); tt.textContent = isLight ? 'ON' : 'OFF'; }
+
+  // Schedule
+  settingsGetSchedule();
+}
+
+function _renderSettingsSubs(subs) {
+  const el = document.getElementById('set-subs-list');
+  if (!el) return;
+  if (!subs.length) { el.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:14px;">No subscriptions yet</div>'; return; }
+  el.innerHTML = subs.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;">
+      <span style="flex:1;font-size:15px;color:rgba(255,255,255,0.8);">${s.name}</span>
+      <span style="color:#f87171;font-weight:500;">$${s.monthly_usd}/mo</span>
+      <button class="btn-secondary" onclick="settingsRemoveSub(${i})" style="font-size:12px;padding:3px 8px;">✕</button>
+    </div>`).join('');
+}
+
+function settingsAddSub() {
+  const name = (document.getElementById('set-sub-name').value || '').trim();
+  const cost = parseFloat(document.getElementById('set-sub-cost').value) || 0;
+  if (!name) return;
+  if (!_settingsState.subscriptions) _settingsState.subscriptions = [];
+  _settingsState.subscriptions.push({ name, monthly_usd: cost, model: 'other' });
+  document.getElementById('set-sub-name').value = '';
+  document.getElementById('set-sub-cost').value = '';
+  _renderSettingsSubs(_settingsState.subscriptions);
+}
+
+function settingsRemoveSub(i) {
+  _settingsState.subscriptions.splice(i, 1);
+  _renderSettingsSubs(_settingsState.subscriptions);
+}
+
+async function settingsSaveGeneral() {
+  const hv = parseFloat(document.getElementById('set-hourly-value').value) || 100;
+  const st = document.getElementById('set-general-status');
+  st.textContent = 'Saving…';
+  try {
+    await api('/api/wizard/save', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ hourly_value: hv, subscriptions: _settingsState.subscriptions || [],
+        models: _settingsState.models || [], storage: _settingsState.storage || [],
+        memory: _settingsState.memory || {}, dream_prefs: _settingsState.dream_prefs || {} }) });
+    st.textContent = '✓ Saved'; setTimeout(() => st.textContent = '', 3000);
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
+
+async function settingsSaveMemory() {
+  const obs = document.getElementById('set-obsidian').value.trim();
+  const pcIdx = document.getElementById('set-pc-index').value.trim();
+  const pcNs = document.getElementById('set-pc-ns').value.trim();
+  const sbId = document.getElementById('set-sb-id').value.trim();
+  const mem = { obsidian: obs, pinecone: { index: pcIdx, namespace: pcNs }, supabase: { project_id: sbId } };
+  if (_settingsState) _settingsState.memory = mem;
+  const st = document.getElementById('set-memory-status');
+  st.textContent = 'Saving…';
+  try {
+    await api('/api/wizard/save', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ memory: mem, models: (_settingsState||{}).models||[], storage: (_settingsState||{}).storage||[],
+        hourly_value: (_settingsState||{}).hourly_value||100, dream_prefs: (_settingsState||{}).dream_prefs||{} }) });
+    st.textContent = '✓ Saved'; setTimeout(() => st.textContent = '', 3000);
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
+
+async function settingsSaveDreamPrefs() {
+  const dp = {
+    web_search: document.getElementById('set-dream-web-search').checked,
+    image_per_card: document.getElementById('set-dream-image-per-card').checked,
+    frequency: document.getElementById('set-dream-frequency').value,
+  };
+  if (_settingsState) _settingsState.dream_prefs = dp;
+  const st = document.getElementById('set-dream-status');
+  st.textContent = 'Saving…';
+  try {
+    await api('/api/wizard/save', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dream_prefs: dp, models: (_settingsState||{}).models||[], storage: (_settingsState||{}).storage||[],
+        memory: (_settingsState||{}).memory||{}, hourly_value: (_settingsState||{}).hourly_value||100 }) });
+    st.textContent = '✓ Saved'; setTimeout(() => st.textContent = '', 3000);
+    settingsGetSchedule();
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
+
+async function settingsGetSchedule() {
+  try {
+    const r = await api('/api/dreams/schedule', { method: 'POST' });
+    const curr = document.getElementById('set-cron-current'); if (curr) curr.textContent = r.current_cron || '(none)';
+    const sugg = document.getElementById('set-cron-suggested'); if (sugg) sugg.textContent = r.suggested_cron || '(disabled)';
+    window._settingsSuggestedCron = r.suggested_cron;
+  } catch (e) {
+    const curr = document.getElementById('set-cron-current'); if (curr) curr.textContent = 'Error';
+  }
+}
+
+async function settingsApplyCron() {
+  const cron = window._settingsSuggestedCron;
+  if (!cron) { showToast('No suggested cron to apply'); return; }
+  const st = document.getElementById('set-cron-status');
+  st.textContent = 'Applying…';
+  try {
+    const r = await api('/api/dreams/schedule/apply', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ cron }) });
+    st.textContent = r.ok ? '✓ Applied to config' : ('Error: ' + r.error);
+    setTimeout(() => st.textContent = '', 4000);
+    settingsGetSchedule();
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
+
+function settingsToggleTheme() {
+  const current = localStorage.getItem('theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', next);
+  _applyTheme(next);
+  const tt = document.getElementById('set-theme-toggle');
+  if (tt) { tt.className = 'wiz-toggle ' + (next === 'light' ? 'on' : 'off'); tt.textContent = next === 'light' ? 'ON' : 'OFF'; }
+}
+
+function _applyTheme(theme) {
+  if (theme === 'light') {
+    document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+  } else {
+    document.body.style.filter = '';
+  }
+}
+
+// Apply stored theme on load
+_applyTheme(localStorage.getItem('theme') || 'dark');
+
+function settingsClearLocalStorage() {
+  localStorage.clear();
+  showToast('localStorage cleared');
+  document.getElementById('set-reset-status').textContent = '✓ localStorage cleared';
+  setTimeout(() => document.getElementById('set-reset-status').textContent = '', 3000);
+}
+
+async function settingsRegenerateDreams() {
+  const st = document.getElementById('set-reset-status');
+  st.textContent = 'Regenerating dreams…';
+  try {
+    const r = await api('/api/dreams/regenerate', { method: 'POST' });
+    st.textContent = r.ok ? '✓ Dreams regenerated' : ('Error: ' + r.stderr);
+    setTimeout(() => st.textContent = '', 4000);
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
+
+async function settingsRecomputeLint() {
+  const st = document.getElementById('set-reset-status');
+  st.textContent = 'Recomputing lint…';
+  try {
+    const r = await api('/api/lint/recompute', { method: 'POST' });
+    st.textContent = r.ok ? '✓ Lint recomputed' : ('Error: ' + (r.stderr || r.error));
+    setTimeout(() => st.textContent = '', 4000);
+  } catch (e) { st.textContent = 'Error: ' + e.message; }
+}
 </script>
 </body>
 </html>

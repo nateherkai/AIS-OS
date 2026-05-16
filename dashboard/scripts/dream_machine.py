@@ -7,6 +7,7 @@ Budget: <30s on typical day. Skips files older than 24h.
 """
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -58,7 +59,71 @@ def _build_cards(top_recs: list) -> list:
 HOME = Path.home()
 BASE = Path(__file__).parent.parent
 DREAMS_DIR = BASE / "data" / "dreams"
+IMAGES_DIR = DREAMS_DIR / "images"
 SKILLS_FILE = BASE / "data" / "skills.json"
+
+
+def _generate_card_images(cards: list, date: str) -> list:
+    """Generate OpenAI gpt-image-1 thumbnails for top-3 cards.
+
+    Only runs when config dream_prefs.image_per_card is True AND OPENAI_API_KEY set.
+    Best-effort: failures are logged to stderr, card returned without image field.
+    """
+    cfg = _load_config()
+    if not cfg.get("dream_prefs", {}).get("image_per_card", False):
+        return cards
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        # Try loading from gravity-claw .env
+        env_path = Path.home() / "Volumes" / "Samsung PSSD T7" / "gravity-claw" / ".env"
+        # Also try the mounted path directly
+        for candidate in [
+            Path("/Volumes/Samsung PSSD T7/gravity-claw/.env"),
+            Path.home() / ".env",
+        ]:
+            if candidate.exists():
+                for line in candidate.read_text().splitlines():
+                    if line.startswith("OPENAI_API_KEY="):
+                        api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        break
+            if api_key:
+                break
+    if not api_key:
+        print("dream_machine: OPENAI_API_KEY not found — skipping image generation", file=sys.stderr)
+        return cards
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+    except ImportError:
+        print("dream_machine: openai package not installed — skipping image generation", file=sys.stderr)
+        return cards
+
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    out_cards = []
+    for i, card in enumerate(cards):
+        if i >= 3:
+            out_cards.append(card)
+            continue
+        try:
+            prompt = f"Abstract minimalist visualization: {card['title']}"
+            resp = client.images.generate(
+                model="gpt-image-1",
+                prompt=prompt,
+                size="1024x1024",
+                quality="medium",
+            )
+            import base64
+            img_data = resp.data[0].b64_json
+            img_bytes = base64.b64decode(img_data)
+            img_path = IMAGES_DIR / f"{date}-card{i+1}.png"
+            img_path.write_bytes(img_bytes)
+            card = dict(card)
+            card["image"] = f"data/dreams/images/{date}-card{i+1}.png"
+        except Exception as e:
+            print(f"dream_machine: image generation failed for card {i+1}: {e}", file=sys.stderr)
+        out_cards.append(card)
+    return out_cards
 
 CUTOFF_HOURS = 24
 MAX_FILES = 200  # safety cap
@@ -297,8 +362,12 @@ def analyze() -> dict:
             "detail": {"results": external_opps, "query_count": len(external_opps)},
         })
 
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    cards = _build_cards(recs[:3])
+    cards = _generate_card_images(cards, date_str)
+
     out = {
-        "date": datetime.now().strftime("%Y-%m-%d"),
+        "date": date_str,
         "generated_at": datetime.now().isoformat(),
         "files_analyzed": len(files),
         "events_total": len(user_texts) + len(tool_calls),
@@ -316,7 +385,7 @@ def analyze() -> dict:
         "recommendations": recs[:20],
         "top_3": recs[:3],
         # Backwards-compat with dashboard JS (loadVaultCards reads dream.cards).
-        "cards": _build_cards(recs[:3]),
+        "cards": cards,
     }
     return out
 

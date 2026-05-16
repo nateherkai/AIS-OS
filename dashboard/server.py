@@ -259,6 +259,76 @@ def api_dreams_run():
     )
     return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
 
+@app.post("/api/dreams/regenerate")
+def api_dreams_regenerate():
+    """Regenerate dream report by re-running dream_machine.py. Timeout 60s."""
+    try:
+        res = subprocess.run(
+            ["python3", str(SCRIPTS / "dream_machine.py")],
+            capture_output=True, text=True, timeout=60,
+        )
+        return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "Dream regeneration timed out (60s)"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+@app.post("/api/lint/recompute")
+def api_lint_recompute():
+    """Recompute lint report by running scripts/lint.py. Timeout 60s."""
+    lint_script = SCRIPTS / "lint.py"
+    if not lint_script.exists():
+        return {"ok": False, "error": "scripts/lint.py not found"}
+    try:
+        res = subprocess.run(
+            ["python3", str(lint_script)],
+            capture_output=True, text=True, timeout=60,
+        )
+        return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "Lint recompute timed out (60s)"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+_FREQ_CRON = {
+    "AM": "0 6 * * *",
+    "PM": "0 22 * * *",
+    "both": "0 6,22 * * *",
+    "disabled": None,
+}
+
+@app.post("/api/dreams/schedule")
+def api_dreams_schedule():
+    """Return recommended cron entry from dream_prefs.frequency. No auto-install."""
+    try:
+        cfg_path = BASE / "config.json"
+        cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
+        freq = cfg.get("dream_prefs", {}).get("frequency", "PM")
+        suggested = _FREQ_CRON.get(freq)
+        return {
+            "frequency": freq,
+            "suggested_cron": suggested,
+            "current_cron": cfg.get("dream_cron"),
+            "note": "Run `crontab -e` and add the suggested line with the full path to dream_machine.py to install.",
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+class CronApply(BaseModel):
+    cron: str | None = None
+
+@app.post("/api/dreams/schedule/apply")
+def api_dreams_schedule_apply(body: CronApply):
+    """Write dream_cron into config.json (user still must `crontab -e` manually)."""
+    try:
+        cfg_path = BASE / "config.json"
+        cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
+        cfg["dream_cron"] = body.cron
+        cfg_path.write_text(json.dumps(cfg, indent=2))
+        return {"ok": True, "dream_cron": body.cron}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 # ── Bridge (Gravity Claw two-way) ─────────────────────────────
 
 class BridgeQuery(BaseModel):
