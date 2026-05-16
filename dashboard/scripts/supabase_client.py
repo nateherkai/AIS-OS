@@ -27,7 +27,7 @@ def get_schools() -> list:
 
 def get_pipeline_summary(schools: list) -> dict:
     paid = [s for s in schools if s["subscription_status"] == "active"]
-    trials = [s for s in schools if s["subscription_status"] == "trialing"]
+    trials = [s for s in schools if s["subscription_status"] in ("trial", "trialing")]
     return {
         "paid_count": len(paid),
         "trial_count": len(trials),
