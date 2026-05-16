@@ -44,8 +44,13 @@ def build():
     projects_root = HOME / ".claude" / "projects"
     if projects_root.exists():
         for ws in [d for d in projects_root.iterdir() if d.is_dir()][:8]:
+            # Clean up label: take last meaningful segment of path-encoded name
+            raw = ws.name.replace("-Users-aaronfamilylivestock-", "")
+            raw = raw.replace("-Volumes-Samsung-PSSD-T7-", "")
+            raw = raw.replace("--", "/").replace("-", " ").strip()
+            label = raw.split()[-1] if raw else ws.name[:18]
             nid = f"ws:{ws.name}"
-            nodes.append({"id": nid, "label": ws.name[:24], "kind": "workspace", "size": 12})
+            nodes.append({"id": nid, "label": label[:18], "kind": "workspace", "size": 12})
             edges.append({"source": "aios", "target": nid})
             # Memory files inside
             mem = ws / "memory"

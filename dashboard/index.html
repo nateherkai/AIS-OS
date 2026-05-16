@@ -167,7 +167,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .dream-head { font-size:21px; color:#fff; font-weight:500; line-height:1.4; }
 
 /* Memory Graph — force-directed glow viz */
-.graph-wrap { position:relative; height:640px; overflow:hidden; border-radius:14px; background:radial-gradient(ellipse at center, rgba(15,15,30,0.95), #050510 70%); border:1px solid rgba(255,255,255,0.06); }
+.graph-wrap { position:relative; height:760px; overflow:hidden; border-radius:14px; background:radial-gradient(ellipse at center, rgba(15,15,30,0.95), #050510 70%); border:1px solid rgba(255,255,255,0.06); }
 .graph-svg { width:100%; height:100%; cursor:grab; }
 .graph-svg:active { cursor:grabbing; }
 .graph-legend { position:absolute; bottom:14px; left:14px; display:flex; gap:14px; font-size:13px; color:rgba(255,255,255,0.7); background:rgba(0,0,0,0.4); padding:8px 14px; border-radius:8px; backdrop-filter:blur(8px); }
@@ -764,18 +764,18 @@ function runForceGraph(nodes, edges) {
     const color = KIND_COLORS[n.kind] || '#999';
     g.innerHTML = `
       <circle r="${n.size}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
-      ${n.size > 9 ? `<text dy="${n.size+14}" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="13" font-weight="500">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
+      ${n.size > 9 ? `<text dy="${n.size+18}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="16" font-weight="500" style="text-shadow:0 0 4px rgba(0,0,0,0.8);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
     `;
     gNodes.appendChild(g);
     return g;
   });
 
-  // Force simulation
-  const REPULSION = 1800;
-  const LINK_K = 0.04;
-  const LINK_LEN = 110;
-  const CENTER_K = 0.012;
-  const DAMP = 0.85;
+  // Force simulation — keeps running for "live" feel
+  const REPULSION = 6000;
+  const LINK_K = 0.05;
+  const LINK_LEN = 160;
+  const CENTER_K = 0.006;
+  let DAMP = 0.82;
 
   let ticks = 0;
   function step() {
@@ -787,10 +787,11 @@ function runForceGraph(nodes, edges) {
         if (i === j) continue;
         const b = nodes[j];
         let dx = a.x - b.x, dy = a.y - b.y;
-        let d2 = dx*dx + dy*dy + 0.01;
+        let d2 = dx*dx + dy*dy + 1;
         const f = REPULSION / d2;
-        a.vx += (dx / Math.sqrt(d2)) * f * 0.001;
-        a.vy += (dy / Math.sqrt(d2)) * f * 0.001;
+        const d = Math.sqrt(d2);
+        a.vx += (dx / d) * f * 0.001;
+        a.vy += (dy / d) * f * 0.001;
       }
     }
     // Springs
@@ -803,33 +804,41 @@ function runForceGraph(nodes, edges) {
       if (!a.fixed) { a.vx += fx; a.vy += fy; }
       if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
     });
-    // Center pull
+    // Light center pull
     nodes.forEach(n => {
       if (n.fixed) return;
       n.vx += (W/2 - n.x) * CENTER_K * 0.01;
       n.vy += (H/2 - n.y) * CENTER_K * 0.01;
     });
+    // Continuous gentle jitter for "live" feel (after settle)
+    if (ticks > 200) {
+      nodes.forEach(n => {
+        if (n.fixed) return;
+        n.vx += (Math.random() - 0.5) * 0.4;
+        n.vy += (Math.random() - 0.5) * 0.4;
+      });
+    }
     // Integrate
     nodes.forEach(n => {
       if (n.fixed) return;
       n.vx *= DAMP; n.vy *= DAMP;
       n.x += n.vx; n.y += n.vy;
-      // Bounds
-      n.x = Math.max(30, Math.min(W-30, n.x));
-      n.y = Math.max(30, Math.min(H-30, n.y));
+      n.x = Math.max(60, Math.min(W-60, n.x));
+      n.y = Math.max(60, Math.min(H-60, n.y));
     });
     // Render
     edgeEls.forEach((e, i) => {
       const a = nodes[links[i].s], b = nodes[links[i].t];
       const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2 - 30;
+      const my = (a.y + b.y) / 2 - 20;
       e.setAttribute('d', `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`);
     });
     nodeEls.forEach((el, i) => {
       el.setAttribute('transform', `translate(${nodes[i].x},${nodes[i].y})`);
     });
     ticks++;
-    if (ticks < 600) graphSim = requestAnimationFrame(step);
+    // Always-on animation — gentle perpetual motion
+    graphSim = requestAnimationFrame(step);
   }
   step();
 }
