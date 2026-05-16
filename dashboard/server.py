@@ -1,11 +1,13 @@
 import os
 import json
+import secrets
+import subprocess
 import webbrowser
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
@@ -21,6 +23,22 @@ import sys
 sys.path.insert(0, str(SCRIPTS))
 from supabase_client import get_schools, get_pipeline_summary
 from parse_apple_card import parse_and_update
+from pillars import build_pillars
+from memory_feed import build_feed as build_memory_feed
+from roi import compute as compute_roi
+import bridge as bridge_mod
+import notify_gc
+
+# Ensure BRIDGE_TOKEN exists (generate once, persist to .env)
+if not os.environ.get("BRIDGE_TOKEN"):
+    env_file = BASE.parent / ".env"
+    tok = secrets.token_urlsafe(24)
+    os.environ["BRIDGE_TOKEN"] = tok
+    try:
+        with open(env_file, "a") as f:
+            f.write(f"\nBRIDGE_TOKEN={tok}\n")
+    except Exception:
+        pass
 
 app = FastAPI(title="Ag Coach Pro AIOS Dashboard")
 
@@ -183,6 +201,87 @@ def pipeline_check():
         lines += ["", "ACTION: No active trials — send a new MailerLite blast"]
 
     return {"output": "\n".join(lines)}
+
+# ── Six Pillars / Memory / ROI / Dreams ───────────────────────
+
+@app.get("/api/pillars")
+def api_pillars():
+    return build_pillars()
+
+@app.get("/api/memory-feed")
+def api_memory_feed(limit: int = 30):
+    return build_memory_feed(limit=limit)
+
+@app.get("/api/roi")
+def api_roi():
+    return compute_roi()
+
+@app.get("/api/dreams")
+def api_dreams(date: str | None = None):
+    dreams_dir = DATA / "dreams"
+    if not dreams_dir.exists():
+        return {"items": []}
+    if date:
+        f = dreams_dir / f"{date}.json"
+        if not f.exists():
+            raise HTTPException(404, f"No dream for {date}")
+        return json.loads(f.read_text())
+    files = sorted(dreams_dir.glob("*.json"), reverse=True)
+    if not files:
+        return {"items": [], "message": "No dreams yet — run scripts/dream_machine.py"}
+    return json.loads(files[0].read_text())
+
+@app.post("/api/dreams/run")
+def api_dreams_run():
+    res = subprocess.run(
+        ["python3", str(SCRIPTS / "dream_machine.py")],
+        capture_output=True, text=True, timeout=60,
+    )
+    return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+
+# ── Bridge (Gravity Claw two-way) ─────────────────────────────
+
+class BridgeQuery(BaseModel):
+    q: str | None = None
+    scope: list[str] | None = None
+
+class BridgePush(BaseModel):
+    message: str
+    event_id: str | None = None
+
+@app.get("/api/bridge/handshake")
+def api_bridge_handshake():
+    return bridge_mod.handshake()
+
+@app.post("/api/bridge/query")
+async def api_bridge_query(req: Request, body: BridgeQuery):
+    expected = os.environ.get("BRIDGE_TOKEN", "")
+    token = req.headers.get("x-bridge-token", "")
+    if not expected or token != expected:
+        raise HTTPException(401, "invalid X-Bridge-Token")
+    return bridge_mod.snapshot(body.scope)
+
+@app.post("/api/bridge/push")
+async def api_bridge_push(req: Request, body: BridgePush):
+    expected = os.environ.get("BRIDGE_TOKEN", "")
+    token = req.headers.get("x-bridge-token", "")
+    if not expected or token != expected:
+        raise HTTPException(401, "invalid X-Bridge-Token")
+    return notify_gc.post(body.message, body.event_id)
+
+@app.post("/api/bridge/local-test")
+async def api_bridge_local_test(req: Request):
+    """Loopback-only smoke test — sends a Telegram message via GC bot."""
+    if req.client.host not in ("127.0.0.1", "localhost", "::1"):
+        raise HTTPException(403, "loopback only")
+    return notify_gc.post(f"✅ AIOS bridge online — UI test {datetime.now().strftime('%H:%M:%S')}")
+
+@app.get("/bridge/install.md")
+def serve_install_md():
+    p = BASE / "bridge" / "install.md"
+    if not p.exists():
+        raise HTTPException(404)
+    return FileResponse(p, media_type="text/markdown")
 
 # ── Entry point ───────────────────────────────────────────────
 

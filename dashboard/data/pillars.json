@@ -1,0 +1,75 @@
+{
+  "pillars": [
+    {
+      "id": "models",
+      "name": "Models",
+      "icon": "🧠",
+      "members": [
+        {"name": "Claude Opus 4.7", "provider": "Anthropic", "status": "active"},
+        {"name": "Claude Sonnet 4.6", "provider": "Anthropic", "status": "active"},
+        {"name": "Claude Haiku 4.5", "provider": "Anthropic", "status": "active"},
+        {"name": "GPT (via OpenRouter)", "provider": "OpenAI", "status": "active"},
+        {"name": "Gemini", "provider": "Google", "status": "inactive"}
+      ]
+    },
+    {
+      "id": "plans",
+      "name": "Plans & Subscriptions",
+      "icon": "💳",
+      "members": [
+        {"name": "Claude Max", "provider": "Anthropic", "status": "active"},
+        {"name": "OpenRouter API", "provider": "OpenRouter", "status": "active"},
+        {"name": "Pinecone", "provider": "Pinecone", "status": "active"},
+        {"name": "Supabase", "provider": "Supabase", "status": "active"},
+        {"name": "Vercel", "provider": "Vercel", "status": "active"},
+        {"name": "Railway", "provider": "Railway", "status": "active"}
+      ]
+    },
+    {
+      "id": "memory",
+      "name": "Memory",
+      "icon": "🧬",
+      "members": [
+        {"name": "Pinecone gravityclaw/knowledge", "kind": "vector", "status": "active", "probe": "pinecone"},
+        {"name": "Supabase Ag Coach Pro", "kind": "sql", "status": "active", "probe": "supabase"},
+        {"name": "Obsidian (gravity-claw/memory)", "kind": "markdown", "status": "active", "probe": "obsidian"},
+        {"name": "~/.claude/projects MEMORY.md", "kind": "markdown", "status": "active", "probe": "local-memory"}
+      ]
+    },
+    {
+      "id": "skills",
+      "name": "Skills",
+      "icon": "🛠",
+      "members": [
+        {"name": "/onboard", "scope": "project"},
+        {"name": "/audit", "scope": "project"},
+        {"name": "/level-up", "scope": "project"},
+        {"name": "/weekly-pipeline-check", "scope": "project"},
+        {"name": "/trial-follow-up", "scope": "project"},
+        {"name": "/draft-reply", "scope": "project"},
+        {"name": "/graphify", "scope": "global"},
+        {"name": "/notebooklm", "scope": "global"},
+        {"name": "/three-brain", "scope": "global"},
+        {"name": "/gpt-image-2", "scope": "global"},
+        {"name": "/use-railway", "scope": "global"}
+      ]
+    },
+    {
+      "id": "knowledge",
+      "name": "Knowledge Systems",
+      "icon": "📚",
+      "members": [
+        {"name": "Gravity Claw vault", "path": "/Volumes/Samsung PSSD T7/gravity-claw/memory"},
+        {"name": "AIS-OS context/", "path": "context/"},
+        {"name": "AIS-OS references/", "path": "references/"},
+        {"name": "NotebookLM AI Brain", "path": "external"}
+      ]
+    },
+    {
+      "id": "connections",
+      "name": "Connections",
+      "icon": "🔌",
+      "from_file": "connections.md"
+    }
+  ]
+}
