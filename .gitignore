@@ -6,3 +6,7 @@ __pycache__/
 node_modules/
 .claude/settings.local.json
 audits/
+
+# Gmail OAuth (never commit)
+dashboard/.gmail-credentials.json
+dashboard/.gmail-token.json

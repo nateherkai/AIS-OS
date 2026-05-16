@@ -28,6 +28,10 @@ from memory_feed import build_feed as build_memory_feed
 from roi import compute as compute_roi
 import bridge as bridge_mod
 import notify_gc
+try:
+    import gmail_client
+except ImportError:
+    gmail_client = None
 
 # Ensure BRIDGE_TOKEN exists (generate once, persist to .env)
 if not os.environ.get("BRIDGE_TOKEN"):
@@ -275,6 +279,46 @@ async def api_bridge_local_test(req: Request):
     if req.client.host not in ("127.0.0.1", "localhost", "::1"):
         raise HTTPException(403, "loopback only")
     return notify_gc.post(f"✅ AIOS bridge online — UI test {datetime.now().strftime('%H:%M:%S')}")
+
+# ── Gmail Inbox ──────────────────────────────────────────────
+
+@app.get("/api/inbox/status")
+def api_inbox_status():
+    if not gmail_client:
+        return {"ready": False, "error": "gmail_client module not loaded"}
+    return gmail_client.auth_status()
+
+@app.post("/api/inbox/authorize")
+def api_inbox_authorize():
+    if not gmail_client:
+        raise HTTPException(500, "gmail_client missing")
+    return gmail_client.authorize()
+
+@app.get("/api/inbox")
+def api_inbox(q: str = "in:inbox", limit: int = 20):
+    if not gmail_client:
+        raise HTTPException(500, "gmail_client missing")
+    try:
+        return gmail_client.list_threads(q, limit)
+    except Exception as e:
+        raise HTTPException(500, f"Gmail error: {e}")
+
+@app.get("/api/inbox/thread/{thread_id}")
+def api_inbox_thread(thread_id: str):
+    if not gmail_client:
+        raise HTTPException(500, "gmail_client missing")
+    return gmail_client.get_thread(thread_id)
+
+class DraftBody(BaseModel):
+    to: str
+    subject: str
+    body: str
+
+@app.post("/api/inbox/draft")
+def api_inbox_draft(d: DraftBody):
+    if not gmail_client:
+        raise HTTPException(500, "gmail_client missing")
+    return gmail_client.send_draft(d.to, d.subject, d.body)
 
 @app.get("/bridge/install.md")
 def serve_install_md():

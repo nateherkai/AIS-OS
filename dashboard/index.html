@@ -187,7 +187,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item"><span class="nav-icon">$</span><span class="nav-label">Revenue</span></div>
   <div class="nav-item"><span class="nav-icon">🏫</span><span class="nav-label">Schools</span><span class="nav-badge" id="sb-trials">—</span></div>
   <div class="nav-item"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
-  <div class="nav-item"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span></div>
+  <div class="nav-item" onclick="showView('inbox',this)"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span><span class="nav-badge" id="sb-unread" style="display:none;">—</span></div>
   <div class="sidebar-section">OS Layer</div>
   <div class="nav-item" onclick="showView('pillars',this)"><span class="nav-icon">🏛</span><span class="nav-label">Six Pillars</span></div>
   <div class="nav-item" onclick="showView('memory',this)"><span class="nav-icon">🧬</span><span class="nav-label">Memory</span></div>
@@ -248,6 +248,23 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div id="view-dreams" class="view">
     <div class="panel-title">Dreams <span id="dreams-date">—</span> <button class="refresh-btn" onclick="runDreams()" style="margin-left:8px;">▶ Run Now</button></div>
     <div id="dreams-body"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div id="view-inbox" class="view">
+    <div class="panel-title">Inbox <span id="inbox-ts">—</span>
+      <span style="float:right;font-size:11px;">
+        <input id="inbox-q" placeholder="in:inbox" value="in:inbox" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;width:200px;">
+        <button class="refresh-btn" onclick="loadInbox()">↺</button>
+      </span>
+    </div>
+    <div id="inbox-auth" style="display:none;" class="panel glass">
+      <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:10px;">Gmail not authorized yet.</div>
+      <button class="btn-primary" onclick="authInbox()">▶ Authorize Gmail</button>
+      <div id="inbox-auth-result" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.5);"></div>
+    </div>
+    <div class="panel glass" id="inbox-list-panel">
+      <div id="inbox-list"><div class="loading">Loading...</div></div>
+    </div>
   </div>
 
   <div id="view-bridge" class="view">
@@ -563,6 +580,7 @@ const VIEW_LOADERS = {
   roi: loadROI,
   dreams: loadDreams,
   bridge: loadBridge,
+  inbox: loadInbox,
   dashboard: () => {},
 };
 
@@ -695,6 +713,55 @@ async function loadBridge() {
   } catch (e) {
     document.getElementById('bridge-install').textContent = '(install.md unavailable)';
   }
+}
+
+async function loadInbox() {
+  const status = await fetch('/api/inbox/status').then(r => r.json());
+  const authBox = document.getElementById('inbox-auth');
+  const listPanel = document.getElementById('inbox-list-panel');
+  if (!status.ready) {
+    authBox.style.display = '';
+    listPanel.style.display = 'none';
+    return;
+  }
+  authBox.style.display = 'none';
+  listPanel.style.display = '';
+  const q = document.getElementById('inbox-q').value || 'in:inbox';
+  const d = await fetch('/api/inbox?limit=20&q=' + encodeURIComponent(q)).then(r => r.json());
+  document.getElementById('inbox-ts').textContent = d.count + ' threads';
+  const sb = document.getElementById('sb-unread');
+  const unread = d.threads.filter(t => t.unread).length;
+  if (unread > 0) { sb.textContent = unread; sb.style.display = ''; } else { sb.style.display = 'none'; }
+  const list = document.getElementById('inbox-list');
+  if (!d.threads.length) { list.innerHTML = '<div class="loading">No threads for query</div>'; return; }
+  list.innerHTML = d.threads.map(t => `
+    <div class="feed-row" style="cursor:pointer;" onclick="openThread('${t.id}')">
+      <span class="feed-source" style="${t.unread ? 'background:rgba(212,165,116,0.25);color:#D4A574;' : ''}">${t.unread ? '●' : '○'}</span>
+      <span class="feed-text">
+        <div style="color:${t.unread ? '#fff' : 'rgba(255,255,255,0.6)'};font-weight:${t.unread ? '500' : '400'};">${(t.subject||'').replace(/</g,'&lt;')}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">${(t.from||'').replace(/</g,'&lt;')} · ${(t.snippet||'').replace(/</g,'&lt;').slice(0,100)}</div>
+      </span>
+      <span class="feed-ts">${(t.date||'').slice(0,16)}${t.msg_count > 1 ? ' · '+t.msg_count : ''}</span>
+    </div>
+  `).join('');
+}
+
+async function authInbox() {
+  const el = document.getElementById('inbox-auth-result');
+  el.textContent = 'Browser window opening — sign in...';
+  try {
+    const r = await fetch('/api/inbox/authorize', { method: 'POST' }).then(r => r.json());
+    el.textContent = r.ok ? '✓ Authorized' : ('ERROR: ' + r.error);
+    if (r.ok) { setTimeout(loadInbox, 500); }
+  } catch (e) {
+    el.textContent = 'ERROR: ' + e;
+  }
+}
+
+async function openThread(id) {
+  const d = await fetch('/api/inbox/thread/' + id).then(r => r.json());
+  const m = d.messages[d.messages.length - 1];
+  openModal(m.subject || '(no subject)', m.from + ' → ' + m.to, m.body || '(empty)');
 }
 
 async function testBridge() {
