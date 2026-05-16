@@ -127,37 +127,52 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .loading { color:rgba(255,255,255,0.2); font-size:11px; text-align:center; padding:20px; }
 
 /* OS LAYER VIEWS */
-.view { display:none; }
+.view { display:none; padding-bottom:80px; }
 .view.active { display:flex; flex-direction:column; gap:16px; }
+/* OS Layer typography — bigger for legibility */
+.view .panel-title { font-size:18px; letter-spacing:0.04em; }
+.view .panel { padding:22px; }
+.view .kpi-label { font-size:16px; }
+.view .kpi-value { font-size:38px; }
+.view .kpi-sub { font-size:14px; }
+
 .pillar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-.pillar-card { border-radius:14px; padding:18px; }
-.pillar-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.pillar-icon { font-size:22px; }
-.pillar-name { font-size:14px; font-weight:600; color:#fff; flex:1; }
-.pillar-count { font-size:10px; color:rgba(255,255,255,0.4); }
-.pillar-member { display:flex; align-items:center; gap:8px; padding:5px 0; font-size:11px; color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.04); }
+.pillar-card { border-radius:14px; padding:20px; }
+.pillar-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.pillar-icon { font-size:32px; }
+.pillar-name { font-size:18px; font-weight:600; color:#fff; flex:1; }
+.pillar-count { font-size:14px; color:rgba(255,255,255,0.4); }
+.pillar-member { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:15px; color:rgba(255,255,255,0.75); border-bottom:1px solid rgba(255,255,255,0.04); }
 .pillar-member:last-child { border:none; }
-.pillar-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-.pdot-active { background:#4ade80; box-shadow:0 0 4px rgba(74,222,128,0.5); }
+.pillar-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.pdot-active { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.7); }
 .pdot-inactive { background:#6b7280; }
-.pdot-degraded { background:#facc15; }
+.pdot-degraded { background:#facc15; box-shadow:0 0 8px rgba(250,204,21,0.6); }
 .pdot-unknown { background:rgba(255,255,255,0.15); }
 
-.feed-row { display:flex; gap:10px; padding:8px 4px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:11px; }
-.feed-source { font-size:9px; padding:2px 6px; border-radius:4px; background:rgba(212,165,116,0.12); color:#D4A574; flex-shrink:0; height:fit-content; }
-.feed-text { flex:1; color:rgba(255,255,255,0.7); }
-.feed-ts { font-size:9px; color:rgba(255,255,255,0.3); flex-shrink:0; }
+.feed-row { display:flex; gap:14px; padding:14px 6px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:15px; }
+.feed-source { font-size:12px; padding:4px 10px; border-radius:6px; background:rgba(212,165,116,0.12); color:#D4A574; flex-shrink:0; height:fit-content; }
+.feed-text { flex:1; color:rgba(255,255,255,0.8); }
+.feed-ts { font-size:12px; color:rgba(255,255,255,0.35); flex-shrink:0; }
 
 .roi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-.roi-flag { padding:9px 12px; background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); border-radius:8px; font-size:11px; color:rgba(255,255,255,0.7); margin-top:8px; }
+.roi-flag { padding:14px 18px; background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); border-radius:10px; font-size:15px; color:rgba(255,255,255,0.8); margin-top:10px; }
 .roi-flag b { color:#f87171; }
 
-.dream-card { padding:14px; border-radius:10px; background:rgba(212,165,116,0.06); border:1px solid rgba(212,165,116,0.2); margin-bottom:10px; }
+.dream-card { padding:18px; border-radius:12px; background:rgba(212,165,116,0.06); border:1px solid rgba(212,165,116,0.2); margin-bottom:12px; }
 .dream-pri-high { border-color:rgba(248,113,113,0.4); background:rgba(248,113,113,0.06); }
 .dream-pri-medium { border-color:rgba(250,204,21,0.3); background:rgba(250,204,21,0.06); }
 .dream-pri-low { border-color:rgba(255,255,255,0.1); background:rgba(255,255,255,0.03); }
-.dream-dim { font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:4px; }
-.dream-head { font-size:13px; color:#fff; font-weight:500; }
+.dream-dim { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:6px; }
+.dream-head { font-size:17px; color:#fff; font-weight:500; line-height:1.4; }
+
+/* Knowledge graph (Obsidian glow viz) */
+.graph-wrap { position:relative; height:480px; overflow:hidden; border-radius:14px; background:radial-gradient(circle at 50% 50%, rgba(212,165,116,0.04), rgba(0,0,0,0.5) 70%); border:1px solid rgba(255,255,255,0.06); }
+.graph-svg { width:100%; height:100%; }
+.glow-node circle { transition:all 0.3s; cursor:pointer; }
+.glow-node:hover circle { r:14; }
+.glow-node text { fill:rgba(255,255,255,0.85); font-size:11px; text-anchor:middle; pointer-events:none; }
+.glow-line { stroke:rgba(212,165,116,0.18); stroke-width:1; }
 </style>
 </head>
 <body>
@@ -224,6 +239,8 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-memory" class="view">
+    <div class="panel-title">Knowledge Graph <span style="font-size:12px;color:rgba(255,255,255,0.4);">obsidian + pinecone + supabase + local</span></div>
+    <div class="graph-wrap"><svg class="graph-svg" id="graph-svg"></svg></div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
     <div class="panel glass" id="memory-feed"><div class="loading">Loading...</div></div>
   </div>
@@ -640,17 +657,66 @@ async function loadPillars() {
 }
 
 async function loadMemory() {
-  const d = await fetch('/api/memory-feed?limit=30').then(r => r.json());
+  const d = await fetch('/api/memory-feed?limit=40').then(r => r.json());
   document.getElementById('memory-ts').textContent = d.ts || '';
   const feed = document.getElementById('memory-feed');
   if (!d.items.length) { feed.innerHTML = '<div class="loading">No recent memory writes</div>'; return; }
   feed.innerHTML = d.items.map(it => `
     <div class="feed-row">
       <span class="feed-source">${it.source}</span>
-      <span class="feed-text">${(it.summary || '').replace(/</g,'&lt;')}<br><span style="font-size:9px;color:rgba(255,255,255,0.25);">${it.path || ''}</span></span>
+      <span class="feed-text">${(it.summary || '').replace(/</g,'&lt;')}<br><span style="font-size:11px;color:rgba(255,255,255,0.3);">${(it.path || '').replace(/</g,'&lt;')}</span></span>
       <span class="feed-ts">${(it.ts || '').slice(0,16)}</span>
     </div>
   `).join('');
+  drawGraph(d.items);
+}
+
+function drawGraph(items) {
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  const W = svg.clientWidth, H = svg.clientHeight;
+  const cx = W/2, cy = H/2;
+  // Group by source
+  const groups = {};
+  items.forEach(it => { (groups[it.source] = groups[it.source] || []).push(it); });
+  const sourceKeys = Object.keys(groups);
+  const colorMap = {
+    'obsidian': '#a78bfa',
+    'pinecone': '#4ade80',
+    'local-memory': '#D4A574',
+  };
+  const defaultColor = '#60a5fa';
+  let svgContent = `
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="14" fill="#D4A574" filter="url(#glow)" opacity="0.95"/>
+    <text x="${cx}" y="${cy+30}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13" font-weight="600">AIOS</text>
+  `;
+  // Source hubs in inner ring
+  sourceKeys.forEach((src, i) => {
+    const angle = (i / sourceKeys.length) * Math.PI * 2;
+    const r = 90;
+    const hx = cx + Math.cos(angle) * r;
+    const hy = cy + Math.sin(angle) * r;
+    const color = colorMap[src.split('.')[0]] || defaultColor;
+    svgContent += `<line class="glow-line" x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" />`;
+    svgContent += `<g class="glow-node"><circle cx="${hx}" cy="${hy}" r="9" fill="${color}" filter="url(#glow)" opacity="0.9"/><text x="${hx}" y="${hy-16}">${src.split('.')[0]}</text></g>`;
+    // Leaves
+    const leaves = groups[src].slice(0, 8);
+    leaves.forEach((it, j) => {
+      const lAng = angle + (j - leaves.length/2) * 0.25;
+      const lr = r + 80 + (j % 2) * 30;
+      const lx = cx + Math.cos(lAng) * lr;
+      const ly = cy + Math.sin(lAng) * lr;
+      // Skip if off-canvas
+      if (lx < 20 || lx > W-20 || ly < 20 || ly > H-20) return;
+      svgContent += `<line class="glow-line" x1="${hx}" y1="${hy}" x2="${lx}" y2="${ly}" />`;
+      const label = (it.summary || it.path || '').replace(/[<>&]/g,'').slice(0,18);
+      svgContent += `<g class="glow-node"><circle cx="${lx}" cy="${ly}" r="5" fill="${color}" filter="url(#glow)" opacity="0.7"><title>${(it.summary||'').replace(/[<>&]/g,'').slice(0,140)}</title></circle><text x="${lx}" y="${ly+18}">${label}</text></g>`;
+    });
+  });
+  svg.innerHTML = svgContent;
 }
 
 async function loadROI() {
