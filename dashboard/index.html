@@ -272,6 +272,12 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
         <span><i style="background:#FF7A00;box-shadow:0 0 10px #FF7A00;"></i>Skill</span>
         <span><i style="background:#D4A574;box-shadow:0 0 10px #D4A574;"></i>Vector</span>
         <span><i style="background:#7A8799;box-shadow:0 0 8px #7A8799;"></i>Stale</span>
+        <span><i style="background:#C084FC;box-shadow:0 0 10px #C084FC;"></i>Wiki Source</span>
+        <span><i style="background:#A78BFA;box-shadow:0 0 10px #A78BFA;"></i>Wiki Concept</span>
+        <span><i style="background:#F472B6;box-shadow:0 0 10px #F472B6;"></i>Wiki Person</span>
+        <span><i style="background:#22D3EE;box-shadow:0 0 10px #22D3EE;"></i>Wiki Org</span>
+        <span><i style="background:#FACC15;box-shadow:0 0 10px #FACC15;"></i>Comparison</span>
+        <span><i style="background:#34D399;box-shadow:0 0 10px #34D399;"></i>Analysis</span>
       </div>
     </div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
@@ -816,6 +822,14 @@ const KIND_COLORS = {
   skill: '#FF7A00',
   vector: '#D4A574',
   stale: '#7A8799',
+  // Karpathy LLM Wiki kinds — distinct hues, all glow
+  wiki: '#A78BFA',
+  'wiki-source': '#C084FC',
+  'wiki-person': '#F472B6',
+  'wiki-org': '#22D3EE',
+  'wiki-concept': '#A78BFA',
+  'wiki-comparison': '#FACC15',
+  'wiki-analysis': '#34D399',
 };
 
 function hexToRgba(hex, a) {
@@ -865,6 +879,14 @@ function runForceGraph(nodes, edges) {
     decision: { r: 0.35, start: 1.08 * Math.PI, span: 0.35 * Math.PI },
     vector: { r: 0.46, start: -0.02 * Math.PI, span: 0.16 * Math.PI },
     stale: { r: 0.48, start: 0.82 * Math.PI, span: 0.46 * Math.PI },
+    // Karpathy wiki layer — outer ring, spread across full circle by type
+    'wiki-source':     { r: 0.62, start: -0.10 * Math.PI, span: 0.55 * Math.PI },
+    'wiki-concept':    { r: 0.62, start:  0.50 * Math.PI, span: 0.55 * Math.PI },
+    'wiki-person':     { r: 0.58, start:  1.05 * Math.PI, span: 0.30 * Math.PI },
+    'wiki-org':        { r: 0.58, start:  1.40 * Math.PI, span: 0.25 * Math.PI },
+    'wiki-comparison': { r: 0.66, start:  1.70 * Math.PI, span: 0.15 * Math.PI },
+    'wiki-analysis':   { r: 0.66, start: -0.20 * Math.PI, span: 0.15 * Math.PI },
+    wiki:              { r: 0.62, start:  0,              span: 2 * Math.PI },
   };
   Object.entries(grouped).forEach(([kind, group]) => {
     if (kind === 'core') return;
@@ -921,8 +943,8 @@ function runForceGraph(nodes, edges) {
   const edgeEls = links.map(l => {
     const e = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     e.setAttribute('class', 'graph-edge');
-    e.setAttribute('stroke', 'rgba(160,190,255,0.11)');
-    e.setAttribute('stroke-width', '0.9');
+    e.setAttribute('stroke', 'rgba(170,210,255,0.18)');
+    e.setAttribute('stroke-width', '0.8');
     e.setAttribute('fill', 'none');
     e.setAttribute('filter', 'url(#ge)');
     gEdges.appendChild(e);
@@ -934,23 +956,60 @@ function runForceGraph(nodes, edges) {
     p.setAttribute('opacity', '0');
     gPulses.appendChild(p);
     l._pulse = p;
-    l._fireAt = Math.random() * 80;
-    l._fireDur = Math.random() < 0.18 ? 46 : 0;
+    l._fireAt = Math.random() * 60;
+    l._fireDur = Math.random() < 0.55 ? 52 : 0;
     return e;
   });
-  const nodeEls = nodes.map(n => {
+  // Compute hub set — top-5 nodes by total degree (in+out edges)
+  const degree = {};
+  links.forEach(l => {
+    degree[l.s] = (degree[l.s] || 0) + 1;
+    degree[l.t] = (degree[l.t] || 0) + 1;
+  });
+  const hubIndices = new Set(
+    Object.entries(degree)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([i]) => parseInt(i, 10))
+  );
+  // 1-hop neighbor map for hover highlights
+  const neighbors = nodes.map(() => new Set());
+  links.forEach(l => {
+    neighbors[l.s].add(l.t);
+    neighbors[l.t].add(l.s);
+  });
+
+  const nodeEls = nodes.map((n, ni) => {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'graph-node');
     g.setAttribute('role', 'button');
     g.setAttribute('tabindex', '0');
+    g.setAttribute('data-idx', String(ni));
     const color = KIND_COLORS[n.kind] || '#999';
+    const isHub = hubIndices.has(ni) || n.kind === 'core';
+    const labelHtml = `<text class="node-label" dy="${n.size+14}" text-anchor="middle" fill="rgba(245,248,255,0.95)" font-size="13" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1); pointer-events:none; opacity:${isHub ? 1 : 0}; transition:opacity 0.15s;">${(n.label||'').replace(/[<>&]/g,'').slice(0,20)}</text>`;
     g.innerHTML = `
-      <circle r="${n.size+18}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.08 : 0.2}"/>
-      <circle r="${n.size+7}" fill="none" stroke="${color}" stroke-width="1.2" opacity="${n.kind === 'stale' ? 0.18 : 0.45}"/>
-      <circle r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.45 : 0.88}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
-      <circle r="${Math.max(2, n.size * 0.36)}" fill="rgba(255,255,255,0.82)" opacity="${n.kind === 'stale' ? 0.18 : 0.65}"/>
-      ${n.size > 9 ? `<text dy="${n.size+24}" text-anchor="middle" fill="rgba(245,248,255,0.88)" font-size="15" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,0.95);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
+      <circle class="node-halo" r="${n.size+8}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.08 : 0.22}"/>
+      <circle class="node-core" r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
+      <circle class="node-hot" r="${Math.max(1.4, n.size * 0.4)}" fill="rgba(255,255,255,0.95)" opacity="${n.kind === 'stale' ? 0.25 : 0.85}"/>
+      ${labelHtml}
     `;
+    const showNeighborLabels = (on) => {
+      const op = on ? '1' : (isHub ? '1' : '0');
+      const lbl = g.querySelector('.node-label');
+      if (lbl) lbl.style.opacity = on ? '1' : (isHub ? '1' : '0');
+      neighbors[ni].forEach(j => {
+        const sib = nodeEls[j];
+        if (!sib) return;
+        const sibLbl = sib.querySelector('.node-label');
+        const sibIsHub = hubIndices.has(j) || nodes[j].kind === 'core';
+        if (sibLbl) sibLbl.style.opacity = on ? '1' : (sibIsHub ? '1' : '0');
+      });
+    };
+    g.addEventListener('mouseenter', () => showNeighborLabels(true));
+    g.addEventListener('mouseleave', () => showNeighborLabels(false));
+    g.addEventListener('focus', () => showNeighborLabels(true));
+    g.addEventListener('blur', () => showNeighborLabels(false));
     g.addEventListener('click', () => showGraphNode(n));
     g.addEventListener('keydown', ev => {
       if (ev.key === 'Enter' || ev.key === ' ') {
@@ -963,12 +1022,12 @@ function runForceGraph(nodes, edges) {
   });
 
   // Force simulation — keeps running for "live" feel
-  const REPULSION = 14500;
-  const LINK_K = 0.026;
-  const LINK_LEN = Math.min(250, Math.max(190, Math.min(W, H) * 0.28));
-  const CENTER_K = 0.003;
-  const COLLISION_PAD = 42;
-  let DAMP = 0.86;
+  const REPULSION = 28000;
+  const LINK_K = 0.022;
+  const LINK_LEN = Math.min(360, Math.max(280, Math.min(W, H) * 0.42));
+  const CENTER_K = 0.0008;
+  const COLLISION_PAD = 24;
+  let DAMP = 0.92;
 
   let ticks = 0;
   function step() {
@@ -1058,9 +1117,9 @@ function runForceGraph(nodes, edges) {
         const qy = (1-progress)*(1-progress)*a.y + 2*(1-progress)*progress*my + progress*progress*b.y;
         l._pulse.setAttribute('cx', qx);
         l._pulse.setAttribute('cy', qy);
-        l._pulse.setAttribute('r', 4 + 5 * Math.sin(progress * Math.PI));
+        l._pulse.setAttribute('r', 5 + 7 * Math.sin(progress * Math.PI));
         l._pulse.setAttribute('fill', color);
-        l._pulse.setAttribute('opacity', alpha);
+        l._pulse.setAttribute('opacity', Math.min(1, alpha * 1.4));
       } else {
         e.setAttribute('stroke', 'rgba(155,185,255,0.09)');
         e.setAttribute('stroke-width', '0.9');

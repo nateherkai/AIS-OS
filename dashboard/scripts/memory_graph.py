@@ -40,7 +40,7 @@ def build():
     MAX_FILES_PER_WORKSPACE = 12
 
     # Center
-    nodes.append({"id": "aios", "label": "AIOS", "kind": "core", "size": 22})
+    nodes.append({"id": "aios", "label": "AIOS", "kind": "core", "size": 14})
 
     # Workspaces — top-level dirs in .claude/projects
     projects_root = HOME / ".claude" / "projects"
@@ -57,7 +57,7 @@ def build():
             raw = raw.replace("--", "/").replace("-", " ").strip()
             label = raw.split()[-1] if raw else ws.name[:18]
             nid = f"ws:{ws.name}"
-            nodes.append({"id": nid, "label": label[:18], "kind": "workspace", "size": 12})
+            nodes.append({"id": nid, "label": label[:18], "kind": "workspace", "size": 6})
             edges.append({"source": "aios", "target": nid})
             # Memory files inside
             mem = ws / "memory"
@@ -67,7 +67,7 @@ def build():
                     fid = f"file:{f}"
                     age = now - f.stat().st_mtime
                     kind = "stale" if age > STALE_AGE else "file"
-                    nodes.append({"id": fid, "label": f.stem[:20], "kind": kind, "size": 7})
+                    nodes.append({"id": fid, "label": f.stem[:20], "kind": kind, "size": 4})
                     edges.append({"source": nid, "target": fid})
 
     # Skills — under .claude/skills and AIS-OS .claude/skills
@@ -76,7 +76,7 @@ def build():
             continue
         for s in [d for d in skills_root.iterdir() if d.is_dir()][:10]:
             sid = f"skill:{s.name}"
-            nodes.append({"id": sid, "label": "/" + s.name, "kind": "skill", "size": 8})
+            nodes.append({"id": sid, "label": "/" + s.name, "kind": "skill", "size": 5})
             edges.append({"source": "aios", "target": sid})
 
     # Obsidian decisions — Gravity Claw vault under memory/06_Decisions or memory/02_Decisions or anywhere
@@ -87,7 +87,7 @@ def build():
             decision_files.extend(obsidian.glob(pattern))
         for f in decision_files[:10]:
             did = f"dec:{f.name}"
-            nodes.append({"id": did, "label": f.stem[:24], "kind": "decision", "size": 9})
+            nodes.append({"id": did, "label": f.stem[:24], "kind": "decision", "size": 5})
             edges.append({"source": "aios", "target": did})
         # Workspace-tagged daily notes (sessions)
         daily = obsidian / "07_Daily"
@@ -96,26 +96,58 @@ def build():
                 sid = f"sess:{f.name}"
                 age = now - f.stat().st_mtime
                 kind = "stale" if age > STALE_AGE else "session"
-                nodes.append({"id": sid, "label": f.stem, "kind": kind, "size": 7})
+                nodes.append({"id": sid, "label": f.stem, "kind": kind, "size": 4})
                 edges.append({"source": "aios", "target": sid})
 
     # Vector indexes
     env = _gc_env_keys()
     if env.get("PINECONE_INDEX_NAME"):
         vid = f"vec:{env['PINECONE_INDEX_NAME']}"
-        nodes.append({"id": vid, "label": env["PINECONE_INDEX_NAME"], "kind": "vector", "size": 14})
+        nodes.append({"id": vid, "label": env["PINECONE_INDEX_NAME"], "kind": "vector", "size": 8})
         edges.append({"source": "aios", "target": vid})
 
-    # Vault wiki nodes
+    # Vault wiki nodes — Karpathy LLM Wiki, subkinded for visual layer + cross-linked
+    wiki_palette = {
+        "sources": "wiki-source",
+        "people": "wiki-person",
+        "organizations": "wiki-org",
+        "concepts": "wiki-concept",
+        "comparisons": "wiki-comparison",
+        "analysis": "wiki-analysis",
+    }
+    wiki_size = {
+        "sources": 5,
+        "people": 6,
+        "organizations": 6,
+        "concepts": 5,
+        "comparisons": 4,
+        "analysis": 4,
+    }
     vault_root = Path("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master")
     wiki_nodes_raw = load_vault_wiki_nodes(vault_root)
     existing_ids = {n["id"] for n in nodes}
+    wiki_ids = {f"wiki:{wn['id']}" for wn in wiki_nodes_raw}
     for wn in wiki_nodes_raw:
         nid = f"wiki:{wn['id']}"
-        if nid not in existing_ids:
-            nodes.append({"id": nid, "label": wn["id"][:20], "kind": "wiki", "size": 7})
-            edges.append({"source": "aios", "target": nid})
-            existing_ids.add(nid)
+        if nid in existing_ids:
+            continue
+        nodes.append({
+            "id": nid,
+            "label": wn["id"][:24],
+            "kind": wiki_palette.get(wn["type"], "wiki"),
+            "size": wiki_size.get(wn["type"], 7),
+            "path": wn["path"],
+        })
+        edges.append({"source": "aios", "target": nid})
+        existing_ids.add(nid)
+    # Crosslinks BETWEEN wiki nodes — fires the neural map
+    for wn in wiki_nodes_raw:
+        src = f"wiki:{wn['id']}"
+        for tgt_stem in wn["edges"]:
+            tgt_clean = tgt_stem.replace(".md", "").strip()
+            tgt = f"wiki:{tgt_clean}"
+            if tgt in wiki_ids and tgt != src:
+                edges.append({"source": src, "target": tgt})
 
     counts = defaultdict(int)
     for n in nodes:
