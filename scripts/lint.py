@@ -21,6 +21,11 @@ REQUIRED_FRONTMATTER_FIELDS = {
 }
 
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+
+
+def _strip_code_fences(text: str) -> str:
+    return FENCE_RE.sub("", text)
 
 
 def _wiki_pages(vault: Path) -> list[Path]:
@@ -32,7 +37,8 @@ def _wiki_pages(vault: Path) -> list[Path]:
 
 
 def _wikilinks_in(text: str) -> list[str]:
-    return [m.group(1).strip() for m in WIKILINK_RE.finditer(text)]
+    stripped = _strip_code_fences(text)
+    return [m.group(1).strip() for m in WIKILINK_RE.finditer(stripped)]
 
 
 def find_orphans(vault: Path) -> list[Path]:
@@ -77,11 +83,18 @@ def find_broken_links(vault: Path) -> list[dict]:
     pages = _wiki_pages(vault)
     page_stems = {p.stem for p in pages}
     broken: list[dict] = []
+    vault_resolved = vault.resolve()
     for p in pages:
         for link in _wikilinks_in(p.read_text()):
             target = link.strip()
             if target.startswith("../"):
                 resolved = (p.parent / target).resolve()
+                # Bounds check: must be inside vault root.
+                try:
+                    resolved.relative_to(vault_resolved)
+                except ValueError:
+                    broken.append({"page": str(p), "target": target, "reason": "outside_vault"})
+                    continue
                 if not resolved.exists() and not (resolved.parent / f"{resolved.name}.md").exists():
                     broken.append({"page": str(p), "target": target})
             else:
@@ -124,6 +137,16 @@ def find_raw_backlog(vault: Path, max_age_days: int = 7) -> list[dict]:
     return backlog
 
 
+def find_parse_errors(vault: Path) -> list[dict]:
+    out: list[dict] = []
+    for p in _wiki_pages(vault):
+        try:
+            frontmatter.load(p)
+        except Exception as e:
+            out.append({"path": str(p), "error": str(e)[:200]})
+    return out
+
+
 def find_unassigned_domain(vault: Path) -> list[Path]:
     out: list[Path] = []
     for p in _wiki_pages(vault):
@@ -145,6 +168,7 @@ def lint_vault(vault: Path, today: str | None = None) -> dict:
         "missing_frontmatter": find_missing_frontmatter(vault),
         "raw_backlog": find_raw_backlog(vault),
         "unassigned_domain": [str(p) for p in find_unassigned_domain(vault)],
+        "parse_errors": find_parse_errors(vault),
     }
     report["total_issues"] = sum(
         len(v) if isinstance(v, list) else 0 for v in report.values()
@@ -161,6 +185,7 @@ def format_report(report: dict, today: str) -> str:
         ("missing_frontmatter", "Missing frontmatter"),
         ("raw_backlog", "Raw backlog"),
         ("unassigned_domain", "Unassigned domain"),
+        ("parse_errors", "Parse errors"),
     ]:
         items = report[key]
         lines.append(f"\n## {label} ({len(items)})\n")

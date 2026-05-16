@@ -91,9 +91,5 @@ def test_find_raw_backlog_old_files(tmp_path):
 def test_lint_vault_returns_full_report(tmp_path):
     vault = _setup_vault(tmp_path)
     report = lint_vault(vault, today="2026-05-16")
-    assert "orphans" in report
-    assert "stale" in report
-    assert "broken_links" in report
-    assert "missing_frontmatter" in report
-    assert "raw_backlog" in report
-    assert "total_issues" in report
+    for key in ["orphans", "stale", "broken_links", "missing_frontmatter", "raw_backlog", "parse_errors", "total_issues"]:
+        assert key in report

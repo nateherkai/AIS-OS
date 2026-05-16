@@ -154,22 +154,32 @@ REQUIREMENTS:
 """
 
 
-def call_claude(prompt: str, cfg: DreamConfig) -> dict:
+def call_claude(prompt: str, cfg: DreamConfig, max_retries: int = 3) -> dict:
     if Anthropic is None:
         raise RuntimeError("anthropic SDK not installed. pip install anthropic")
+    import sys
+    import time
     client = Anthropic()
-    msg = client.messages.create(
-        model=cfg.model,
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = msg.content[0].text
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text.strip())
+    last_err: Exception | None = None
+    for attempt in range(max_retries):
+        try:
+            msg = client.messages.create(
+                model=cfg.model,
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = msg.content[0].text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            return json.loads(text.strip())
+        except Exception as e:  # broad: SDK exceptions + JSON decode
+            last_err = e
+            backoff = 2 ** attempt
+            print(f"call_claude attempt {attempt + 1} failed: {e}. Retrying in {backoff}s...", file=sys.stderr)
+            time.sleep(backoff)
+    raise RuntimeError(f"call_claude failed after {max_retries} retries: {last_err}")
 
 
 def main() -> int:
@@ -188,8 +198,13 @@ def main() -> int:
         cards: list[Card] = []
         summary = "Dry-run dream pass — no cards generated."
     else:
+        import sys
         prompt = build_prompt(ctx, cfg)
-        result = call_claude(prompt, cfg)
+        try:
+            result = call_claude(prompt, cfg)
+        except Exception as e:
+            print(f"Dream pass FAILED: {e}", file=sys.stderr)
+            return 1
         cards = [Card(status="open", **c) for c in result.get("cards", [])]
         summary = result.get("summary", "")
 
