@@ -274,8 +274,104 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .pc-activity-count { font-size:12px; color:#4ade80; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* ── CMD+K PALETTE (N1) ────────────────────────────────────── */
+.cmdk-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(12px); z-index:300; align-items:flex-start; justify-content:center; padding-top:12vh; }
+.cmdk-overlay.open { display:flex; }
+.cmdk-modal { background:rgba(10,12,28,0.97); border:1px solid rgba(255,255,255,0.12); border-radius:16px; width:100%; max-width:600px; overflow:hidden; box-shadow:0 32px 80px rgba(0,0,0,0.8); }
+.cmdk-input-wrap { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.cmdk-input-icon { font-size:17px; color:rgba(255,255,255,0.3); flex-shrink:0; }
+.cmdk-input { flex:1; background:none; border:none; outline:none; font-size:17px; color:#fff; }
+.cmdk-input::placeholder { color:rgba(255,255,255,0.25); }
+.cmdk-esc { font-size:11px; color:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:2px 6px; flex-shrink:0; }
+.cmdk-results { max-height:480px; overflow-y:auto; padding:6px 0; }
+.cmdk-group-label { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); padding:10px 16px 4px; }
+.cmdk-row { display:flex; align-items:center; gap:10px; padding:9px 16px; cursor:pointer; transition:background 0.1s; border-radius:6px; margin:1px 6px; }
+.cmdk-row:hover, .cmdk-row.active { background:rgba(212,165,116,0.12); }
+.cmdk-row-icon { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; background:rgba(255,255,255,0.06); }
+.cmdk-row-label { flex:1; font-size:15px; color:rgba(255,255,255,0.9); font-weight:500; }
+.cmdk-row-ctx { font-size:12px; color:rgba(255,255,255,0.35); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cmdk-row-enter { font-size:11px; color:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:2px 5px; flex-shrink:0; }
+.cmdk-empty { padding:24px; text-align:center; color:rgba(255,255,255,0.3); font-size:15px; }
+
+/* ── WIKI VIEW (N2) ─────────────────────────────────────────── */
+.wiki-layout { display:flex; gap:0; height:calc(100vh - 60px); overflow:hidden; }
+.wiki-tree-col { width:280px; min-width:280px; border-right:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; overflow:hidden; }
+.wiki-tree-search { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.wiki-tree-search input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:7px; color:#fff; font-size:14px; padding:6px 10px; outline:none; }
+.wiki-tree-search input:focus { border-color:rgba(212,165,116,0.35); }
+.wiki-tree-body { flex:1; overflow-y:auto; padding:6px 0; }
+.wiki-tree-section { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); padding:10px 14px 3px; }
+.wiki-tree-dir { padding:6px 14px; cursor:pointer; font-size:13px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:6px; border-radius:6px; margin:1px 6px; transition:background 0.1s; user-select:none; }
+.wiki-tree-dir:hover { background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.8); }
+.wiki-tree-dir .tree-caret { font-size:10px; transition:transform 0.15s; }
+.wiki-tree-dir.open .tree-caret { transform:rotate(90deg); }
+.wiki-tree-file { padding:5px 14px 5px 30px; cursor:pointer; font-size:13px; color:rgba(255,255,255,0.45); border-radius:6px; margin:1px 6px; transition:background 0.1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wiki-tree-file:hover { background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.8); }
+.wiki-tree-file.active { background:rgba(212,165,116,0.12); color:#D4A574; }
+.wiki-pane { flex:1; overflow-y:auto; padding:28px 32px; }
+.wiki-pane-empty { color:rgba(255,255,255,0.25); font-size:15px; text-align:center; padding-top:60px; }
+.wiki-frontmatter { background:rgba(212,165,116,0.07); border:1px solid rgba(212,165,116,0.2); border-radius:10px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:rgba(255,255,255,0.65); line-height:1.8; }
+.wiki-frontmatter .fm-key { color:rgba(212,165,116,0.7); font-weight:600; }
+.wiki-body { font-size:15px; color:rgba(255,255,255,0.82); line-height:1.8; }
+.wiki-body h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 16px; }
+.wiki-body h2 { font-size:17px; font-weight:600; color:rgba(255,255,255,0.9); margin:24px 0 10px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:6px; }
+.wiki-body h3 { font-size:15px; font-weight:600; color:rgba(255,255,255,0.8); margin:18px 0 8px; }
+.wiki-body p { margin:0 0 12px; }
+.wiki-body ul, .wiki-body ol { padding-left:22px; margin:0 0 12px; }
+.wiki-body li { margin-bottom:4px; }
+.wiki-body code { background:rgba(255,255,255,0.07); border-radius:4px; padding:1px 5px; font-family:monospace; font-size:13px; }
+.wiki-body pre { background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:12px 16px; overflow:auto; margin:0 0 14px; }
+.wiki-body pre code { background:none; padding:0; }
+.wiki-body table { border-collapse:collapse; width:100%; margin:0 0 14px; font-size:14px; }
+.wiki-body th { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.55); padding:7px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); }
+.wiki-body td { padding:6px 12px; border-bottom:1px solid rgba(255,255,255,0.04); color:rgba(255,255,255,0.75); }
+.wiki-body a { color:#D4A574; text-decoration:none; }
+.wiki-body a:hover { text-decoration:underline; }
+.wiki-link { color:#D4A574; cursor:pointer; text-decoration:underline; }
+.wiki-section-label { font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.25); margin:28px 0 8px; }
+.wiki-backlink-row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:7px; cursor:pointer; transition:background 0.1s; }
+.wiki-backlink-row:hover { background:rgba(255,255,255,0.04); }
+.wiki-backlink-label { font-size:14px; color:rgba(212,165,116,0.8); }
+.wiki-pane-actions { display:flex; gap:8px; margin-bottom:18px; }
+.wiki-action-btn { font-size:13px; padding:5px 12px; border-radius:7px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.55); cursor:pointer; transition:all 0.15s; }
+.wiki-action-btn:hover { background:rgba(212,165,116,0.12); color:#D4A574; border-color:rgba(212,165,116,0.3); }
+
+/* ── FOCUS MODE breadcrumb (N3) ─────────────────────────────── */
+.graph-breadcrumb { position:absolute; top:14px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:4px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 12px; font-size:13px; color:rgba(255,255,255,0.65); backdrop-filter:blur(10px); z-index:10; white-space:nowrap; max-width:80%; overflow:hidden; }
+.graph-breadcrumb.hidden { display:none; }
+.crumb-item { cursor:pointer; color:rgba(212,165,116,0.8); transition:color 0.1s; }
+.crumb-item:hover { color:#D4A574; }
+.crumb-sep { color:rgba(255,255,255,0.2); font-size:11px; }
+.crumb-current { color:rgba(255,255,255,0.9); font-weight:600; }
+.graph-focus-btns { position:absolute; top:14px; right:14px; display:none; gap:6px; z-index:10; }
+.graph-focus-btns.visible { display:flex; }
+.graph-focus-btn { font-size:12px; padding:5px 10px; border-radius:7px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.6); cursor:pointer; backdrop-filter:blur(8px); transition:all 0.15s; }
+.graph-focus-btn:hover { background:rgba(212,165,116,0.15); color:#D4A574; border-color:rgba(212,165,116,0.35); }
+
+/* ── FILTER CHIPS (N5) ──────────────────────────────────────── */
+.graph-filter-row { display:flex; flex-wrap:wrap; gap:6px; padding:10px 0; margin-bottom:6px; }
+.filter-chip { font-size:12px; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.15s; user-select:none; }
+.filter-chip.on { background:rgba(212,165,116,0.14); border-color:rgba(212,165,116,0.35); color:#D4A574; }
+.filter-chip:hover { border-color:rgba(255,255,255,0.25); color:rgba(255,255,255,0.8); }
+</style>
 </head>
 <body>
+
+<!-- CMD+K PALETTE (N1) -->
+<div class="cmdk-overlay" id="cmdk-overlay" onclick="if(event.target===this)closeCmdk()">
+  <div class="cmdk-modal">
+    <div class="cmdk-input-wrap">
+      <span class="cmdk-input-icon">⌕</span>
+      <input class="cmdk-input" id="cmdk-input" placeholder="Search views, wiki, graph nodes, skills…" autocomplete="off" spellcheck="false">
+      <span class="cmdk-esc" onclick="closeCmdk()">Esc</span>
+    </div>
+    <div class="cmdk-results" id="cmdk-results">
+      <div class="cmdk-empty">Type to search…</div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -307,6 +403,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('wizard',this)"><span class="nav-icon">⚙</span><span class="nav-label">Wizard</span></div>
   <div class="nav-item" onclick="showView('pillars',this)"><span class="nav-icon">🏛</span><span class="nav-label">Six Pillars</span></div>
   <div class="nav-item" onclick="showView('memory',this)"><span class="nav-icon">🧬</span><span class="nav-label">Memory</span></div>
+  <div class="nav-item" onclick="showView('wiki',this)"><span class="nav-icon">📖</span><span class="nav-label">Wiki</span></div>
   <div class="nav-item" onclick="showView('roi',this)"><span class="nav-icon">📈</span><span class="nav-label">ROI</span></div>
   <div class="nav-item" onclick="showView('dreams',this)"><span class="nav-icon">🌙</span><span class="nav-label">Dreams</span></div>
   <div class="nav-item" onclick="showView('bridge',this)"><span class="nav-icon">🔗</span><span class="nav-label">GC Bridge</span></div>
@@ -345,6 +442,8 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-memory" class="view">
+    <!-- Filter chips (N5) -->
+    <div class="graph-filter-row" id="graph-filter-row"></div>
     <!-- Pinecone mini-card -->
     <div class="panel glass" id="pc-mini-card" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
       <div>
@@ -361,6 +460,13 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     <div class="graph-wrap">
       <div class="graph-title">Memory Graph<b id="graph-headline">— · — · —</b></div>
       <div class="graph-stats" id="graph-stats">loading…</div>
+      <!-- Focus mode breadcrumb (N3) -->
+      <div class="graph-breadcrumb hidden" id="graph-breadcrumb"></div>
+      <!-- Focus mode action buttons (N3) -->
+      <div class="graph-focus-btns" id="graph-focus-btns">
+        <button class="graph-focus-btn" onclick="graphResetFocus()">↺ Reset</button>
+        <button class="graph-focus-btn" onclick="graphCenterFocus()">⌖ Center</button>
+      </div>
       <svg class="graph-svg" id="graph-svg"></svg>
       <div class="graph-legend">
         <span><i style="background:#00E676;box-shadow:0 0 10px #00E676;"></i>Memory Core</span>
@@ -665,6 +771,26 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   </div><!-- /view-dashboard -->
+
+  <!-- ══ WIKI BROWSER VIEW (N2) ══ -->
+  <div id="view-wiki" class="view" style="padding-bottom:0;">
+    <div class="wiki-layout">
+      <!-- Left tree -->
+      <div class="wiki-tree-col glass">
+        <div class="wiki-tree-search">
+          <input id="wiki-tree-filter" placeholder="Filter pages…" oninput="wikiFilterTree(this.value)">
+        </div>
+        <div class="wiki-tree-body" id="wiki-tree-body">
+          <div class="loading" style="font-size:13px;">Loading tree…</div>
+        </div>
+      </div>
+      <!-- Right pane -->
+      <div class="wiki-pane" id="wiki-pane">
+        <div class="wiki-pane-empty">Select a page from the tree to read it here.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -943,6 +1069,7 @@ const VIEW_LOADERS = {
   pinecone: loadPinecone,
   usage: loadUsage,
   agent: loadAgent,
+  wiki: () => loadWiki && loadWiki(),
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},
@@ -1244,51 +1371,57 @@ function runForceGraph(nodes, edges) {
     return g;
   });
 
-  // --- Highlight logic ---
-  let selectedIdx = null;
+  // --- Expose globals for N3 focus mode ---
+  window.__graphNodes = nodes;
+  window.__graphNodeEls = nodeEls;
+  window.__graphEdgeEls = edgeEls;
+  window.__graphLinks = links;
+  window.__graphNeighbors = neighbors;
+  window.__graphHubIds = hubIds;
+  window.__graphSvgEl = svgEl;
+  // (zoom behavior set after d3.zoom init below)
+
+  // --- Highlight logic (hover preview only, focus mode uses _applyFocusOpacity) ---
+  let _hoverIdx = null;
+
   function applyHighlight(focusIdx) {
-    if (focusIdx === null) {
-      nodeEls.forEach((g, i) => {
-        g.style.opacity = 1;
-        const lbl = g.querySelector('.node-label');
-        if (lbl) lbl.style.opacity = hubIds.has(nodes[i].id) ? 1 : 0;
-      });
-      edgeEls.forEach(e => {
-        e.style.opacity = 0.08;
-        e.style.strokeWidth = '0.7';
-      });
-      return;
-    }
-    const focused = new Set([focusIdx]);
-    neighbors[focusIdx].forEach(j => focused.add(j));
-    nodeEls.forEach((g, i) => {
-      g.style.opacity = focused.has(i) ? 1 : 0.12;
-      const lbl = g.querySelector('.node-label');
-      if (lbl) lbl.style.opacity = focused.has(i) ? 1 : 0;
-    });
-    edgeEls.forEach((e, i) => {
-      const l = links[i];
-      const touch = focused.has(l.s) || focused.has(l.t);
-      e.style.opacity = touch ? 0.85 : 0.04;
-      e.style.strokeWidth = touch ? '1.2' : '0.7';
-    });
+    // If focus mode is active, don't change opacities on hover
+    if (window.__graphFocusCurrentIdx !== null) return;
+    _applyFocusOpacity(focusIdx);
   }
 
   nodeEls.forEach((g, ni) => {
     g.addEventListener('mouseenter', () => {
-      if (selectedIdx === null) applyHighlight(ni);
+      if (window.__graphFocusCurrentIdx === null) {
+        _hoverIdx = ni;
+        applyHighlight(ni);
+      }
     });
     g.addEventListener('mouseleave', () => {
-      if (selectedIdx === null) applyHighlight(null);
-      else applyHighlight(selectedIdx);
+      _hoverIdx = null;
+      if (window.__graphFocusCurrentIdx === null) applyHighlight(null);
     });
     g.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      if (selectedIdx === ni) {
+      if (ev.shiftKey) {
+        // Shift+Click opens detail
         try { showGraphNode(nodes[ni]); } catch(e) {}
       } else {
-        selectedIdx = ni;
-        applyHighlight(ni);
+        // Normal click: focus mode drill-down
+        const curFocus = window.__graphFocusCurrentIdx;
+        if (curFocus !== null && curFocus !== ni) {
+          // Only allow drilling into visible 1-hop neighbors
+          if (neighbors[curFocus].has(ni) || curFocus === ni) {
+            graphFocusByIndex(ni);
+          } else {
+            graphFocusByIndex(ni);
+          }
+        } else if (curFocus === ni) {
+          // Double-click same node = show detail
+          try { showGraphNode(nodes[ni]); } catch(e) {}
+        } else {
+          graphFocusByIndex(ni);
+        }
       }
     });
     g.addEventListener('keydown', ev => {
@@ -1299,10 +1432,9 @@ function runForceGraph(nodes, edges) {
     });
   });
 
-  // Click empty SVG to deselect
+  // Click empty SVG to deselect / reset focus
   svgEl.addEventListener('click', () => {
-    selectedIdx = null;
-    applyHighlight(null);
+    graphResetFocus();
   });
 
   // --- D3 force simulation ---
@@ -1359,6 +1491,10 @@ function runForceGraph(nodes, edges) {
       zoomRoot.setAttribute('transform', e.transform.toString());
     });
   d3.select(svgEl).call(zoomBehavior);
+  window.__graphZoomBehavior = zoomBehavior;
+
+  // Apply filter chip state on fresh graph load
+  setTimeout(() => _applyFocusOpacity(null), 50);
 
   // --- Tick — sync positions ---
   let tickCount = 0;
@@ -1498,7 +1634,7 @@ async function loadDreams() {
     <div class="kpi-sub" style="margin-bottom:12px;">Analyzed ${d.files_analyzed} files · ${d.events_total} events · generated ${d.generated_at}</div>
     ${d.recommendations.map(r => `
       <div class="dream-card dream-pri-${r.priority}">
-        <div class="dream-dim">${r.dimension} · ${r.priority}</div>
+        <div class="dream-dim">${r.dimension} · ${r.priority} <span style="float:right;font-size:12px;cursor:pointer;color:rgba(212,165,116,0.6);" onclick="openCmdk('${r.dimension.replace(/'/g,"\\'")}')">Find related →</span></div>
         <div class="dream-head">${r.headline.replace(/</g,'&lt;')}</div>
       </div>
     `).join('')}
@@ -2121,6 +2257,628 @@ function agentQuickSkill() {
   const topic = prompt('Find a skill for: (enter topic)');
   if (topic) agentAsk(`Find me a skill for: ${topic}`);
 }
+
+// ══════════════════════════════════════════════════════════════
+// PHASE C — N1: CMD+K FIND PALETTE
+// ══════════════════════════════════════════════════════════════
+
+let _cmdkIndex = null;
+let _cmdkActive = -1;
+
+async function _loadCmdkIndex() {
+  if (_cmdkIndex) return _cmdkIndex;
+  try {
+    _cmdkIndex = await api('/api/search/index');
+  } catch (e) {
+    _cmdkIndex = [];
+  }
+  return _cmdkIndex;
+}
+
+function openCmdk(prefill) {
+  const overlay = document.getElementById('cmdk-overlay');
+  overlay.classList.add('open');
+  const input = document.getElementById('cmdk-input');
+  input.value = prefill || '';
+  input.focus();
+  _cmdkActive = -1;
+  if (prefill) _cmdkSearch(prefill);
+  else {
+    document.getElementById('cmdk-results').innerHTML = '<div class="cmdk-empty">Type to search…</div>';
+  }
+  _loadCmdkIndex(); // pre-warm
+}
+
+function closeCmdk() {
+  document.getElementById('cmdk-overlay').classList.remove('open');
+}
+
+function _cmdkSearch(q) {
+  const results = document.getElementById('cmdk-results');
+  if (!q.trim()) {
+    results.innerHTML = '<div class="cmdk-empty">Type to search…</div>';
+    _cmdkActive = -1;
+    return;
+  }
+  if (!_cmdkIndex) { results.innerHTML = '<div class="cmdk-empty">Loading index…</div>'; return; }
+  const q_low = q.toLowerCase();
+  const TYPE_ICONS = { view:'⌂', wiki:'📄', graph:'🧬', domain:'📁', skill:'⚡' };
+
+  const scored = _cmdkIndex
+    .map(item => {
+      const label = (item.label || '').toLowerCase();
+      const ctx = (item.context || '').toLowerCase();
+      let score = 0;
+      const isCore = ['core','domain','anchor'].includes(item.action_payload?.kind);
+      if (label === q_low) score = 100;
+      else if (label.startsWith(q_low)) score = 80;
+      else if (label.includes(q_low)) score = 60;
+      else if (ctx.includes(q_low)) score = 30;
+      if (isCore) score += 10;
+      return { ...item, _score: score };
+    })
+    .filter(x => x._score > 0)
+    .sort((a,b) => b._score - a._score)
+    .slice(0, 12);
+
+  if (scored.length === 0) {
+    results.innerHTML = '<div class="cmdk-empty">No results for "' + escapeHtml(q) + '"</div>';
+    _cmdkActive = -1;
+    return;
+  }
+
+  // Group by type
+  const groups = {};
+  scored.forEach(item => {
+    const g = item.type || 'other';
+    (groups[g] = groups[g] || []).push(item);
+  });
+  const GROUP_LABELS = { view:'Views', wiki:'Wiki Pages', graph:'Graph Nodes', domain:'Domain Folders', skill:'Skills' };
+
+  let html = '';
+  let idx = 0;
+  const allItems = [];
+  for (const [type, items] of Object.entries(groups)) {
+    html += `<div class="cmdk-group-label">${GROUP_LABELS[type] || type}</div>`;
+    items.forEach(item => {
+      html += `<div class="cmdk-row" data-idx="${idx}" onclick="_cmdkActivate(${idx})">
+        <div class="cmdk-row-icon">${TYPE_ICONS[item.type] || '·'}</div>
+        <div class="cmdk-row-label">${escapeHtml(item.label)}</div>
+        <div class="cmdk-row-ctx">${escapeHtml(item.context || '')}</div>
+        <div class="cmdk-row-enter">↵</div>
+      </div>`;
+      allItems.push(item);
+      idx++;
+    });
+  }
+  results.innerHTML = html;
+  results._items = allItems;
+  _cmdkActive = -1;
+}
+
+function _cmdkActivate(idx) {
+  const results = document.getElementById('cmdk-results');
+  const items = results._items;
+  if (!items || idx < 0 || idx >= items.length) return;
+  const item = items[idx];
+  closeCmdk();
+
+  const p = item.action_payload || {};
+  switch (item.type) {
+    case 'view':
+      showView(p.view || item.route || item.id);
+      break;
+    case 'domain':
+      showView('wiki');
+      setTimeout(() => wikiOpenDomain(p.domain || item.label), 300);
+      break;
+    case 'wiki':
+      showView('wiki');
+      setTimeout(() => wikiLoadPage(p.wiki_path || item.id.replace('wiki:', '')), 300);
+      break;
+    case 'graph':
+      showView('memory');
+      setTimeout(() => graphFocusById(p.node_id), 800);
+      break;
+    case 'skill':
+      navigator.clipboard.writeText('/' + (item.id || item.label)).catch(() => {});
+      showToast('Copied: /' + item.label);
+      break;
+    default:
+      if (item.route) showView(item.route);
+  }
+}
+
+// Keyboard navigation for palette
+document.addEventListener('keydown', e => {
+  // Open palette: Cmd+K or Cmd+P or /
+  if ((e.metaKey && (e.key === 'k' || e.key === 'K')) ||
+      (e.metaKey && (e.key === 'p' || e.key === 'P'))) {
+    // Only intercept if not in an input
+    const tag = document.activeElement?.tagName;
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+      e.preventDefault();
+      openCmdk();
+      return;
+    }
+    e.preventDefault();
+    openCmdk();
+    return;
+  }
+  const overlay = document.getElementById('cmdk-overlay');
+  if (!overlay.classList.contains('open')) return;
+  const results = document.getElementById('cmdk-results');
+  const rows = results.querySelectorAll('.cmdk-row');
+  if (e.key === 'Escape') { closeCmdk(); return; }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _cmdkActive = Math.min(_cmdkActive + 1, rows.length - 1);
+    rows.forEach((r, i) => r.classList.toggle('active', i === _cmdkActive));
+    rows[_cmdkActive]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _cmdkActive = Math.max(_cmdkActive - 1, 0);
+    rows.forEach((r, i) => r.classList.toggle('active', i === _cmdkActive));
+    rows[_cmdkActive]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (_cmdkActive >= 0) _cmdkActivate(_cmdkActive);
+  }
+});
+
+document.getElementById('cmdk-input').addEventListener('input', e => {
+  _cmdkSearch(e.target.value);
+  _loadCmdkIndex().then(() => _cmdkSearch(e.target.value));
+});
+
+// ══════════════════════════════════════════════════════════════
+// PHASE C — N2: WIKI BROWSER
+// ══════════════════════════════════════════════════════════════
+
+let _wikiTree = null;
+let _wikiCurrentPath = null;
+let _wikiOpenDirs = new Set();
+
+async function loadWiki() {
+  if (!_wikiTree) {
+    try {
+      _wikiTree = await api('/api/wiki/tree');
+    } catch (e) {
+      document.getElementById('wiki-tree-body').innerHTML = `<div class="loading">Error loading tree: ${escapeHtml(e.message)}</div>`;
+      return;
+    }
+  }
+  _wikiRenderTree('');
+}
+
+function _wikiRenderTree(filter) {
+  const body = document.getElementById('wiki-tree-body');
+  const q = filter.toLowerCase();
+  let html = '';
+
+  function _renderFile(node, indent) {
+    if (q && !node.name.toLowerCase().includes(q)) return '';
+    const active = _wikiCurrentPath === node.path;
+    return `<div class="wiki-tree-file ${active ? 'active' : ''}" onclick="wikiLoadPage('${escapeHtml(node.path)}')" title="${escapeHtml(node.name)}">${escapeHtml(node.name)}</div>`;
+  }
+
+  function _renderDir(node, depth) {
+    const key = node.path;
+    const isOpen = _wikiOpenDirs.has(key) || (q && node.children.some(c => c.name.toLowerCase().includes(q) || c.type === 'file' && c.name.toLowerCase().includes(q)));
+    let childHtml = '';
+    if (isOpen || q) {
+      node.children.forEach(child => {
+        if (child.type === 'file') childHtml += _renderFile(child, depth + 1);
+        else if (child.type === 'dir') childHtml += _renderDir(child, depth + 1);
+      });
+    }
+    if (q && !childHtml) return '';
+    return `<div class="wiki-tree-dir ${isOpen ? 'open' : ''}" onclick="_wikiToggleDir('${escapeHtml(key)}')"><span class="tree-caret">▶</span>${escapeHtml(node.name)}</div>${isOpen || q ? childHtml : ''}`;
+  }
+
+  if (!_wikiTree) return;
+
+  // Domains section
+  html += '<div class="wiki-tree-section">Domains</div>';
+  (_wikiTree.domains || []).forEach(node => {
+    html += _renderDir(node, 0);
+  });
+
+  // Wiki section
+  html += '<div class="wiki-tree-section">Wiki</div>';
+  (_wikiTree.wiki || []).forEach(node => {
+    if (node.type === 'file') html += _renderFile(node, 0);
+    else html += _renderDir(node, 0);
+  });
+
+  body.innerHTML = html || '<div class="cmdk-empty" style="font-size:13px;">No pages match filter</div>';
+}
+
+function _wikiToggleDir(key) {
+  if (_wikiOpenDirs.has(key)) _wikiOpenDirs.delete(key);
+  else _wikiOpenDirs.add(key);
+  _wikiRenderTree(document.getElementById('wiki-tree-filter')?.value || '');
+}
+
+function wikiFilterTree(q) {
+  _wikiRenderTree(q);
+}
+
+function wikiOpenDomain(domainName) {
+  _wikiOpenDirs.add(domainName);
+  _wikiRenderTree('');
+  // Try to load _X-Home.md if it exists
+  const homeFile = domainName + '/_' + domainName.split('-')[0] + '-Home.md';
+  wikiLoadPage(homeFile, true /* silent 404 */);
+}
+
+async function wikiLoadPage(relPath, silentErr) {
+  _wikiCurrentPath = relPath;
+  _wikiRenderTree(document.getElementById('wiki-tree-filter')?.value || '');
+  const pane = document.getElementById('wiki-pane');
+  pane.innerHTML = '<div class="loading">Loading…</div>';
+
+  try {
+    const d = await api('/api/wiki/page?path=' + encodeURIComponent(relPath));
+    _wikiRenderPage(d);
+  } catch (e) {
+    if (!silentErr) {
+      pane.innerHTML = `<div class="wiki-pane-empty">Could not load page.<br><small style="color:rgba(255,255,255,0.3);">${escapeHtml(relPath)}</small></div>`;
+    }
+  }
+}
+
+function _wikiRenderPage(d) {
+  const pane = document.getElementById('wiki-pane');
+  const fm = d.frontmatter || {};
+
+  // Frontmatter box
+  let fmHtml = '';
+  if (Object.keys(fm).length > 0) {
+    const fmPairs = Object.entries(fm).map(([k,v]) =>
+      `<span class="fm-key">${escapeHtml(k)}:</span> ${escapeHtml(Array.isArray(v) ? v.join(', ') : String(v))}`
+    ).join('<br>');
+    fmHtml = `<div class="wiki-frontmatter">${fmPairs}</div>`;
+  }
+
+  // Render markdown body, replacing [[links]] with clickable spans
+  let body = d.body || '';
+  // Protect [[links]] before marked processes
+  const linkMap = {};
+  let linkIdx = 0;
+  body = body.replace(/\[\[([^\]]+)\]\]/g, (match, ref) => {
+    const key = `WIKILINK${linkIdx++}`;
+    linkMap[key] = ref;
+    return `<PLACEHOLDER data-key="${key}"></PLACEHOLDER>`;
+  });
+  let rendered = '';
+  try {
+    rendered = marked.parse(body);
+  } catch (e) {
+    rendered = `<pre>${escapeHtml(body)}</pre>`;
+  }
+  // Restore wiki links
+  rendered = rendered.replace(/<PLACEHOLDER data-key="(WIKILINK\d+)"><\/PLACEHOLDER>/g, (_, key) => {
+    const ref = linkMap[key] || key;
+    return `<span class="wiki-link" onclick="wikiFollowLink('${escapeHtml(ref)}')" title="Open [[${escapeHtml(ref)}]]">[[${escapeHtml(ref)}]]</span>`;
+  });
+
+  // Action buttons
+  const actionsHtml = `<div class="wiki-pane-actions">
+    <button class="wiki-action-btn" onclick="wikiViewInGraph('${escapeHtml(d.stem || '')}')">🧬 View in Graph</button>
+    ${(d.frontmatter?.domains || []).map(dom => `<button class="wiki-action-btn" onclick="showView('wiki');wikiOpenDomain('${escapeHtml(dom)}')">📁 ${escapeHtml(dom)}</button>`).join('')}
+  </div>`;
+
+  // Backlinks
+  let backHtml = '';
+  if (d.backlinks && d.backlinks.length > 0) {
+    backHtml = `<div class="wiki-section-label">Backlinks (${d.backlinks.length})</div>` +
+      d.backlinks.map(b => `<div class="wiki-backlink-row" onclick="wikiLoadPage('${escapeHtml(b.path)}')"><span style="color:rgba(255,255,255,0.25);">←</span><span class="wiki-backlink-label">${escapeHtml(b.label)}</span></div>`).join('');
+  }
+
+  // Outbound
+  let outHtml = '';
+  if (d.outbound && d.outbound.length > 0) {
+    outHtml = `<div class="wiki-section-label">Outbound links</div>` +
+      d.outbound.map(o => `<div class="wiki-backlink-row" onclick="wikiFollowLink('${escapeHtml(o.label)}')"><span style="color:rgba(255,255,255,0.25);">→</span><span class="wiki-backlink-label">${escapeHtml(o.label)}</span></div>`).join('');
+  }
+
+  pane.innerHTML = actionsHtml + fmHtml + `<div class="wiki-body">${rendered}</div>` + backHtml + outHtml;
+}
+
+function wikiFollowLink(ref) {
+  // Find the page by stem in wiki tree
+  if (!_wikiTree) return;
+  const found = _wikiSearchByStem(ref, _wikiTree.wiki) || _wikiSearchByStem(ref, _wikiTree.domains);
+  if (found) {
+    wikiLoadPage(found);
+  } else {
+    showToast('Page not found: ' + ref);
+  }
+}
+
+function _wikiSearchByStem(stem, nodes) {
+  if (!nodes) return null;
+  for (const n of nodes) {
+    if (n.type === 'file' && (n.name === stem || n.path.endsWith('/' + stem + '.md') || n.path === stem + '.md')) return n.path;
+    if (n.children) {
+      const r = _wikiSearchByStem(stem, n.children);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+function wikiViewInGraph(stem) {
+  showView('memory');
+  setTimeout(() => graphFocusById(stem), 800);
+}
+
+// Register wiki in VIEW_LOADERS
+VIEW_LOADERS['wiki'] = loadWiki;
+
+// ══════════════════════════════════════════════════════════════
+// PHASE C — N3: FOCUS MODE (graph)
+// ══════════════════════════════════════════════════════════════
+
+// These are set by runForceGraph and used by focus mode controls
+window.__graphFocusBreadcrumb = [];
+window.__graphFocusCurrentIdx = null;
+window.__graphZoomBehavior = null;
+window.__graphSvgEl = null;
+window.__graphNodes = null;
+window.__graphNodeEls = null;
+window.__graphEdgeEls = null;
+window.__graphLinks = null;
+window.__graphNeighbors = null;
+window.__graphHubIds = null;
+
+function graphFocusByIndex(ni) {
+  if (!window.__graphNodes || ni === undefined || ni === null) return;
+  const n = window.__graphNodes[ni];
+  if (!n) return;
+
+  window.__graphFocusCurrentIdx = ni;
+  // Update breadcrumb — cap at 5
+  const crumbs = window.__graphFocusBreadcrumb;
+  // Don't duplicate last entry
+  if (crumbs.length === 0 || crumbs[crumbs.length - 1].idx !== ni) {
+    crumbs.push({ idx: ni, label: n.label || n.id || 'node' });
+    if (crumbs.length > 5) crumbs.shift();
+  }
+  _updateBreadcrumbUI();
+  _applyFocusOpacity(ni);
+  _panToNode(ni);
+  // Show focus buttons
+  document.getElementById('graph-focus-btns')?.classList.add('visible');
+}
+
+function graphFocusById(id) {
+  if (!window.__graphNodes) return;
+  const idx = window.__graphNodes.findIndex(n => n.id === id || n.label === id || n.id?.includes(id));
+  if (idx >= 0) graphFocusByIndex(idx);
+}
+
+function graphResetFocus() {
+  window.__graphFocusBreadcrumb = [];
+  window.__graphFocusCurrentIdx = null;
+  // Revert opacities via applyHighlight
+  _applyFocusOpacity(null);
+  _updateBreadcrumbUI();
+  document.getElementById('graph-focus-btns')?.classList.remove('visible');
+}
+
+function graphCenterFocus() {
+  const ni = window.__graphFocusCurrentIdx;
+  if (ni !== null && ni !== undefined) _panToNode(ni);
+}
+
+function _panToNode(ni) {
+  const nodes = window.__graphNodes;
+  const svgEl = window.__graphSvgEl;
+  const zb = window.__graphZoomBehavior;
+  if (!nodes || !svgEl || !zb) return;
+  const n = nodes[ni];
+  if (!n || n.x === undefined) return;
+  const W = svgEl.clientWidth || 1200;
+  const H = svgEl.clientHeight || 640;
+  const t = d3.zoomTransform(svgEl);
+  const newX = W / 2 - t.k * n.x;
+  const newY = H / 2 - t.k * n.y;
+  d3.select(svgEl).transition().duration(600).call(
+    zb.transform,
+    d3.zoomIdentity.translate(newX, newY).scale(t.k)
+  );
+}
+
+function _applyFocusOpacity(focusIdx) {
+  const nodeEls = window.__graphNodeEls;
+  const edgeEls = window.__graphEdgeEls;
+  const nodes = window.__graphNodes;
+  const links = window.__graphLinks;
+  const neighbors = window.__graphNeighbors;
+  const hubIds = window.__graphHubIds;
+  const filterState = window.__graphFilterState || {};
+  if (!nodeEls || !edgeEls) return;
+
+  if (focusIdx === null) {
+    // Apply only filter state
+    nodeEls.forEach((g, i) => {
+      const n = nodes[i];
+      const kindOff = filterState[n.kind] === false;
+      g.style.opacity = kindOff ? 0.05 : 1;
+      const lbl = g.querySelector('.node-label');
+      if (lbl) lbl.style.opacity = (!kindOff && hubIds && hubIds.has(n.id)) ? 1 : 0;
+    });
+    edgeEls.forEach((e, i) => {
+      const l = links[i];
+      const srcOff = filterState[nodes[l.s]?.kind] === false;
+      const tgtOff = filterState[nodes[l.t]?.kind] === false;
+      e.style.opacity = (srcOff || tgtOff) ? 0.02 : 0.08;
+      e.style.strokeWidth = '0.7';
+    });
+    return;
+  }
+
+  const focused = new Set([focusIdx]);
+  neighbors[focusIdx].forEach(j => focused.add(j));
+  nodeEls.forEach((g, i) => {
+    const n = nodes[i];
+    const kindOff = filterState[n.kind] === false;
+    const inFocus = focused.has(i);
+    g.style.opacity = kindOff ? 0.04 : inFocus ? 1 : 0.04;
+    const lbl = g.querySelector('.node-label');
+    if (lbl) lbl.style.opacity = (!kindOff && inFocus) ? 1 : 0;
+  });
+  edgeEls.forEach((e, i) => {
+    const l = links[i];
+    const touch = focused.has(l.s) || focused.has(l.t);
+    e.style.opacity = touch ? 0.85 : 0.02;
+    e.style.strokeWidth = touch ? '1.2' : '0.7';
+  });
+}
+
+function _updateBreadcrumbUI() {
+  const bc = document.getElementById('graph-breadcrumb');
+  if (!bc) return;
+  const crumbs = window.__graphFocusBreadcrumb;
+  if (crumbs.length === 0) {
+    bc.classList.add('hidden');
+    return;
+  }
+  bc.classList.remove('hidden');
+  let html = `<span class="crumb-item" onclick="graphResetFocus()">All</span>`;
+  crumbs.forEach((c, i) => {
+    html += `<span class="crumb-sep">›</span>`;
+    if (i === crumbs.length - 1) {
+      html += `<span class="crumb-current">${escapeHtml(c.label)}</span>`;
+    } else {
+      html += `<span class="crumb-item" onclick="graphFocusByIndex(${c.idx})">${escapeHtml(c.label)}</span>`;
+    }
+  });
+  bc.innerHTML = html;
+}
+
+// Esc clears focus
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    // Don't clear if cmdk is open (it handles Esc itself)
+    if (document.getElementById('cmdk-overlay').classList.contains('open')) return;
+    if (window.__graphFocusCurrentIdx !== null) {
+      graphResetFocus();
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// PHASE C — N4: CROSS-VIEW JUMPS (patched into showGraphNode)
+// ══════════════════════════════════════════════════════════════
+
+// Override showGraphNode to add jump buttons
+function showGraphNode(n) {
+  const label = n.label || n.id || 'Memory node';
+  const lines = [
+    `Type: ${n.kind || 'unknown'}`,
+    `ID: ${n.id || 'unknown'}`,
+  ];
+  if (n.id?.startsWith('file:')) lines.push(`Path: ${n.id.slice(5)}`);
+  if (n.kind === 'core') lines.push('This is the AIS-OS center node.');
+  if (n.kind === 'workspace') lines.push('Workspace scanned from ~/.claude/projects.');
+  if (n.kind === 'vector') lines.push('Vector index from Gravity Claw environment.');
+
+  // Build extra action buttons for modal
+  let extraButtons = '';
+  const isWiki = n.kind?.startsWith('wiki');
+  const isSkill = n.kind === 'skill';
+  const isDomain = n.kind === 'domain';
+
+  // We'll use openModalWithActions for extended buttons
+  document.getElementById('modal-title').textContent = label;
+  document.getElementById('modal-sub').textContent = `${n.kind || 'node'} · ${n.id || ''}`;
+  document.getElementById('modal-body').textContent = lines.join('\n');
+  document.getElementById('modal').classList.add('open');
+
+  // Add cross-view action buttons
+  const actionDiv = document.querySelector('#modal .modal-action');
+  if (actionDiv) {
+    let extraHtml = '';
+    if (isWiki) {
+      const stem = label.replace(/\s+/g, '-').toLowerCase();
+      extraHtml += `<button class="btn-secondary" onclick="closeCmdk();closeModal();showView('wiki');setTimeout(()=>wikiFollowLink('${escapeHtml(stem)}'),300)">📖 Open in Wiki</button>`;
+    }
+    if (isDomain) {
+      extraHtml += `<button class="btn-secondary" onclick="closeModal();showView('wiki');setTimeout(()=>wikiOpenDomain('${escapeHtml(label)}'),300)">📁 Open Domain</button>`;
+    }
+    if (isSkill) {
+      const cmd = '/' + (n.id?.replace('skill:', '') || label);
+      extraHtml += `<button class="btn-secondary" onclick="navigator.clipboard.writeText('${escapeHtml(cmd)}').catch(()=>{});showToast('Copied: ${escapeHtml(cmd)}');closeModal()">⚡ Copy ${escapeHtml(cmd)}</button>`;
+    }
+    // Always close + done
+    actionDiv.innerHTML = `<button class="btn-primary" onclick="closeModal()">Done</button><button class="btn-secondary" onclick="closeModal()">Close</button>${extraHtml}`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PHASE C — N5: FILTER CHIPS (graph)
+// ══════════════════════════════════════════════════════════════
+
+const FILTER_KINDS = [
+  { key: 'core', label: 'Core' },
+  { key: 'domain', label: 'Domain' },
+  { key: 'anchor', label: 'Anchor' },
+  { key: 'workspace', label: 'Workspace' },
+  { key: 'file', label: 'File' },
+  { key: 'skill', label: 'Skill' },
+  { key: 'vector', label: 'Vector' },
+  { key: 'stale', label: 'Stale' },
+  { key: 'wiki-source', label: 'Wiki Source' },
+  { key: 'wiki-concept', label: 'Wiki Concept' },
+  { key: 'wiki-person', label: 'Wiki Person' },
+  { key: 'wiki-org', label: 'Wiki Org' },
+  { key: 'wiki-comparison', label: 'Comparison' },
+  { key: 'wiki-analysis', label: 'Analysis' },
+];
+
+function _initFilterChips() {
+  const row = document.getElementById('graph-filter-row');
+  if (!row) return;
+  // Load persisted state
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('graphFilterState') || '{}'); } catch(e) {}
+  window.__graphFilterState = {};
+  FILTER_KINDS.forEach(f => {
+    window.__graphFilterState[f.key] = saved[f.key] !== false; // default ON
+  });
+  _renderFilterChips();
+}
+
+function _renderFilterChips() {
+  const row = document.getElementById('graph-filter-row');
+  if (!row) return;
+  const fs = window.__graphFilterState || {};
+  row.innerHTML = FILTER_KINDS.map(f =>
+    `<span class="filter-chip ${fs[f.key] !== false ? 'on' : ''}" onclick="_toggleFilterChip('${f.key}')">${f.label}</span>`
+  ).join('') + `<span class="filter-chip on" style="margin-left:auto;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08);color:rgba(255,255,255,0.35);" onclick="_filterChipsAll()">All on</span>`;
+}
+
+function _toggleFilterChip(key) {
+  const fs = window.__graphFilterState;
+  fs[key] = !fs[key];
+  try { localStorage.setItem('graphFilterState', JSON.stringify(fs)); } catch(e) {}
+  _renderFilterChips();
+  // Reapply opacity
+  _applyFocusOpacity(window.__graphFocusCurrentIdx);
+}
+
+function _filterChipsAll() {
+  const fs = window.__graphFilterState;
+  FILTER_KINDS.forEach(f => fs[f.key] = true);
+  try { localStorage.setItem('graphFilterState', JSON.stringify(fs)); } catch(e) {}
+  _renderFilterChips();
+  _applyFocusOpacity(window.__graphFocusCurrentIdx);
+}
+
+_initFilterChips();
 
 // Load Supabase mini-card on dashboard init
 (async function loadSbMiniCard() {

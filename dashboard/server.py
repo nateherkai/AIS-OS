@@ -43,6 +43,7 @@ from supabase_widget import (
 from pinecone_widget import stats as pc_stats, recent as pc_recent, query as pc_query
 from usage_tracker import usage_stats
 import personal_agent as agent_mod
+import wiki_reader as wiki_mod
 
 # Ensure BRIDGE_TOKEN exists (generate once, persist to .env)
 if not os.environ.get("BRIDGE_TOKEN"):
@@ -442,6 +443,115 @@ def api_agent_ask(body: AgentAsk):
         return agent_mod.ask(body.question, body.mode)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ── Wiki Browser (N2) ────────────────────────────────────────
+
+import time as _time
+_search_index_cache: dict = {"ts": 0, "data": None}
+
+@app.get("/api/wiki/tree")
+def api_wiki_tree():
+    try:
+        return wiki_mod.tree()
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.get("/api/wiki/page")
+def api_wiki_page(path: str):
+    if ".." in path:
+        raise HTTPException(400, "Path traversal rejected")
+    try:
+        return wiki_mod.page(path)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.get("/api/wiki/search")
+def api_wiki_search(q: str = ""):
+    if not q:
+        return []
+    try:
+        return wiki_mod.search(q)
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.get("/api/search/index")
+def api_search_index():
+    """Return flat search index for Cmd+K palette. Cached 60s."""
+    global _search_index_cache
+    now = _time.time()
+    if _search_index_cache["data"] and now - _search_index_cache["ts"] < 60:
+        return _search_index_cache["data"]
+    try:
+        index = []
+        # Dashboard views
+        views = [
+            ("dashboard", "Dashboard", "Main business overview"),
+            ("revenue", "Revenue", "Monthly revenue KPI"),
+            ("schools", "Schools", "School pipeline from Supabase"),
+            ("expenses", "Expenses", "Monthly burn and expenses"),
+            ("inbox", "Inbox", "Gmail inbox"),
+            ("pillars", "Six Pillars", "OS health pillars"),
+            ("memory", "Memory Graph", "Knowledge graph and memory feed"),
+            ("wiki", "Wiki Browser", "Browse and search vault wiki pages"),
+            ("roi", "ROI", "AI return on investment"),
+            ("dreams", "Dreams", "Dream machine recommendations"),
+            ("bridge", "GC Bridge", "Gravity Claw bridge"),
+            ("wizard", "Setup Wizard", "AIOS configuration wizard"),
+            ("supabase", "Supabase", "Database tables and status"),
+            ("pinecone", "Pinecone", "Vector memory search"),
+            ("usage", "Token Usage", "Token usage and subscription stats"),
+            ("agent", "Personal Agent", "AI assistant with vault context"),
+        ]
+        for route, label, ctx in views:
+            index.append({"type": "view", "id": route, "label": label, "context": ctx, "route": route, "action_payload": {"view": route}})
+
+        # Domain folders
+        from pathlib import Path
+        vault = Path(BASE).parent / "Bryan-Aaron-Master"
+        for d in sorted(vault.iterdir()):
+            import re as _re
+            if d.is_dir() and _re.match(r"^\d{2}-", d.name):
+                index.append({"type": "domain", "id": f"domain:{d.name}", "label": d.name, "context": "Domain folder", "route": "wiki", "action_payload": {"view": "wiki", "domain": d.name}})
+
+        # Graph nodes from memory-graph
+        try:
+            from memory_graph import build as build_graph
+            gd = build_graph()
+            for n in gd.get("nodes", []):
+                index.append({
+                    "type": "graph",
+                    "id": n.get("id"),
+                    "label": n.get("label") or n.get("id", ""),
+                    "context": n.get("kind", ""),
+                    "route": "memory",
+                    "action_payload": {"view": "memory", "node_id": n.get("id"), "kind": n.get("kind")},
+                })
+        except Exception:
+            pass
+
+        # Wiki pages
+        try:
+            t = wiki_mod.tree()
+            def _flatten(nodes, prefix=""):
+                for node in nodes:
+                    if node["type"] == "file":
+                        p = node["path"]
+                        index.append({"type": "wiki", "id": f"wiki:{p}", "label": node["name"], "context": f"wiki/{p}", "route": "wiki", "action_payload": {"view": "wiki", "wiki_path": p}})
+                    elif node["type"] == "dir":
+                        _flatten(node.get("children", []), prefix + node["name"] + "/")
+            _flatten(t.get("wiki", []))
+        except Exception:
+            pass
+
+        _search_index_cache["ts"] = now
+        _search_index_cache["data"] = index
+        return index
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 # ── Entry point ───────────────────────────────────────────────
 
