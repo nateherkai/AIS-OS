@@ -10,3 +10,11 @@ audits/
 # Gmail OAuth (never commit)
 dashboard/.gmail-credentials.json
 dashboard/.gmail-token.json
+
+# Dream output — derived from local Claude transcripts. May contain prompt hashes,
+# session IDs, and snippets. Generated nightly; do not commit.
+dashboard/data/dreams/*.json
+!dashboard/data/dreams/.gitkeep
+
+# AIS-OS lint report — derived runtime artifact
+dashboard/lint-report.md

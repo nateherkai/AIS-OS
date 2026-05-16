@@ -5,6 +5,7 @@ emits dashboard/data/dreams/YYYY-MM-DD.json with ranked recommendations.
 
 Budget: <30s on typical day. Skips files older than 24h.
 """
+import hashlib
 import json
 import re
 import sys
@@ -12,6 +13,45 @@ import time
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
+
+
+def _redact_prompt(text: str) -> str:
+    """Return a non-reversible 8-char content hash. Never persist raw user text."""
+    if not isinstance(text, str):
+        return ""
+    return "hash:" + hashlib.sha1(text.encode()).hexdigest()[:8]
+
+
+def _sanitize_detail(detail: dict) -> dict:
+    """Strip raw user text from a recommendation detail. Keep aggregates."""
+    if not isinstance(detail, dict):
+        return detail
+    out = dict(detail)
+    if "prompt" in out:
+        out["prompt_hash"] = _redact_prompt(out["prompt"])
+        del out["prompt"]
+    return out
+
+
+def _redact_priority_minutes(priority: str) -> int:
+    return {"high": 30, "medium": 15, "low": 5}.get(priority, 10)
+
+
+def _build_cards(top_recs: list) -> list:
+    """Project top recommendations into the dashboard's expected `cards` schema."""
+    cards = []
+    for i, r in enumerate(top_recs):
+        cards.append({
+            "id": f"d{i+1}",
+            "dim": r.get("dimension", "unknown"),
+            "title": (r.get("headline") or "")[:80],
+            "insight": r.get("headline", ""),
+            "action": ("Promote to skill or memory" if r.get("priority") == "high"
+                       else "Review and decide"),
+            "estimated_value_minutes": _redact_priority_minutes(r.get("priority", "low")),
+            "status": "open",
+        })
+    return cards
 
 HOME = Path.home()
 BASE = Path(__file__).parent.parent
@@ -102,7 +142,12 @@ def analyze() -> dict:
     # Dimension 1: Repeated manual tasks — user typed similar request 3+ times
     norm = lambda s: re.sub(r"\s+", " ", s.lower().strip())[:120]
     user_counter = Counter(norm(t) for t in user_texts if len(t) > 20)
-    repeated = [{"prompt": k, "count": v} for k, v in user_counter.most_common(5) if v >= 3]
+    # Store hashes only — never raw user text. Keep a short non-identifying snippet
+    # of 30 chars (truncated and lowercased) for headlines.
+    repeated = [
+        {"prompt_hash": _redact_prompt(k), "snippet": k[:30], "count": v}
+        for k, v in user_counter.most_common(5) if v >= 3
+    ]
 
     # Dimension 2: Slow workflows — sessions w/ >40 tool calls
     slow_sessions = [{"session": s[:8], "tool_calls": len(tools)}
@@ -116,8 +161,11 @@ def analyze() -> dict:
     waste = waste[:5]
 
     # Dimension 4: Memory gaps — same question phrased 2+ times across sessions
-    memory_gaps = [{"prompt": k, "count": v} for k, v in user_counter.most_common(10)
-                   if 2 <= v < 3 and any(q in k for q in ("what is", "where is", "how do i", "remind me"))][:5]
+    memory_gaps = [
+        {"prompt_hash": _redact_prompt(k), "snippet": k[:30], "count": v}
+        for k, v in user_counter.most_common(10)
+        if 2 <= v < 3 and any(q in k for q in ("what is", "where is", "how do i", "remind me"))
+    ][:5]
 
     # Dimension 5: Skill underuse
     skills_doc = json.loads(SKILLS_FILE.read_text())
@@ -143,7 +191,9 @@ def analyze() -> dict:
     for t in user_texts:
         tl = t.lower()
         if any(term in tl for term in silo_terms) and len(t) > 30:
-            silos.append({"prompt": tl[:120]})
+            # Persist only the matched term, not the full prompt
+            matched = next((term for term in silo_terms if term in tl), "")
+            silos.append({"term": matched, "prompt_hash": _redact_prompt(tl)})
         if len(silos) >= 5:
             break
 
@@ -151,8 +201,8 @@ def analyze() -> dict:
     recs = []
     for r in repeated:
         recs.append({"dimension": "repeated-task", "priority": "high",
-                     "headline": f'Saw "{r["prompt"][:60]}..." {r["count"]}x — promote to skill',
-                     "detail": r})
+                     "headline": f'Saw similar prompt {r["count"]}x ({r["prompt_hash"]}) — promote to skill',
+                     "detail": _sanitize_detail(r)})
     for s in slow_sessions:
         recs.append({"dimension": "slow-workflow", "priority": "medium",
                      "headline": f'Session {s["session"]} ran {s["tool_calls"]} tool calls — review for batching',
@@ -163,8 +213,8 @@ def analyze() -> dict:
                      "detail": w})
     for g in memory_gaps:
         recs.append({"dimension": "memory-gap", "priority": "medium",
-                     "headline": f'Asked similar question {g["count"]}x — write a memory',
-                     "detail": g})
+                     "headline": f'Asked similar question {g["count"]}x ({g["prompt_hash"]}) — write a memory',
+                     "detail": _sanitize_detail(g)})
     for u in underused:
         recs.append({"dimension": "skill-underuse", "priority": "low",
                      "headline": f'{u["skill"]} never invoked',
@@ -179,8 +229,8 @@ def analyze() -> dict:
                      "detail": fr})
     for si in silos:
         recs.append({"dimension": "knowledge-silo", "priority": "low",
-                     "headline": f'Asked about external store: "{si["prompt"][:60]}..."',
-                     "detail": si})
+                     "headline": f'Asked about external store ({si["term"]})',
+                     "detail": _sanitize_detail(si)})
 
     out = {
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -199,6 +249,8 @@ def analyze() -> dict:
         },
         "recommendations": recs[:20],
         "top_3": recs[:3],
+        # Backwards-compat with dashboard JS (loadVaultCards reads dream.cards).
+        "cards": _build_cards(recs[:3]),
     }
     return out
 
