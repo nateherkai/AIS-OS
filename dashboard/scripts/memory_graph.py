@@ -106,6 +106,33 @@ def build():
         nodes.append({"id": vid, "label": env["PINECONE_INDEX_NAME"], "kind": "vector", "size": 8})
         edges.append({"source": "aios", "target": vid})
 
+    # Domain hubs — big anchor nodes representing each 01-07 vault domain folder
+    # These give the graph clear central structures (like Obsidian's hub-and-spoke)
+    domain_hubs = [
+        ("01-AG-COACH-PRO",          "Ag Coach Pro",          "domain", 22),
+        ("02-AARON-FAMILY-LIVESTOCK","Aaron Family Livestock","domain", 20),
+        ("03-TEACHING",              "Teaching",              "domain", 16),
+        ("04-FINANCES",              "Finances",              "domain", 14),
+        ("05-PERSONAL",              "Personal",              "domain", 14),
+        ("06-AI-WORKFLOW",           "AI Workflow",           "domain", 18),
+        ("07-RESOURCES",             "Resources",             "domain", 14),
+    ]
+    vault_root_check = Path("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master")
+    for slug, label, kind, size in domain_hubs:
+        if (vault_root_check / slug).exists():
+            did = f"domain:{slug}"
+            nodes.append({"id": did, "label": label, "kind": kind, "size": size})
+            edges.append({"source": "aios", "target": did})
+    # Special anchors — Business Brain + CLAUDE.md as big standalone hubs
+    bb = vault_root_check / "Business_Brain.md"
+    if bb.exists():
+        nodes.append({"id": "anchor:business-brain", "label": "Business Brain", "kind": "anchor", "size": 20})
+        edges.append({"source": "aios", "target": "anchor:business-brain"})
+    cmd = vault_root_check / "CLAUDE.md"
+    if cmd.exists():
+        nodes.append({"id": "anchor:claude-md", "label": "CLAUDE", "kind": "anchor", "size": 18})
+        edges.append({"source": "aios", "target": "anchor:claude-md"})
+
     # Vault wiki nodes — Karpathy LLM Wiki, subkinded for visual layer + cross-linked
     wiki_palette = {
         "sources": "wiki-source",
@@ -138,7 +165,41 @@ def build():
             "size": wiki_size.get(wn["type"], 7),
             "path": wn["path"],
         })
-        edges.append({"source": "aios", "target": nid})
+        # Connect to domain hub(s) instead of just AIOS — gives graph structure
+        connected_to_domain = False
+        for slug, label, kind, size in [
+            ("01-AG-COACH-PRO",          "Ag Coach Pro",          "domain", 22),
+            ("02-AARON-FAMILY-LIVESTOCK","Aaron Family Livestock","domain", 20),
+            ("03-TEACHING",              "Teaching",              "domain", 16),
+            ("04-FINANCES",              "Finances",              "domain", 14),
+            ("05-PERSONAL",              "Personal",              "domain", 14),
+            ("06-AI-WORKFLOW",           "AI Workflow",           "domain", 18),
+            ("07-RESOURCES",             "Resources",             "domain", 14),
+        ]:
+            label_lower = wn["id"].lower()
+            slug_key = slug.lower().replace("0", "").replace("-", "")
+            # Heuristic: agcoach-* → ag-coach-pro, etc.
+            if (
+                ("agcoach" in label_lower and "01" in slug) or
+                ("livestock" in label_lower and "02" in slug) or
+                ("teaching" in label_lower and "03" in slug) or
+                ("finance" in label_lower and "04" in slug) or
+                ("nate-herk" in label_lower and "06" in slug) or
+                ("jack-roberts" in label_lower and "06" in slug) or
+                ("karpathy" in label_lower and "06" in slug) or
+                ("wiki" in label_lower and "06" in slug) or
+                ("dream" in label_lower and "06" in slug) or
+                ("hot-cache" in label_lower and "06" in slug) or
+                ("obsidian" in label_lower and "06" in slug) or
+                ("os" in label_lower and "06" in slug)
+            ):
+                did = f"domain:{slug}"
+                if did in existing_ids:
+                    edges.append({"source": did, "target": nid})
+                    connected_to_domain = True
+                    break
+        if not connected_to_domain:
+            edges.append({"source": "aios", "target": nid})
         existing_ids.add(nid)
     # Crosslinks BETWEEN wiki nodes — fires the neural map
     for wn in wiki_nodes_raw:

@@ -266,6 +266,8 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <svg class="graph-svg" id="graph-svg"></svg>
       <div class="graph-legend">
         <span><i style="background:#00E676;box-shadow:0 0 10px #00E676;"></i>Memory Core</span>
+        <span><i style="background:#FACC15;box-shadow:0 0 10px #FACC15;"></i>Domain Hub</span>
+        <span><i style="background:#F472B6;box-shadow:0 0 10px #F472B6;"></i>Anchor</span>
         <span><i style="background:#0077FF;box-shadow:0 0 10px #0077FF;"></i>Workspace</span>
         <span><i style="background:#00C2FF;box-shadow:0 0 10px #00C2FF;"></i>File</span>
         <span><i style="background:#FFD000;box-shadow:0 0 10px #FFD000;"></i>Decision</span>
@@ -816,6 +818,8 @@ async function loadMemory() {
 
 const KIND_COLORS = {
   core: '#00E676',
+  domain: '#FACC15',
+  anchor: '#F472B6',
   workspace: '#0077FF',
   file: '#00C2FF',
   decision: '#FFD000',
@@ -1056,14 +1060,15 @@ function runForceGraph(nodes, edges) {
     .force('center', d3.forceCenter(W/2, H/2).strength(0.02))
     .alphaDecay(0)
     .alphaMin(0)
-    .alphaTarget(0.04);
+    .alphaTarget(0.006)
+    .velocityDecay(0.55);
 
   window.__graphSim = sim;
 
   // Drag behavior
   const dragBehavior = d3.drag()
     .on('start', function(event, d) {
-      if (!event.active) sim.alphaTarget(0.3).restart();
+      if (!event.active) sim.alphaTarget(0.15).restart();
       d.fx = d.x;
       d.fy = d.y;
     })
@@ -1072,7 +1077,7 @@ function runForceGraph(nodes, edges) {
       d.fy = event.y;
     })
     .on('end', function(event, d) {
-      if (!event.active) sim.alphaTarget(0.04);
+      if (!event.active) sim.alphaTarget(0.006);
       d.fx = null;
       d.fy = null;
     });
