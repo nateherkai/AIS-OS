@@ -25,6 +25,7 @@ from supabase_client import get_schools, get_pipeline_summary
 from parse_apple_card import parse_and_update
 from pillars import build_pillars
 from memory_feed import build_feed as build_memory_feed
+from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
 import bridge as bridge_mod
 import notify_gc
@@ -215,6 +216,10 @@ def api_pillars():
 @app.get("/api/memory-feed")
 def api_memory_feed(limit: int = 30):
     return build_memory_feed(limit=limit)
+
+@app.get("/api/memory-graph")
+def api_memory_graph():
+    return build_memory_graph()
 
 @app.get("/api/roi")
 def api_roi():

@@ -129,50 +129,56 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 /* OS LAYER VIEWS */
 .view { display:none; padding-bottom:80px; }
 .view.active { display:flex; flex-direction:column; gap:16px; }
-/* OS Layer typography — bigger for legibility */
-.view .panel-title { font-size:18px; letter-spacing:0.04em; }
-.view .panel { padding:22px; }
-.view .kpi-label { font-size:16px; }
-.view .kpi-value { font-size:38px; }
-.view .kpi-sub { font-size:14px; }
+/* OS Layer typography — much bigger for legibility */
+.view .panel-title { font-size:24px; letter-spacing:0.04em; }
+.view .panel { padding:26px; }
+.view .kpi-label { font-size:20px; }
+.view .kpi-value { font-size:56px; }
+.view .kpi-sub { font-size:18px; }
 
-.pillar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-.pillar-card { border-radius:14px; padding:20px; }
-.pillar-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-.pillar-icon { font-size:32px; }
-.pillar-name { font-size:18px; font-weight:600; color:#fff; flex:1; }
-.pillar-count { font-size:14px; color:rgba(255,255,255,0.4); }
-.pillar-member { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:15px; color:rgba(255,255,255,0.75); border-bottom:1px solid rgba(255,255,255,0.04); }
+.pillar-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.pillar-card { border-radius:14px; padding:24px; }
+.pillar-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.pillar-icon { font-size:40px; }
+.pillar-name { font-size:24px; font-weight:600; color:#fff; flex:1; }
+.pillar-count { font-size:18px; color:rgba(255,255,255,0.45); }
+.pillar-member { display:flex; align-items:center; gap:12px; padding:10px 0; font-size:19px; color:rgba(255,255,255,0.8); border-bottom:1px solid rgba(255,255,255,0.04); }
 .pillar-member:last-child { border:none; }
-.pillar-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.pdot-active { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.7); }
+.pillar-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.pdot-active { background:#4ade80; box-shadow:0 0 10px rgba(74,222,128,0.7); }
 .pdot-inactive { background:#6b7280; }
-.pdot-degraded { background:#facc15; box-shadow:0 0 8px rgba(250,204,21,0.6); }
+.pdot-degraded { background:#facc15; box-shadow:0 0 10px rgba(250,204,21,0.6); }
 .pdot-unknown { background:rgba(255,255,255,0.15); }
 
-.feed-row { display:flex; gap:14px; padding:14px 6px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:15px; }
-.feed-source { font-size:12px; padding:4px 10px; border-radius:6px; background:rgba(212,165,116,0.12); color:#D4A574; flex-shrink:0; height:fit-content; }
-.feed-text { flex:1; color:rgba(255,255,255,0.8); }
-.feed-ts { font-size:12px; color:rgba(255,255,255,0.35); flex-shrink:0; }
+.feed-row { display:flex; gap:16px; padding:18px 8px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:18px; }
+.feed-source { font-size:15px; padding:6px 12px; border-radius:8px; background:rgba(212,165,116,0.12); color:#D4A574; flex-shrink:0; height:fit-content; }
+.feed-text { flex:1; color:rgba(255,255,255,0.85); line-height:1.5; }
+.feed-ts { font-size:14px; color:rgba(255,255,255,0.4); flex-shrink:0; }
 
-.roi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-.roi-flag { padding:14px 18px; background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); border-radius:10px; font-size:15px; color:rgba(255,255,255,0.8); margin-top:10px; }
+.roi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.roi-flag { padding:18px 22px; background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); border-radius:10px; font-size:18px; color:rgba(255,255,255,0.85); margin-top:12px; }
 .roi-flag b { color:#f87171; }
 
-.dream-card { padding:18px; border-radius:12px; background:rgba(212,165,116,0.06); border:1px solid rgba(212,165,116,0.2); margin-bottom:12px; }
+.dream-card { padding:22px; border-radius:12px; background:rgba(212,165,116,0.06); border:1px solid rgba(212,165,116,0.2); margin-bottom:14px; }
 .dream-pri-high { border-color:rgba(248,113,113,0.4); background:rgba(248,113,113,0.06); }
 .dream-pri-medium { border-color:rgba(250,204,21,0.3); background:rgba(250,204,21,0.06); }
 .dream-pri-low { border-color:rgba(255,255,255,0.1); background:rgba(255,255,255,0.03); }
-.dream-dim { font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:6px; }
-.dream-head { font-size:17px; color:#fff; font-weight:500; line-height:1.4; }
+.dream-dim { font-size:14px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-bottom:8px; }
+.dream-head { font-size:21px; color:#fff; font-weight:500; line-height:1.4; }
 
-/* Knowledge graph (Obsidian glow viz) */
-.graph-wrap { position:relative; height:480px; overflow:hidden; border-radius:14px; background:radial-gradient(circle at 50% 50%, rgba(212,165,116,0.04), rgba(0,0,0,0.5) 70%); border:1px solid rgba(255,255,255,0.06); }
-.graph-svg { width:100%; height:100%; }
-.glow-node circle { transition:all 0.3s; cursor:pointer; }
-.glow-node:hover circle { r:14; }
-.glow-node text { fill:rgba(255,255,255,0.85); font-size:11px; text-anchor:middle; pointer-events:none; }
-.glow-line { stroke:rgba(212,165,116,0.18); stroke-width:1; }
+/* Memory Graph — force-directed glow viz */
+.graph-wrap { position:relative; height:640px; overflow:hidden; border-radius:14px; background:radial-gradient(ellipse at center, rgba(15,15,30,0.95), #050510 70%); border:1px solid rgba(255,255,255,0.06); }
+.graph-svg { width:100%; height:100%; cursor:grab; }
+.graph-svg:active { cursor:grabbing; }
+.graph-legend { position:absolute; bottom:14px; left:14px; display:flex; gap:14px; font-size:13px; color:rgba(255,255,255,0.7); background:rgba(0,0,0,0.4); padding:8px 14px; border-radius:8px; backdrop-filter:blur(8px); }
+.graph-legend span { display:inline-flex; align-items:center; gap:6px; }
+.graph-legend i { width:9px; height:9px; border-radius:50%; display:inline-block; }
+.graph-stats { position:absolute; top:14px; right:14px; font-size:12px; color:rgba(255,255,255,0.55); background:rgba(0,0,0,0.4); padding:8px 14px; border-radius:8px; backdrop-filter:blur(8px); text-align:right; line-height:1.5; }
+.graph-stats b { color:#D4A574; font-weight:600; }
+.graph-title { position:absolute; top:14px; left:14px; font-size:14px; color:rgba(255,255,255,0.55); letter-spacing:0.08em; text-transform:uppercase; }
+.graph-title b { display:block; color:#fff; font-size:18px; text-transform:none; letter-spacing:0; margin-top:4px; }
+.graph-node { cursor:pointer; }
+.graph-edge { stroke-linecap:round; }
 </style>
 </head>
 <body>
@@ -239,8 +245,21 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-memory" class="view">
-    <div class="panel-title">Knowledge Graph <span style="font-size:12px;color:rgba(255,255,255,0.4);">obsidian + pinecone + supabase + local</span></div>
-    <div class="graph-wrap"><svg class="graph-svg" id="graph-svg"></svg></div>
+    <div class="graph-wrap">
+      <div class="graph-title">Memory Graph<b id="graph-headline">— · — · —</b></div>
+      <div class="graph-stats" id="graph-stats">loading…</div>
+      <svg class="graph-svg" id="graph-svg"></svg>
+      <div class="graph-legend">
+        <span><i style="background:#4ade80;box-shadow:0 0 8px #4ade80;"></i>Memory Core</span>
+        <span><i style="background:#a78bfa;box-shadow:0 0 8px #a78bfa;"></i>Workspace</span>
+        <span><i style="background:#60a5fa;box-shadow:0 0 8px #60a5fa;"></i>File</span>
+        <span><i style="background:#D4A574;box-shadow:0 0 8px #D4A574;"></i>Decision</span>
+        <span><i style="background:#22d3ee;box-shadow:0 0 8px #22d3ee;"></i>Session</span>
+        <span><i style="background:#f472b6;box-shadow:0 0 8px #f472b6;"></i>Skill</span>
+        <span><i style="background:#facc15;box-shadow:0 0 8px #facc15;"></i>Vector</span>
+        <span><i style="background:#6b7280;"></i>Stale</span>
+      </div>
+    </div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
     <div class="panel glass" id="memory-feed"><div class="loading">Loading...</div></div>
   </div>
@@ -660,15 +679,159 @@ async function loadMemory() {
   const d = await fetch('/api/memory-feed?limit=40').then(r => r.json());
   document.getElementById('memory-ts').textContent = d.ts || '';
   const feed = document.getElementById('memory-feed');
-  if (!d.items.length) { feed.innerHTML = '<div class="loading">No recent memory writes</div>'; return; }
-  feed.innerHTML = d.items.map(it => `
-    <div class="feed-row">
-      <span class="feed-source">${it.source}</span>
-      <span class="feed-text">${(it.summary || '').replace(/</g,'&lt;')}<br><span style="font-size:11px;color:rgba(255,255,255,0.3);">${(it.path || '').replace(/</g,'&lt;')}</span></span>
-      <span class="feed-ts">${(it.ts || '').slice(0,16)}</span>
-    </div>
-  `).join('');
-  drawGraph(d.items);
+  if (d.items.length) {
+    feed.innerHTML = d.items.map(it => `
+      <div class="feed-row">
+        <span class="feed-source">${it.source}</span>
+        <span class="feed-text">${(it.summary || '').replace(/</g,'&lt;')}<br><span style="font-size:11px;color:rgba(255,255,255,0.3);">${(it.path || '').replace(/</g,'&lt;')}</span></span>
+        <span class="feed-ts">${(it.ts || '').slice(0,16)}</span>
+      </div>
+    `).join('');
+  } else {
+    feed.innerHTML = '<div class="loading">No recent memory writes</div>';
+  }
+  loadMemoryGraph();
+}
+
+const KIND_COLORS = {
+  core: '#4ade80',
+  workspace: '#a78bfa',
+  file: '#60a5fa',
+  decision: '#D4A574',
+  session: '#22d3ee',
+  skill: '#f472b6',
+  vector: '#facc15',
+  stale: '#6b7280',
+};
+
+let graphSim = null;
+
+async function loadMemoryGraph() {
+  const data = await fetch('/api/memory-graph').then(r => r.json());
+  const s = data.stats;
+  document.getElementById('graph-headline').textContent =
+    `${s.workspaces} workspaces · ${s.memory_files} memory files · ${s.vector_indexes} vector indexes`;
+  document.getElementById('graph-stats').innerHTML =
+    `<b>${s.nodes_total}</b> nodes · <b>${s.edges_total}</b> edges<br>${s.decisions} decisions · ${s.skills} skills · ${s.sessions} sessions${s.stale ? ' · <span style="color:#facc15;">'+s.stale+' stale</span>' : ''}`;
+  runForceGraph(data.nodes, data.edges);
+}
+
+function runForceGraph(nodes, edges) {
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  if (graphSim) { cancelAnimationFrame(graphSim); graphSim = null; }
+  const W = svg.clientWidth || 1200;
+  const H = svg.clientHeight || 640;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // Init positions
+  const idx = {};
+  nodes.forEach((n, i) => {
+    idx[n.id] = i;
+    n.x = W/2 + (Math.random() - 0.5) * 100;
+    n.y = H/2 + (Math.random() - 0.5) * 100;
+    n.vx = 0; n.vy = 0;
+    if (n.kind === 'core') { n.fixed = true; n.x = W/2; n.y = H/2; }
+  });
+  const links = edges.map(e => ({ s: idx[e.source], t: idx[e.target] })).filter(l => l.s !== undefined && l.t !== undefined);
+
+  // SVG content
+  let defs = `<defs>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+  svg.innerHTML = defs +
+    '<g id="g-edges"></g>' +
+    '<g id="g-nodes"></g>';
+  const gEdges = document.getElementById('g-edges');
+  const gNodes = document.getElementById('g-nodes');
+
+  // Pre-create elements
+  const edgeEls = links.map(l => {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    e.setAttribute('class', 'graph-edge');
+    e.setAttribute('stroke', 'rgba(212,165,116,0.15)');
+    e.setAttribute('stroke-width', '1');
+    e.setAttribute('fill', 'none');
+    gEdges.appendChild(e);
+    return e;
+  });
+  const nodeEls = nodes.map(n => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'graph-node');
+    const color = KIND_COLORS[n.kind] || '#999';
+    g.innerHTML = `
+      <circle r="${n.size}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
+      ${n.size > 9 ? `<text dy="${n.size+14}" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="13" font-weight="500">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
+    `;
+    gNodes.appendChild(g);
+    return g;
+  });
+
+  // Force simulation
+  const REPULSION = 1800;
+  const LINK_K = 0.04;
+  const LINK_LEN = 110;
+  const CENTER_K = 0.012;
+  const DAMP = 0.85;
+
+  let ticks = 0;
+  function step() {
+    // Repulsion
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      if (a.fixed) continue;
+      for (let j = 0; j < nodes.length; j++) {
+        if (i === j) continue;
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d2 = dx*dx + dy*dy + 0.01;
+        const f = REPULSION / d2;
+        a.vx += (dx / Math.sqrt(d2)) * f * 0.001;
+        a.vy += (dy / Math.sqrt(d2)) * f * 0.001;
+      }
+    }
+    // Springs
+    links.forEach(l => {
+      const a = nodes[l.s], b = nodes[l.t];
+      let dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx*dx + dy*dy) + 0.01;
+      const force = LINK_K * (d - LINK_LEN);
+      const fx = (dx / d) * force, fy = (dy / d) * force;
+      if (!a.fixed) { a.vx += fx; a.vy += fy; }
+      if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
+    });
+    // Center pull
+    nodes.forEach(n => {
+      if (n.fixed) return;
+      n.vx += (W/2 - n.x) * CENTER_K * 0.01;
+      n.vy += (H/2 - n.y) * CENTER_K * 0.01;
+    });
+    // Integrate
+    nodes.forEach(n => {
+      if (n.fixed) return;
+      n.vx *= DAMP; n.vy *= DAMP;
+      n.x += n.vx; n.y += n.vy;
+      // Bounds
+      n.x = Math.max(30, Math.min(W-30, n.x));
+      n.y = Math.max(30, Math.min(H-30, n.y));
+    });
+    // Render
+    edgeEls.forEach((e, i) => {
+      const a = nodes[links[i].s], b = nodes[links[i].t];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2 - 30;
+      e.setAttribute('d', `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`);
+    });
+    nodeEls.forEach((el, i) => {
+      el.setAttribute('transform', `translate(${nodes[i].x},${nodes[i].y})`);
+    });
+    ticks++;
+    if (ticks < 600) graphSim = requestAnimationFrame(step);
+  }
+  step();
 }
 
 function drawGraph(items) {
