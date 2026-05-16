@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ag Coach Pro — OS Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+  .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); }
+  .glass-gold { background: rgba(212,165,116,0.08); border: 1px solid rgba(212,165,116,0.25); backdrop-filter: blur(20px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; min-width: 220px; height: 100vh;
+    background: rgba(0,0,0,0.5); border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column; padding: 24px 16px; gap: 2px;
+  }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 10px; }
+  .logo-mark { width: 32px; height: 32px; background: linear-gradient(135deg, #D4A574, #c4855a); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #001F4D; }
+  .logo-text { font-size: 13px; font-weight: 600; color: #fff; }
+  .logo-sub { font-size: 10px; color: rgba(255,255,255,0.35); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.15s; border: 1px solid transparent; user-select: none; }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+  .nav-item.active { background: rgba(212,165,116,0.12); color: #D4A574; border-color: rgba(212,165,116,0.2); }
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+  .nav-label { flex: 1; }
+  .nav-badge { background: #D4A574; color: #001F4D; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+  .nav-badge.yellow { background: #facc15; }
+  .sidebar-section { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: rgba(255,255,255,0.2); text-transform: uppercase; padding: 14px 12px 5px; }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-bottom { font-size: 11px; color: rgba(255,255,255,0.3); padding: 12px 12px 0; border-top: 1px solid rgba(255,255,255,0.06); line-height: 1.8; }
+
+  /* ACTION BUTTONS in sidebar */
+  .action-btn { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.15s; border: 1px solid rgba(255,255,255,0.06); margin-top: 2px; background: rgba(255,255,255,0.02); }
+  .action-btn:hover { background: rgba(212,165,116,0.1); color: #D4A574; border-color: rgba(212,165,116,0.25); transform: translateX(2px); }
+  .action-btn:active { transform: translateX(0); opacity: 0.8; }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 22px; font-weight: 700; color: #fff; }
+  .page-date { font-size: 12px; color: rgba(255,255,255,0.3); }
+
+  /* NET BANNER */
+  .net-banner { border-radius: 12px; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); }
+  .net-banner.positive { background: rgba(74,222,128,0.07); border-color: rgba(74,222,128,0.2); }
+  .net-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
+  .net-value { font-size: 22px; font-weight: 700; color: #f87171; }
+  .net-value.positive { color: #4ade80; }
+  .net-note { font-size: 11px; color: rgba(255,255,255,0.3); }
+
+  /* KPI ROW */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kpi-card { border-radius: 14px; padding: 16px 18px; cursor: default; }
+  .kpi-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+  .kpi-value.gold { color: #D4A574; }
+  .kpi-value.red { color: #f87171; }
+  .kpi-value.yellow { color: #facc15; }
+  .kpi-sub { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 5px; }
+  .kpi-progress { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 9px; }
+  .kpi-progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #D4A574, #c4855a); transition: width 0.6s ease; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .panel { border-radius: 14px; padding: 18px; }
+  .panel-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title span { color: #D4A574; font-size: 9px; }
+
+  /* PIPELINE */
+  .pipeline-item { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; cursor: pointer; border-radius: 4px; transition: background 0.1s; }
+  .pipeline-item:hover { background: rgba(255,255,255,0.03); padding-left: 4px; }
+  .pipeline-item:last-child { border: none; }
+  .pipeline-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-paid { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+  .dot-trial { background: #facc15; }
+  .pipeline-name { flex: 1; color: rgba(255,255,255,0.75); }
+  .pipeline-tier { font-size: 9px; padding: 2px 7px; border-radius: 5px; background: rgba(212,165,116,0.12); color: #D4A574; }
+  .pipeline-tier.trial { background: rgba(250,204,21,0.1); color: #facc15; }
+
+  /* EXPENSES */
+  .expense-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+  .expense-item:last-child { border: none; }
+  .expense-bar-wrap { flex: 1; }
+  .expense-name { color: rgba(255,255,255,0.65); margin-bottom: 3px; font-size: 11px; }
+  .expense-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; }
+  .expense-bar-fill { height: 100%; border-radius: 2px; background: rgba(248,113,113,0.5); }
+  .expense-amt { font-size: 12px; color: #f87171; font-weight: 500; min-width: 36px; text-align: right; }
+
+  /* INBOX */
+  .inbox-item { display: flex; gap: 10px; padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; border-radius: 6px; transition: background 0.1s; }
+  .inbox-item:hover { background: rgba(255,255,255,0.03); }
+  .inbox-item:last-child { border: none; }
+  .inbox-dot { width: 7px; height: 7px; border-radius: 50%; background: #D4A574; flex-shrink: 0; margin-top: 4px; }
+  .inbox-dot.read { background: rgba(255,255,255,0.15); }
+  .inbox-from { font-size: 12px; color: #fff; font-weight: 500; }
+  .inbox-preview { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+  .inbox-time { font-size: 10px; color: rgba(255,255,255,0.22); margin-left: auto; white-space: nowrap; }
+  .inbox-reply-btn { display: none; font-size: 10px; color: #D4A574; border: 1px solid rgba(212,165,116,0.3); border-radius: 4px; padding: 3px 8px; cursor: pointer; margin-top: 4px; background: rgba(212,165,116,0.05); }
+  .inbox-reply-btn:hover { background: rgba(212,165,116,0.15); }
+
+  /* TASKS */
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+  .task-item:hover { background: rgba(255,255,255,0.02); }
+  .task-item:last-child { border: none; }
+  .task-item.done .task-text { text-decoration: line-through; color: rgba(255,255,255,0.25); }
+  .task-item.done .task-check { background: rgba(74,222,128,0.2); border-color: #4ade80; }
+  .task-item.done .task-check::after { content: '✓'; font-size: 9px; color: #4ade80; display: flex; align-items: center; justify-content: center; height: 100%; }
+  .task-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(212,165,116,0.35); flex-shrink: 0; margin-top: 1px; transition: all 0.2s; }
+  .task-text { color: rgba(255,255,255,0.72); flex: 1; }
+  .task-tag { font-size: 9px; padding: 2px 6px; border-radius: 5px; background: rgba(212,165,116,0.08); color: rgba(212,165,116,0.7); }
+
+  /* DEBT */
+  .debt-amount { font-size: 28px; font-weight: 700; color: #4ade80; text-align: center; padding: 8px 0 4px; }
+  .debt-label { font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; }
+  .debt-progress { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; margin-top: 10px; }
+  .debt-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4ade80, #22c55e); width: 0%; transition: width 1s ease; }
+  .debt-stats { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: rgba(255,255,255,0.25); }
+  .debt-input-row { display: flex; gap: 6px; margin-top: 12px; }
+  .debt-input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #fff; font-size: 11px; padding: 6px 10px; outline: none; }
+  .debt-input:focus { border-color: rgba(212,165,116,0.3); }
+  .debt-log-btn { background: rgba(212,165,116,0.15); border: 1px solid rgba(212,165,116,0.3); color: #D4A574; border-radius: 6px; font-size: 11px; padding: 6px 10px; cursor: pointer; }
+  .debt-log-btn:hover { background: rgba(212,165,116,0.25); }
+
+  /* CREDIT USAGE */
+  .credit-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; }
+  .credit-row:last-child { border: none; }
+  .credit-school { flex: 1; color: rgba(255,255,255,0.6); }
+  .credit-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; width: 70px; }
+  .credit-bar-fill { height: 100%; border-radius: 2px; background: rgba(212,165,116,0.55); }
+  .credit-pct { font-size: 10px; color: rgba(255,255,255,0.35); min-width: 28px; text-align: right; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; max-width: 480px; width: 90%; }
+  .modal-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .modal-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
+  .modal-close { float: right; background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 18px; margin-top: -4px; }
+  .modal-close:hover { color: #fff; }
+  .modal-result { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 14px; font-size: 12px; line-height: 1.7; color: rgba(255,255,255,0.7); white-space: pre-wrap; }
+  .modal-action { margin-top: 16px; display: flex; gap: 8px; }
+  .btn-primary { flex: 1; background: rgba(212,165,116,0.2); border: 1px solid rgba(212,165,116,0.4); color: #D4A574; border-radius: 8px; font-size: 12px; padding: 9px; cursor: pointer; font-weight: 500; }
+  .btn-primary:hover { background: rgba(212,165,116,0.3); }
+  .btn-secondary { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border-radius: 8px; font-size: 12px; padding: 9px 14px; cursor: pointer; }
+  .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: rgba(212,165,116,0.15); border: 1px solid rgba(212,165,116,0.35); color: #D4A574; border-radius: 10px; padding: 10px 16px; font-size: 12px; z-index: 200; opacity: 0; transform: translateY(10px); transition: all 0.25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modal-title">Pipeline Check</div>
+    <div class="modal-sub" id="modal-sub">Running...</div>
+    <div class="modal-result" id="modal-body"></div>
+    <div class="modal-action">
+      <button class="btn-primary" id="modal-action-btn" onclick="closeModal()">Done</button>
+      <button class="btn-secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">AC</div>
+    <div>
+      <div class="logo-text">Ag Coach Pro</div>
+      <div class="logo-sub">Business OS</div>
+    </div>
+  </div>
+
+  <div class="nav-item active" onclick="setNav(this,'dashboard')"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></div>
+  <div class="nav-item" onclick="setNav(this,'revenue')"><span class="nav-icon">$</span><span class="nav-label">Revenue</span></div>
+  <div class="nav-item" onclick="setNav(this,'schools')"><span class="nav-icon">🏫</span><span class="nav-label">Schools</span><span class="nav-badge yellow">5</span></div>
+  <div class="nav-item" onclick="setNav(this,'expenses')"><span class="nav-icon">↓</span><span class="nav-label">Expenses</span></div>
+  <div class="nav-item" onclick="setNav(this,'inbox')"><span class="nav-icon">✉</span><span class="nav-label">Inbox</span><span class="nav-badge" id="inbox-badge">3</span></div>
+
+  <div class="sidebar-section">Skills</div>
+
+  <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Run Pipeline Check</span></div>
+  <div class="action-btn" onclick="runDraftReply()"><span class="nav-icon">✍</span><span>Draft Reply</span></div>
+  <div class="action-btn" onclick="runTrialFollowUp()"><span class="nav-icon">↑</span><span>Trial Follow-Up</span></div>
+
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-bottom">
+    Burn: <span style="color:#f87171;font-weight:600;">$229/mo</span><br>
+    Revenue: <span style="color:#4ade80;font-weight:600;">$125/mo</span><br>
+    Net: <span style="color:#f87171;font-weight:600;">-$104/mo</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">Good morning, Bryan</div>
+    <div class="page-date" id="live-date"></div>
+  </div>
+
+  <!-- Net banner -->
+  <div class="net-banner" id="net-banner">
+    <div>
+      <div class="net-label">Current Net Income</div>
+      <div class="net-note">Close 2 more schools to break even. 49 to hit goal.</div>
+    </div>
+    <div class="net-value" id="net-value">-$104/mo</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card glass-gold">
+      <div class="kpi-label">Monthly Revenue</div>
+      <div class="kpi-value gold" id="kpi-revenue">$125</div>
+      <div class="kpi-sub">$1,495/yr · 1 school paid</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-revenue" style="width:10%"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">School Goal</div>
+      <div class="kpi-value" id="kpi-schools">1<span style="font-size:14px;color:rgba(255,255,255,0.25)">/50</span></div>
+      <div class="kpi-sub">49 to go · deadline Aug 2026</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-schools" style="width:2%"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Monthly Burn</div>
+      <div class="kpi-value red">$229</div>
+      <div class="kpi-sub">11 services · Claude Max biggest</div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Active Trials</div>
+      <div class="kpi-value yellow" id="kpi-trials">5</div>
+      <div class="kpi-sub">Rowlett · Comfort · +3</div>
+    </div>
+  </div>
+
+  <!-- Schools + Expenses -->
+  <div class="grid-2">
+    <div class="panel glass">
+      <div class="panel-title">School Pipeline <span>LIVE · SUPABASE</span></div>
+      <div class="pipeline-item" onclick="showSchool('Athens ISD FFA','Trinity Desselles','Lone Star Elite','Active · paid by check · $1,495/yr')">
+        <div class="pipeline-dot dot-paid"></div>
+        <div class="pipeline-name">Athens ISD FFA — Trinity Desselles</div>
+        <div class="pipeline-tier">Lone Star Elite</div>
+      </div>
+      <div class="pipeline-item" onclick="showSchool('Rowlett FFA','Erica Browne','Trial','12 days in trial · Blue & Gold recommended')">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Rowlett FFA — Erica Browne</div>
+        <div class="pipeline-tier trial">Trial · 12d</div>
+      </div>
+      <div class="pipeline-item" onclick="showSchool('Comfort FFA','Lauren Kitchens','Trial','13 days in trial · Blue & Gold recommended')">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Comfort FFA — Lauren Kitchens</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+      <div class="pipeline-item" onclick="showSchool('Borger FFA','Shanee Osborn','Trial','13 days in trial · Blue & Gold recommended')">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Borger FFA — Shanee Osborn</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+      <div class="pipeline-item" onclick="showSchool('Ness City FFA','Ashley Klozenbucher','Trial','12 days in trial · Lone Star Elite possible (large program)')">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Ness City FFA — Ashley Klozenbucher</div>
+        <div class="pipeline-tier trial">Trial · 12d</div>
+      </div>
+      <div class="pipeline-item" onclick="showSchool('Merritt FFA','Justin Sam','Trial','13 days in trial · Blue & Gold recommended')">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Merritt FFA — Justin Sam</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Monthly Expenses <span>$229 TOTAL BURN</span></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">Claude Max</div><div class="expense-bar"><div class="expense-bar-fill" style="width:57%"></div></div></div><div class="expense-amt">$130</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">Supabase</div><div class="expense-bar"><div class="expense-bar-fill" style="width:11%"></div></div></div><div class="expense-amt">$25</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">Vercel</div><div class="expense-bar"><div class="expense-bar-fill" style="width:9%"></div></div></div><div class="expense-amt">$20</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">Google Workspace</div><div class="expense-bar"><div class="expense-bar-fill" style="width:9%"></div></div></div><div class="expense-amt">$20</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">ChatGPT Plus</div><div class="expense-bar"><div class="expense-bar-fill" style="width:9%"></div></div></div><div class="expense-amt">$20</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">Firecrawl</div><div class="expense-bar"><div class="expense-bar-fill" style="width:8%"></div></div></div><div class="expense-amt">$19</div></div>
+      <div class="expense-item"><div class="expense-bar-wrap"><div class="expense-name">MailerLite</div><div class="expense-bar"><div class="expense-bar-fill" style="width:7%"></div></div></div><div class="expense-amt">$15</div></div>
+    </div>
+  </div>
+
+  <!-- Inbox + Tasks + Debt -->
+  <div class="grid-3">
+    <div class="panel glass">
+      <div class="panel-title">Inbox <span id="inbox-count">3 UNREAD · GMAIL</span></div>
+      <div class="inbox-item" id="inbox-1" onclick="openInbox(1)">
+        <div class="inbox-dot" id="dot-1"></div>
+        <div style="flex:1">
+          <div class="inbox-from">Trinity Desselles · Athens ISD</div>
+          <div class="inbox-preview">Love the livestock drill, can we add horse...</div>
+          <button class="inbox-reply-btn" id="reply-1" onclick="event.stopPropagation();draftReplyFor('Trinity Desselles','Athens ISD FFA')">✍ Draft Reply</button>
+        </div>
+        <div class="inbox-time">2h ago</div>
+      </div>
+      <div class="inbox-item" id="inbox-2" onclick="openInbox(2)">
+        <div class="inbox-dot" id="dot-2"></div>
+        <div style="flex:1">
+          <div class="inbox-from">Erica Browne · Rowlett FFA</div>
+          <div class="inbox-preview">Question about the quiz builder settings...</div>
+          <button class="inbox-reply-btn" id="reply-2" onclick="event.stopPropagation();draftReplyFor('Erica Browne','Rowlett FFA')">✍ Draft Reply</button>
+        </div>
+        <div class="inbox-time">5h ago</div>
+      </div>
+      <div class="inbox-item" id="inbox-3" onclick="openInbox(3)">
+        <div class="inbox-dot" id="dot-3"></div>
+        <div style="flex:1">
+          <div class="inbox-from">Shanee Osborn · Borger FFA</div>
+          <div class="inbox-preview">Thanks for getting us set up! We love it.</div>
+          <button class="inbox-reply-btn" id="reply-3" onclick="event.stopPropagation();draftReplyFor('Shanee Osborn','Borger FFA')">✍ Draft Reply</button>
+        </div>
+        <div class="inbox-time">1d ago</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Today's Focus <span id="tasks-done-label">0/3 DONE</span></div>
+      <div class="task-item" id="task-1" onclick="toggleTask(1)">
+        <div class="task-check" id="check-1"></div>
+        <div class="task-text">Follow up with 5 trial schools</div>
+        <div class="task-tag">Sales</div>
+      </div>
+      <div class="task-item" id="task-2" onclick="toggleTask(2)">
+        <div class="task-check" id="check-2"></div>
+        <div class="task-text">Reply to Trinity — livestock feedback</div>
+        <div class="task-tag">Support</div>
+      </div>
+      <div class="task-item" id="task-3" onclick="toggleTask(3)">
+        <div class="task-check" id="check-3"></div>
+        <div class="task-text">Send MailerLite blast to 560 teachers</div>
+        <div class="task-tag">Marketing</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Debt Payoff <span>GOAL: DEC 2026</span></div>
+      <div class="debt-amount" id="debt-paid">$0</div>
+      <div class="debt-label">paid off this year</div>
+      <div class="debt-progress"><div class="debt-progress-fill" id="debt-bar"></div></div>
+      <div class="debt-stats"><span id="debt-pct">0% complete</span><span>Dec 31, 2026</span></div>
+      <div class="debt-input-row">
+        <input class="debt-input" id="debt-input" placeholder="Log payment (e.g. 500)" type="number">
+        <button class="debt-log-btn" onclick="logDebtPayment()">Log</button>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:8px;">AI Credit Usage</div>
+        <div class="credit-row"><div class="credit-school">Athens ISD</div><div class="credit-bar"><div class="credit-bar-fill" style="width:8%"></div></div><div class="credit-pct">8%</div></div>
+        <div class="credit-row"><div class="credit-school">Trial pool</div><div class="credit-bar"><div class="credit-bar-fill" style="width:2%"></div></div><div class="credit-pct">2%</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Live date
+document.getElementById('live-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+// Nav switching
+function setNav(el, page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Navigating to ' + page + ' (full app coming soon)');
+}
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Modal
+function openModal(title, sub, body, actionLabel) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-sub').textContent = sub;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal-action-btn').textContent = actionLabel || 'Done';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// Pipeline Check
+function runPipelineCheck() {
+  openModal(
+    '▶ Weekly Pipeline Check',
+    'Pulling live data from Supabase...',
+    `=== Pipeline Check — ${new Date().toLocaleDateString()} ===
+
+GOAL: 50 paid schools by August 2026
+Paid:    1 / 50  (2% to goal)
+Trials:  5
+Gap:     49 schools to close
+
+REVENUE
+MRR: $125  |  ARR: $1,495
+
+TRIALS GOING COLD (>14 days)
+→ None yet — all under 14 days
+
+ACTION THIS WEEK:
+Follow up with Rowlett FFA (Erica Browne).
+12 days in trial — run /trial-follow-up.`,
+    'Open Trial Follow-Up'
+  );
+}
+
+// Draft Reply
+function runDraftReply() {
+  openModal(
+    '✍ Draft Reply',
+    'Paste an email below and run /draft-reply in Claude Code to get a draft in your voice.',
+    `Skill: /draft-reply
+
+How to use:
+1. Open Claude Code in the AIS-OS directory
+2. Type: /draft-reply
+3. Paste the incoming email when prompted
+4. Review the draft — copy and send manually
+
+Voice register: warm, direct, short sentences.
+Never sends automatically. You review first.`,
+    'Got it'
+  );
+}
+
+// Trial Follow-Up
+function runTrialFollowUp() {
+  openModal(
+    '↑ Trial Follow-Up',
+    '5 active trial schools',
+    `Run /trial-follow-up in Claude Code to:
+
+1. Pull all 5 trial schools from Supabase
+2. See days remaining, advisor, email
+3. Get a personalized close email for each
+
+Schools in trial:
+• Rowlett FFA — Erica Browne (12d)
+• Comfort FFA — Lauren Kitchens (13d)
+• Borger FFA — Shanee Osborn (13d)
+• Ness City FFA — Ashley Klozenbucher (12d)
+• Merritt FFA — Justin Sam (13d)
+
+Recommended: Blue & Gold ($895) for all.`,
+    'Open Claude Code'
+  );
+}
+
+// School detail
+function showSchool(name, advisor, tier, notes) {
+  openModal(
+    name,
+    advisor + ' · ' + tier,
+    notes + '\n\nClick "Draft Email" to compose a follow-up in Bryan\'s voice.',
+    'Draft Email'
+  );
+}
+
+// Inbox
+let unread = 3;
+function openInbox(n) {
+  const dot = document.getElementById('dot-' + n);
+  const reply = document.getElementById('reply-' + n);
+  if (dot.classList.contains('read')) {
+    reply.style.display = 'none';
+    return;
+  }
+  dot.classList.add('read');
+  reply.style.display = 'inline-block';
+  unread--;
+  document.getElementById('inbox-badge').textContent = unread > 0 ? unread : '';
+  document.getElementById('inbox-count').textContent = (unread > 0 ? unread + ' UNREAD' : 'ALL READ') + ' · GMAIL';
+  showToast('Marked as read');
+}
+
+function draftReplyFor(name, school) {
+  openModal(
+    '✍ Draft Reply — ' + name,
+    school,
+    `Opening /draft-reply in Claude Code will generate:\n\nHey ${name.split(' ')[0]},\n\nThanks for reaching out — [personalized response based on their message].\n\n[Action or answer]\n\nThanks,\nBryan\n\n---\nRun /draft-reply in Claude Code and paste\ntheir email to get the full draft.`,
+    'Got it'
+  );
+}
+
+// Tasks
+let tasksDone = 0;
+function toggleTask(n) {
+  const item = document.getElementById('task-' + n);
+  const wasDone = item.classList.contains('done');
+  if (wasDone) {
+    item.classList.remove('done');
+    tasksDone = Math.max(0, tasksDone - 1);
+    showToast('Task unchecked');
+  } else {
+    item.classList.add('done');
+    tasksDone++;
+    showToast(tasksDone === 3 ? '🎯 All tasks done!' : 'Task complete');
+  }
+  document.getElementById('tasks-done-label').textContent = tasksDone + '/3 DONE';
+}
+
+// Debt tracker
+let totalPaid = 0;
+const DEBT_GOAL = 50000;
+function logDebtPayment() {
+  const val = parseFloat(document.getElementById('debt-input').value);
+  if (!val || val <= 0) { showToast('Enter a valid amount'); return; }
+  totalPaid += val;
+  const pct = Math.min((totalPaid / DEBT_GOAL) * 100, 100).toFixed(1);
+  document.getElementById('debt-paid').textContent = '$' + totalPaid.toLocaleString();
+  document.getElementById('debt-bar').style.width = pct + '%';
+  document.getElementById('debt-pct').textContent = pct + '% complete';
+  document.getElementById('debt-input').value = '';
+  showToast('Payment logged: $' + val.toLocaleString());
+}
+</script>
+</body>
+</html>

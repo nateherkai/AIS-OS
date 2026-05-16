@@ -1,0 +1,40 @@
+<h2>Where does your expense data live?</h2>
+<p class="subtitle">How do you currently track what you spend on tools and services?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="manual" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Nowhere yet — it's in my head</h3>
+      <p>We'll build a manual expense list inside the dashboard. You enter them once, dashboard tracks them.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="bank" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Bank / credit card statements</h3>
+      <p>CSV export from your bank. Dashboard ingests and categorizes.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="quickbooks" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>QuickBooks / accounting tool</h3>
+      <p>Pull via API or export. Accurate but requires setup.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="stripe_only" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Just Stripe payouts for now</h3>
+      <p>Start simple — revenue in Stripe, expenses as a manual list. Ship fast, add later.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Pick one, then tell me in the terminal.</p>

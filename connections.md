@@ -4,13 +4,16 @@ Registry of every system your AIOS can reach. Filled by `/onboard` from Q4-Q7 an
 
 | # | Domain | Tool | Mechanism | Auth | Last checked |
 |---|---|---|---|---|---|
-| 1 | Revenue / Financials | _filled by /onboard_ | not yet connected | — | — |
-| 2 | Customer interactions | _filled by /onboard_ | not yet connected | — | — |
-| 3 | Calendar | _filled by /onboard_ | not yet connected | — | — |
-| 4 | Communication | _filled by /onboard_ | not yet connected | — | — |
-| 5 | Project / task tracking | _filled by /onboard_ | not yet connected | — | — |
-| 6 | Meeting intelligence | _filled by /onboard_ | not yet connected | — | — |
-| 7 | Knowledge / files | _filled by /onboard_ | not yet connected | — | — |
+| 1 | Revenue / Financials | Stripe (acct 51Sm6ps — live) | key+ref | .env | 2026-05-11 |
+| 2 | Customer interactions | Gmail (support@agcoachpro.com) | mcp (claude.ai) | active | 2026-05-12 |
+| 3 | Customer interactions | Facebook DMs, iMessage | not yet connected | — | — |
+| 4 | Bulk Email | MailerLite | not yet connected | — | — |
+| 5 | Calendar | Google Calendar | mcp (claude.ai) | active | 2026-05-11 |
+| 6 | Files / Docs | Google Drive | mcp (claude.ai) | active | 2026-05-11 |
+| 7 | Project / task tracking | (none yet — in head) | not yet connected | — | — |
+| 8 | Meeting intelligence | (none yet) | not yet connected | — | — |
+| 9 | Product DB | Supabase (nkoyotdafqllgbpuklva) | mcp (claude.ai) | active | 2026-05-11 |
+| 10 | Product Deploy | Vercel (prj_4xPOIb5yS0qzoJFmLstwRURR9KC9) | mcp (claude.ai) | active | 2026-05-11 |
 
 **Mechanism options:** `mcp` (MCP server), `script` (Python/Bash hitting an API, in `scripts/`), `export` (CSV/JSON dump pipeline), `key+ref` (`.env` key + `references/{tool}-api.md` guide), `not yet connected`.
 

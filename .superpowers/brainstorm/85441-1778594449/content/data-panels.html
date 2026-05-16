@@ -1,0 +1,64 @@
+<h2>What's on your dashboard?</h2>
+<p class="subtitle">Select everything you want visible at a glance. Click multiple.</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="revenue" onclick="toggleSelect(this)">
+    <div class="letter">$</div>
+    <div class="content">
+      <h3>Revenue</h3>
+      <p>MRR, ARR, total paid, goal progress toward $120K/yr</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="schools" onclick="toggleSelect(this)">
+    <div class="letter">🏫</div>
+    <div class="content">
+      <h3>School Pipeline</h3>
+      <p>Paid count vs 50-school goal, trials, tier breakdown</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="expenses" onclick="toggleSelect(this)">
+    <div class="letter">↓</div>
+    <div class="content">
+      <h3>Expenses / Spend</h3>
+      <p>Where money is going — Supabase, Vercel, AI credits, tools</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="inbox" onclick="toggleSelect(this)">
+    <div class="letter">✉</div>
+    <div class="content">
+      <h3>Inbox Triage</h3>
+      <p>Unread emails from schools, flagged support issues</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="tasks" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Tasks / Focus</h3>
+      <p>Top 3 things to do today — replaces "in-head" task tracking</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="aicredits" onclick="toggleSelect(this)">
+    <div class="letter">⚡</div>
+    <div class="content">
+      <h3>AI Credit Usage</h3>
+      <p>Token consumption per school, burn rate, Feed Bag alerts</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="debt" onclick="toggleSelect(this)">
+    <div class="letter">⬇</div>
+    <div class="content">
+      <h3>Debt Payoff Tracker</h3>
+      <p>Progress toward paying off all debt — your #2 priority</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Select all that apply, then tell me your choices in the terminal.</p>
