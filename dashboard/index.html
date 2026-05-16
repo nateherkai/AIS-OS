@@ -386,8 +386,9 @@ async function loadKPIs() {
   document.getElementById('kpi-burn').textContent = `$${burn.toFixed(0)}`;
   document.getElementById('kpi-burn-sub').textContent = 'monthly total';
 
-  document.getElementById('kpi-trials').textContent = d.trial_count;
-  document.getElementById('kpi-trials-sub').textContent = d.trial_count === 0 ? 'no active trials' : `${d.trial_count} school${d.trial_count !== 1 ? 's' : ''} in trial`;
+  const trials = d.trial_schools ?? 0;
+  document.getElementById('kpi-trials').textContent = trials;
+  document.getElementById('kpi-trials-sub').textContent = trials === 0 ? 'no active trials' : `${trials} school${trials !== 1 ? 's' : ''} in trial`;
 
   // Net banner
   const netEl = document.getElementById('net-value');
@@ -412,7 +413,9 @@ async function loadKPIs() {
 
 async function loadPipeline() {
   const d = await api('/api/pipeline');
-  document.getElementById('sb-trials').textContent = d.trial_count || '0';
+  const sbT = document.getElementById('sb-trials');
+  if (d.trial_count > 0) { sbT.textContent = d.trial_count; sbT.style.display = ''; }
+  else { sbT.style.display = 'none'; }
 
   const all = [...d.paid, ...d.trials];
   const list = document.getElementById('pipeline-list');
