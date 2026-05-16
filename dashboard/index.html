@@ -11,7 +11,12 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .glass-gold { background:rgba(212,165,116,0.08); border:1px solid rgba(212,165,116,0.25); backdrop-filter:blur(20px); }
 
 /* SIDEBAR */
-.sidebar { width:220px; min-width:220px; height:100vh; background:rgba(0,0,0,0.5); border-right:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; padding:24px 16px; gap:2px; }
+.sidebar { width:240px; min-width:240px; height:100vh; background:rgba(0,0,0,0.5); border-right:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; padding:24px 16px; gap:2px; overflow-y:auto; }
+.sidebar .nav-item, .sidebar .action-btn { font-size:13px; }
+.sidebar .sidebar-section { font-size:11px; }
+.sidebar .nav-badge { font-size:11px; }
+.sidebar .sidebar-bottom { font-size:12px; }
+.sidebar .logo-text { font-size:14px; } .sidebar .logo-sub { font-size:11px; }
 .sidebar-logo { display:flex; align-items:center; gap:10px; padding:0 8px 20px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:10px; }
 .logo-mark { width:32px; height:32px; background:linear-gradient(135deg,#D4A574,#c4855a); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; color:#001F4D; }
 .logo-text { font-size:15px; font-weight:600; color:#fff; }
@@ -704,6 +709,14 @@ const KIND_COLORS = {
   stale: '#6b7280',
 };
 
+function hexToRgba(hex, a) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 let graphSim = null;
 
 async function loadMemoryGraph() {
@@ -735,27 +748,43 @@ function runForceGraph(nodes, edges) {
   });
   const links = edges.map(e => ({ s: idx[e.source], t: idx[e.target] })).filter(l => l.s !== undefined && l.t !== undefined);
 
-  // SVG content
+  // SVG content — glow filters + star field
+  let stars = '';
+  for (let i = 0; i < 140; i++) {
+    const sx = Math.random() * W, sy = Math.random() * H;
+    const sr = Math.random() * 1.2 + 0.3;
+    const so = Math.random() * 0.4 + 0.1;
+    stars += `<circle cx="${sx}" cy="${sy}" r="${sr}" fill="#fff" opacity="${so}"><animate attributeName="opacity" values="${so};${so*0.3};${so}" dur="${2+Math.random()*4}s" repeatCount="indefinite"/></circle>`;
+  }
   let defs = `<defs>
-    <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
+    <filter id="g" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="4" result="b1"/>
+      <feGaussianBlur stdDeviation="10" in="SourceGraphic" result="b2"/>
+      <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ge" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>`;
   svg.innerHTML = defs +
+    `<g id="g-stars">${stars}</g>` +
     '<g id="g-edges"></g>' +
     '<g id="g-nodes"></g>';
   const gEdges = document.getElementById('g-edges');
   const gNodes = document.getElementById('g-nodes');
 
-  // Pre-create elements
+  // Pre-create elements — edges w/ glow + random "fire" timing
   const edgeEls = links.map(l => {
     const e = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     e.setAttribute('class', 'graph-edge');
-    e.setAttribute('stroke', 'rgba(212,165,116,0.15)');
+    e.setAttribute('stroke', 'rgba(255,255,255,0.12)');
     e.setAttribute('stroke-width', '1');
     e.setAttribute('fill', 'none');
+    e.setAttribute('filter', 'url(#ge)');
     gEdges.appendChild(e);
+    l._fireAt = Math.random() * 200;
+    l._fireDur = 0;
     return e;
   });
   const nodeEls = nodes.map(n => {
@@ -763,8 +792,9 @@ function runForceGraph(nodes, edges) {
     g.setAttribute('class', 'graph-node');
     const color = KIND_COLORS[n.kind] || '#999';
     g.innerHTML = `
-      <circle r="${n.size}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
-      ${n.size > 9 ? `<text dy="${n.size+18}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="16" font-weight="500" style="text-shadow:0 0 4px rgba(0,0,0,0.8);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
+      <circle r="${n.size+8}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.15 : 0.35}"/>
+      <circle r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.5 : 1}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
+      ${n.size > 9 ? `<text dy="${n.size+22}" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="16" font-weight="500" style="text-shadow:0 0 6px rgba(0,0,0,0.95);">${(n.label||'').replace(/[<>&]/g,'').slice(0,18)}</text>` : ''}
     `;
     gNodes.appendChild(g);
     return g;
@@ -826,12 +856,33 @@ function runForceGraph(nodes, edges) {
       n.x = Math.max(60, Math.min(W-60, n.x));
       n.y = Math.max(60, Math.min(H-60, n.y));
     });
-    // Render
+    // Render edges w/ fire pulses
     edgeEls.forEach((e, i) => {
-      const a = nodes[links[i].s], b = nodes[links[i].t];
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2 - 20;
+      const l = links[i];
+      const a = nodes[l.s], b = nodes[l.t];
+      // Curved with perpendicular offset based on length
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.sqrt(dx*dx + dy*dy);
+      const perpx = -dy / len, perpy = dx / len;
+      const curve = Math.min(60, len * 0.25);
+      const mx = (a.x + b.x) / 2 + perpx * curve;
+      const my = (a.y + b.y) / 2 + perpy * curve;
       e.setAttribute('d', `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`);
+      // Fire animation
+      if (l._fireDur > 0) {
+        l._fireDur--;
+        const alpha = 0.7 + 0.3 * Math.sin((40 - l._fireDur) / 40 * Math.PI);
+        const color = nodes[l.s].kind === 'core' ? KIND_COLORS[nodes[l.t].kind] : KIND_COLORS[nodes[l.s].kind] || '#fff';
+        e.setAttribute('stroke', hexToRgba(color, alpha));
+        e.setAttribute('stroke-width', '2.2');
+      } else {
+        e.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+        e.setAttribute('stroke-width', '0.8');
+      }
+      if (ticks > l._fireAt) {
+        l._fireDur = 40;
+        l._fireAt = ticks + 100 + Math.random() * 400;
+      }
     });
     nodeEls.forEach((el, i) => {
       el.setAttribute('transform', `translate(${nodes[i].x},${nodes[i].y})`);
