@@ -8,7 +8,7 @@ local AIS-OS dashboard for live context.
 
 ## AIOS Bridge
 
-Bryan runs a local AIOS dashboard at `https://typically-junction-joyce-handle.trycloudflare.com` (FastAPI). It
+Bryan runs a local AIOS dashboard at `https://aios.agcoachos.com` (FastAPI). It
 exposes a bridge endpoint that returns a snapshot of his Ag Coach Pro state:
 pipeline (paid / trial / cold), today's "dream" recommendations, recent
 memory writes, ROI, and Six Pillars status.
@@ -26,7 +26,7 @@ memory writes, ROI, and Six Pillars status.
 **How to call:**
 
 ```bash
-curl -s -X POST https://typically-junction-joyce-handle.trycloudflare.com/api/bridge/query \
+curl -s -X POST https://aios.agcoachos.com/api/bridge/query \
   -H "X-Bridge-Token: $AIOS_BRIDGE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"scope": ["pipeline","dreams","memory","roi","pillars"]}'
@@ -49,7 +49,7 @@ Response shape:
 Set `AIOS_BRIDGE_TOKEN` in your `.env` to the same value as the dashboard's
 `BRIDGE_TOKEN` env var.
 
-**Handshake (no auth required):** `GET https://typically-junction-joyce-handle.trycloudflare.com/api/bridge/handshake`
+**Handshake (no auth required):** `GET https://aios.agcoachos.com/api/bridge/handshake`
 returns service identity. Use to verify the bridge is up before relying on it.
 
 **Failure mode:** if curl times out or returns 5xx, tell Bryan "AIOS
