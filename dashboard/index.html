@@ -1985,6 +1985,7 @@ function runForceGraph(nodes, edges) {
         } else {
           graphFocusByIndex(ni);
         }
+        try { highlightListRow(nodes[ni].id); } catch(e) {}
       }
     });
     g.addEventListener('keydown', ev => {
@@ -2149,6 +2150,18 @@ function setupMinimap() {
   __minimapTimer = setInterval(() => {
     if (document.visibilityState === 'visible') drawMinimap();
   }, 100);
+
+  if (!window.__graphEscBound) {
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (e.target && e.target.tagName === 'INPUT') return;
+      const v = document.getElementById('view-memory');
+      if (v && v.classList.contains('active')) {
+        graphResetFocus();
+      }
+    });
+    window.__graphEscBound = true;
+  }
 }
 
 function getGraphBounds() {
@@ -3584,6 +3597,7 @@ function graphResetFocus() {
   _applyFocusOpacity(null);
   _updateBreadcrumbUI();
   document.getElementById('graph-focus-btns')?.classList.remove('visible');
+  document.querySelectorAll('.graph-list-row.active').forEach(r => r.classList.remove('active'));
 }
 
 function graphCenterFocus() {
