@@ -67,6 +67,7 @@ Updated: 2026-05-16 (Pass 5 — Gravity Claw memory cross-vault ingest)
 - [[sources/agcoach-superpowers-specs|Ag Coach Pro — Superpowers Specs Catalog]] — 12 design specs + 1 run record
 - [[sources/agcoach-ffa-pdf-inventory|Ag Coach Pro — FFA Source PDF Inventory]] — 7 PDFs + DOCX + CSVs in `docs/`; RAG ingest map
 - [[sources/agcoach-farm-business-management-content-pack|Ag Coach Pro — Farm Business Management Content Pack]] — 12 sections, 50+ questions, 243 economics terms
+- [[../01-AG-COACH-PRO/App-Source/_INDEX|Ag Coach Pro App Source Mirror]] (182 files)
 
 ## People
 

@@ -797,6 +797,17 @@ def api_search_index():
     except Exception as e:
         raise HTTPException(500, str(e))
 
+@app.post("/api/ag-coach/mirror-refresh")
+def api_ag_coach_mirror():
+    """Re-run the ag-coach-app .md mirror script into vault App-Source/."""
+    import subprocess
+    res = subprocess.run(
+        [str(SCRIPTS / "mirror_ag_coach.sh")],
+        capture_output=True, text=True, timeout=60
+    )
+    return {"ok": res.returncode == 0, "stdout": res.stdout[-1000:], "stderr": res.stderr[-500:]}
+
+
 # ── Entry point ───────────────────────────────────────────────
 
 if __name__ == "__main__":
