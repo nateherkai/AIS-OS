@@ -48,13 +48,13 @@ API_KEY: str = (
     or os.environ.get("PINECONE_API_KEY", "")
 )
 INDEX_HOST: str = (
-    _PM.get("index_host")
-    or ""
+    os.environ.get("PINECONE_INDEX_HOST")
+    or "https://gravityclaw-vector-7macm39.svc.aped-4627-b74a.pinecone.io"
 )
 INDEX_NAME: str = (
-    os.environ.get("PINECONE_INDEX_NAME", "gravityclaw")
+    os.environ.get("PINECONE_INDEX_NAME", "gravityclaw-vector")
 )
-NAMESPACE: str = "knowledge"
+NAMESPACE: str = os.environ.get("PINECONE_NAMESPACE", "aios-vault")
 OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
 
 _stats_cache: dict | None = None
