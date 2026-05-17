@@ -20,6 +20,15 @@ GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
 GC_ENV = GC / ".env"
 
 
+def _attach_mtime(node, path):
+    """Attach integer mtime to a node if the path exists. Additive only."""
+    try:
+        node["mtime"] = int(os.path.getmtime(str(path)))
+    except OSError:
+        pass
+    return node
+
+
 def _gc_env_keys():
     if not GC_ENV.exists():
         return {}
@@ -57,7 +66,9 @@ def build():
             raw = raw.replace("--", "/").replace("-", " ").strip()
             label = raw.split()[-1] if raw else ws.name[:18]
             nid = f"ws:{ws.name}"
-            nodes.append({"id": nid, "label": label[:18], "kind": "workspace", "size": 6})
+            ws_node = {"id": nid, "label": label[:18], "kind": "workspace", "size": 6}
+            _attach_mtime(ws_node, ws)
+            nodes.append(ws_node)
             edges.append({"source": "aios", "target": nid})
             # Memory files inside
             mem = ws / "memory"
@@ -67,7 +78,9 @@ def build():
                     fid = f"file:{f}"
                     age = now - f.stat().st_mtime
                     kind = "stale" if age > STALE_AGE else "file"
-                    nodes.append({"id": fid, "label": f.stem[:20], "kind": kind, "size": 4})
+                    f_node = {"id": fid, "label": f.stem[:20], "kind": kind, "size": 4}
+                    _attach_mtime(f_node, f)
+                    nodes.append(f_node)
                     edges.append({"source": nid, "target": fid})
 
     # Skills — under .claude/skills and AIS-OS .claude/skills
@@ -76,7 +89,9 @@ def build():
             continue
         for s in [d for d in skills_root.iterdir() if d.is_dir()][:10]:
             sid = f"skill:{s.name}"
-            nodes.append({"id": sid, "label": "/" + s.name, "kind": "skill", "size": 5})
+            s_node = {"id": sid, "label": "/" + s.name, "kind": "skill", "size": 5}
+            _attach_mtime(s_node, s)
+            nodes.append(s_node)
             edges.append({"source": "aios", "target": sid})
 
     # Obsidian decisions — Gravity Claw vault under memory/06_Decisions or memory/02_Decisions or anywhere
@@ -87,7 +102,9 @@ def build():
             decision_files.extend(obsidian.glob(pattern))
         for f in decision_files[:10]:
             did = f"dec:{f.name}"
-            nodes.append({"id": did, "label": f.stem[:24], "kind": "decision", "size": 5})
+            d_node = {"id": did, "label": f.stem[:24], "kind": "decision", "size": 5}
+            _attach_mtime(d_node, f)
+            nodes.append(d_node)
             edges.append({"source": "aios", "target": did})
         # Workspace-tagged daily notes (sessions)
         daily = obsidian / "07_Daily"
@@ -96,7 +113,9 @@ def build():
                 sid = f"sess:{f.name}"
                 age = now - f.stat().st_mtime
                 kind = "stale" if age > STALE_AGE else "session"
-                nodes.append({"id": sid, "label": f.stem, "kind": kind, "size": 4})
+                sess_node = {"id": sid, "label": f.stem, "kind": kind, "size": 4}
+                _attach_mtime(sess_node, f)
+                nodes.append(sess_node)
                 edges.append({"source": "aios", "target": sid})
 
     # Vector indexes
@@ -121,16 +140,22 @@ def build():
     for slug, label, kind, size in domain_hubs:
         if (vault_root_check / slug).exists():
             did = f"domain:{slug}"
-            nodes.append({"id": did, "label": label, "kind": kind, "size": size})
+            dom_node = {"id": did, "label": label, "kind": kind, "size": size}
+            _attach_mtime(dom_node, vault_root_check / slug)
+            nodes.append(dom_node)
             edges.append({"source": "aios", "target": did})
     # Special anchors — Business Brain + CLAUDE.md as big standalone hubs
     bb = vault_root_check / "Business_Brain.md"
     if bb.exists():
-        nodes.append({"id": "anchor:business-brain", "label": "Business Brain", "kind": "anchor", "size": 20})
+        bb_node = {"id": "anchor:business-brain", "label": "Business Brain", "kind": "anchor", "size": 20}
+        _attach_mtime(bb_node, bb)
+        nodes.append(bb_node)
         edges.append({"source": "aios", "target": "anchor:business-brain"})
     cmd = vault_root_check / "CLAUDE.md"
     if cmd.exists():
-        nodes.append({"id": "anchor:claude-md", "label": "CLAUDE", "kind": "anchor", "size": 18})
+        cmd_node = {"id": "anchor:claude-md", "label": "CLAUDE", "kind": "anchor", "size": 18}
+        _attach_mtime(cmd_node, cmd)
+        nodes.append(cmd_node)
         edges.append({"source": "aios", "target": "anchor:claude-md"})
 
     # Vault wiki nodes — Karpathy LLM Wiki, subkinded for visual layer + cross-linked
@@ -158,13 +183,15 @@ def build():
         nid = f"wiki:{wn['id']}"
         if nid in existing_ids:
             continue
-        nodes.append({
+        wiki_node = {
             "id": nid,
             "label": wn["id"][:24],
             "kind": wiki_palette.get(wn["type"], "wiki"),
             "size": wiki_size.get(wn["type"], 7),
             "path": wn["path"],
-        })
+        }
+        _attach_mtime(wiki_node, vault_root / wn["path"])
+        nodes.append(wiki_node)
         # Connect to domain hub(s) instead of just AIOS — gives graph structure
         connected_to_domain = False
         for slug, label, kind, size in [
@@ -214,7 +241,9 @@ def build():
     # Hub node connecting GC vault memory files to AIOS
     gc_hub_id = "gc:gravity-claw"
     if GC.exists():
-        nodes.append({"id": gc_hub_id, "label": "Gravity Claw", "kind": "gc-hub", "size": 12})
+        gc_hub_node = {"id": gc_hub_id, "label": "Gravity Claw", "kind": "gc-hub", "size": 12}
+        _attach_mtime(gc_hub_node, GC)
+        nodes.append(gc_hub_node)
         edges.append({"source": "aios", "target": gc_hub_id})
         existing_ids.add(gc_hub_id)
 
@@ -230,7 +259,9 @@ def build():
                 gfid = f"gc-file:{gf.name}"
                 age = now - gf.stat().st_mtime
                 kind = "stale" if age > STALE_AGE else "gc-file"
-                nodes.append({"id": gfid, "label": gf.name, "kind": kind, "size": 4})
+                gf_node = {"id": gfid, "label": gf.name, "kind": kind, "size": 4}
+                _attach_mtime(gf_node, gf)
+                nodes.append(gf_node)
                 edges.append({"source": gc_hub_id, "target": gfid})
                 existing_ids.add(gfid)
 
@@ -245,7 +276,9 @@ def build():
                     continue
                 age = now - gf.stat().st_mtime
                 kind = "stale" if age > STALE_AGE else "gc-file"
-                nodes.append({"id": gfid, "label": f"{sub.name}/{gf.stem}", "kind": kind, "size": 3})
+                gf2_node = {"id": gfid, "label": f"{sub.name}/{gf.stem}", "kind": kind, "size": 3}
+                _attach_mtime(gf2_node, gf)
+                nodes.append(gf2_node)
                 edges.append({"source": gc_hub_id, "target": gfid})
                 existing_ids.add(gfid)
                 gc_extra_count += 1
