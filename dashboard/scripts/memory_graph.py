@@ -145,18 +145,31 @@ def build():
             nodes.append(dom_node)
             edges.append({"source": "aios", "target": did})
     # Special anchors — Business Brain + CLAUDE.md as big standalone hubs
+    existing_domain_ids = {f"domain:{slug}" for slug, *_ in domain_hubs if (vault_root_check / slug).exists()}
     bb = vault_root_check / "Business_Brain.md"
     if bb.exists():
         bb_node = {"id": "anchor:business-brain", "label": "Business Brain", "kind": "anchor", "size": 20}
         _attach_mtime(bb_node, bb)
         nodes.append(bb_node)
         edges.append({"source": "aios", "target": "anchor:business-brain"})
+        # BB covers AFL umbrella — wire to business + finance domains it explicitly governs
+        for slug in ("01-AG-COACH-PRO", "02-AARON-FAMILY-LIVESTOCK", "04-FINANCES"):
+            did = f"domain:{slug}"
+            if did in existing_domain_ids:
+                edges.append({"source": "anchor:business-brain", "target": did})
+        # Bridge to wiki business-brain page (same entity, different layer)
+        edges.append({"source": "anchor:business-brain", "target": "wiki:agcoach-business-brain"})
     cmd = vault_root_check / "CLAUDE.md"
     if cmd.exists():
         cmd_node = {"id": "anchor:claude-md", "label": "CLAUDE", "kind": "anchor", "size": 18}
         _attach_mtime(cmd_node, cmd)
         nodes.append(cmd_node)
         edges.append({"source": "aios", "target": "anchor:claude-md"})
+        # CLAUDE.md instructs every session — links to Business Brain + all domains
+        if bb.exists():
+            edges.append({"source": "anchor:claude-md", "target": "anchor:business-brain"})
+        for did in existing_domain_ids:
+            edges.append({"source": "anchor:claude-md", "target": did})
 
     # Vault wiki nodes — Karpathy LLM Wiki, subkinded for visual layer + cross-linked
     wiki_palette = {
