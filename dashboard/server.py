@@ -18,6 +18,7 @@ load_dotenv()
 BASE = Path(__file__).parent
 DATA = BASE / "data"
 SCRIPTS = BASE / "scripts"
+ROOT = BASE.parent  # AIS-OS root (one level up from dashboard/)
 
 import sys
 sys.path.insert(0, str(SCRIPTS))
@@ -276,9 +277,9 @@ def api_dreams_regenerate():
 @app.post("/api/lint/recompute")
 def api_lint_recompute():
     """Recompute lint report by running scripts/lint.py. Timeout 60s."""
-    lint_script = SCRIPTS / "lint.py"
+    lint_script = ROOT / "scripts" / "lint.py"
     if not lint_script.exists():
-        return {"ok": False, "error": "scripts/lint.py not found"}
+        return {"ok": False, "error": f"scripts/lint.py not found (looked at {lint_script})"}
     try:
         res = subprocess.run(
             ["python3", str(lint_script)],

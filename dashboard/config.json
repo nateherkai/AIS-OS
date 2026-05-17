@@ -24,7 +24,7 @@
       "model": "gemini"
     }
   ],
-  "dream_cron": "0 2 * * *",
+  "dream_cron": "0 22 * * *",
   "dream_prefs": {},
   "memory": {},
   "storage": [],
