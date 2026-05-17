@@ -101,6 +101,7 @@ def _generate_card_images(cards: list, date: str) -> list:
 
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     out_cards = []
+    image_errors = []
     for i, card in enumerate(cards):
         if i >= 3:
             out_cards.append(card)
@@ -121,8 +122,15 @@ def _generate_card_images(cards: list, date: str) -> list:
             card = dict(card)
             card["image"] = f"data/dreams/images/{date}-card{i+1}.png"
         except Exception as e:
+            err_msg = str(e)[:120]
             print(f"dream_machine: image generation failed for card {i+1}: {e}", file=sys.stderr)
+            card = dict(card)
+            card["image_error"] = err_msg
+            image_errors.append({"card_id": card.get("id", f"d{i+1}"), "error": err_msg})
         out_cards.append(card)
+    # Attach image_errors to the last card as a sentinel for callers to inspect
+    # (returned via _generate_card_images; caller in analyze() wraps into output)
+    _generate_card_images._last_image_errors = image_errors
     return out_cards
 
 CUTOFF_HOURS = 24
@@ -364,7 +372,9 @@ def analyze() -> dict:
 
     date_str = datetime.now().strftime("%Y-%m-%d")
     cards = _build_cards(recs[:3])
+    _generate_card_images._last_image_errors = []
     cards = _generate_card_images(cards, date_str)
+    image_errors = getattr(_generate_card_images, "_last_image_errors", [])
 
     out = {
         "date": date_str,
@@ -386,6 +396,8 @@ def analyze() -> dict:
         "top_3": recs[:3],
         # Backwards-compat with dashboard JS (loadVaultCards reads dream.cards).
         "cards": cards,
+        # F14: surface image generation errors for caller / dashboard JS toast
+        "image_errors": image_errors,
     }
     return out
 

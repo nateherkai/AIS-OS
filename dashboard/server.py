@@ -8,8 +8,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
 load_dotenv()
@@ -58,6 +59,23 @@ if not os.environ.get("BRIDGE_TOKEN"):
         pass
 
 app = FastAPI(title="Ag Coach Pro AIOS Dashboard")
+
+# F10: CSRF Origin check middleware — blocks cross-origin POST/PUT/PATCH/DELETE
+# Bridge endpoints (/api/bridge/) are exempt: they use X-Bridge-Token auth instead.
+class OriginCheckMiddleware(BaseHTTPMiddleware):
+    _ALLOWED = ("http://localhost:8080", "http://127.0.0.1:8080")
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            path = request.url.path
+            # Exempt bridge endpoints (token-authenticated) and local-test (loopback-gated)
+            if not path.startswith("/api/bridge/"):
+                origin = request.headers.get("origin") or request.headers.get("referer", "")
+                if origin and not any(origin.startswith(a) for a in self._ALLOWED):
+                    return JSONResponse({"error": "Cross-origin request denied"}, status_code=403)
+        return await call_next(request)
+
+app.add_middleware(OriginCheckMiddleware)
 
 # ── Data helpers ──────────────────────────────────────────────
 
@@ -263,12 +281,24 @@ def api_dreams_run():
 @app.post("/api/dreams/regenerate")
 def api_dreams_regenerate():
     """Regenerate dream report by re-running dream_machine.py. Timeout 60s."""
+    _invalidate_search_cache()  # F13: new dream data may change graph nodes
     try:
         res = subprocess.run(
             ["python3", str(SCRIPTS / "dream_machine.py")],
             capture_output=True, text=True, timeout=60,
         )
-        return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+        result = {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+        # F14: surface image_errors from regenerated dream file
+        try:
+            import json as _json
+            dreams_dir = DATA / "dreams"
+            files = sorted(dreams_dir.glob("*.json"), reverse=True)
+            if files:
+                dream = _json.loads(files[0].read_text())
+                result["image_errors"] = dream.get("image_errors", [])
+        except Exception:
+            pass
+        return result
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": "Dream regeneration timed out (60s)"}
     except Exception as e:
@@ -321,6 +351,7 @@ class CronApply(BaseModel):
 @app.post("/api/dreams/schedule/apply")
 def api_dreams_schedule_apply(body: CronApply):
     """Write dream_cron into config.json (user still must `crontab -e` manually)."""
+    _invalidate_search_cache()  # F13: config change may affect index
     try:
         cfg_path = BASE / "config.json"
         cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
@@ -432,6 +463,7 @@ class WizardSave(BaseModel):
 
 @app.post("/api/wizard/save")
 def api_wizard_save(body: WizardSave):
+    _invalidate_search_cache()  # F13: wizard config change may affect graph/index
     try:
         return save_wizard(body.model_dump(), BASE / "config.json")
     except Exception as e:
@@ -559,6 +591,11 @@ def api_agent_ask(body: AgentAsk):
 
 import time as _time
 _search_index_cache: dict = {"ts": 0, "data": None}
+
+def _invalidate_search_cache():
+    """F13: Clear server-side search index cache on any mutating write."""
+    _search_index_cache["data"] = None
+    _search_index_cache["ts"] = 0
 
 @app.get("/api/wiki/tree")
 def api_wiki_tree():

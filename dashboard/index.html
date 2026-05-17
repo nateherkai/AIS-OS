@@ -275,6 +275,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
 /* ── CMD+K PALETTE (N1) ────────────────────────────────────── */
 .cmdk-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(12px); z-index:300; align-items:flex-start; justify-content:center; padding-top:12vh; }
@@ -1823,6 +1824,10 @@ async function runDreams() {
   showToast('Running Dream Machine...');
   const r = await fetch('/api/dreams/run', { method: 'POST' }).then(r => r.json());
   showToast(r.ok ? 'Dreams updated' : 'Dream run failed');
+  // F14: surface image generation errors
+  if (r.image_errors && r.image_errors.length > 0) {
+    setTimeout(() => showToast(`${r.image_errors.length} image(s) failed to generate`), 1200);
+  }
   loadDreams();
 }
 
@@ -2496,12 +2501,17 @@ function agentQuickSkill() {
 // ══════════════════════════════════════════════════════════════
 
 let _cmdkIndex = null;
+let _cmdkIndexTs = 0;
+const _CMDK_TTL_MS = 30000; // F13: client cache TTL — 30s
 let _cmdkActive = -1;
 
 async function _loadCmdkIndex() {
-  if (_cmdkIndex) return _cmdkIndex;
+  // F13: expire stale client cache after 30s
+  const now = Date.now();
+  if (_cmdkIndex && (now - _cmdkIndexTs) < _CMDK_TTL_MS) return _cmdkIndex;
   try {
     _cmdkIndex = await api('/api/search/index');
+    _cmdkIndexTs = Date.now();
   } catch (e) {
     _cmdkIndex = [];
   }
@@ -2785,7 +2795,8 @@ function _wikiRenderPage(d) {
   });
   let rendered = '';
   try {
-    rendered = marked.parse(body);
+    // F11: sanitize marked output before assigning to innerHTML (XSS guard)
+    rendered = DOMPurify.sanitize(marked.parse(body));
   } catch (e) {
     rendered = `<pre>${escapeHtml(body)}</pre>`;
   }
@@ -3327,6 +3338,10 @@ async function settingsRegenerateDreams() {
   try {
     const r = await api('/api/dreams/regenerate', { method: 'POST' });
     st.textContent = r.ok ? '✓ Dreams regenerated' : ('Error: ' + r.stderr);
+    // F14: surface image generation errors
+    if (r.image_errors && r.image_errors.length > 0) {
+      showToast(`${r.image_errors.length} image(s) failed to generate`);
+    }
     setTimeout(() => st.textContent = '', 4000);
   } catch (e) { st.textContent = 'Error: ' + e.message; }
 }

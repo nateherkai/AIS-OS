@@ -3,6 +3,7 @@
 SECURITY: Never logs or returns secret values — only presence booleans + key names.
 """
 
+import fcntl
 import json
 import os
 import re
@@ -202,26 +203,38 @@ def detect_all() -> dict:
 
 
 def save_wizard(config_update: dict, config_path: Path = CONFIG_DEFAULT) -> dict:
-    """Merge wizard config into config.json atomically."""
-    current = _read_config(config_path)
+    """Merge wizard config into config.json atomically with exclusive file lock (F8)."""
+    # Ensure file exists before attempting r+ open
+    if not config_path.exists():
+        config_path.write_text("{}")
 
-    # Merge top-level keys from update
-    allowed_keys = {"models", "storage", "memory", "hourly_value", "dream_prefs"}
-    for key in allowed_keys:
-        if key in config_update and config_update[key] is not None:
-            if key == "hourly_value":
-                current["hourly_value_usd"] = config_update[key]
-            else:
-                current[key] = config_update[key]
+    with open(config_path, "r+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            try:
+                current = json.load(f)
+            except Exception:
+                current = {}
 
-    # Atomic write
-    tmp = config_path.with_suffix(".tmp")
-    try:
-        tmp.write_text(json.dumps(current, indent=2))
-        tmp.replace(config_path)
-    except Exception as e:
-        if tmp.exists():
-            tmp.unlink()
-        raise RuntimeError(f"Failed to write config: {e}")
+            # Merge top-level keys from update
+            allowed_keys = {"models", "storage", "memory", "hourly_value", "dream_prefs"}
+            for key in allowed_keys:
+                if key in config_update and config_update[key] is not None:
+                    if key == "hourly_value":
+                        current["hourly_value_usd"] = config_update[key]
+                    else:
+                        current[key] = config_update[key]
 
-    return current
+            # Atomic write via tmp rename
+            tmp = config_path.with_suffix(".tmp")
+            try:
+                tmp.write_text(json.dumps(current, indent=2))
+                tmp.replace(config_path)
+            except Exception as e:
+                if tmp.exists():
+                    tmp.unlink()
+                raise RuntimeError(f"Failed to write config: {e}")
+
+            return current
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)

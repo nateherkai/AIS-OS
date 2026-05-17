@@ -77,15 +77,18 @@ def _curl_pinecone(method: str, path: str, body: dict | None = None) -> dict:
     cmd = ["curl", "-s", "-X", method, url] + headers
     if body is not None:
         cmd += ["-d", json.dumps(body)]
+    # F2: never surface str(e) — the cmd list contains the API key in argv
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         return json.loads(result.stdout)
     except subprocess.TimeoutExpired:
         return {"error": "Pinecone request timed out"}
-    except json.JSONDecodeError as e:
-        return {"error": f"Invalid JSON from Pinecone: {e}"}
-    except Exception as e:
-        return {"error": str(e)}
+    except subprocess.CalledProcessError:
+        return {"error": "Pinecone request failed"}
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON from Pinecone"}
+    except Exception:
+        return {"error": "Pinecone error"}
 
 
 def stats() -> dict:
@@ -142,6 +145,11 @@ def recent(limit: int = 50) -> dict:
 
 def query(text: str, top_k: int = 10) -> dict:
     """Embed text (via Pinecone inference API or OpenAI) and query Pinecone."""
+    # F7: empty/oversized input guard
+    if not text or not text.strip():
+        return {"matches": [], "error": "Empty query"}
+    text = text.strip()[:8000]
+
     if not API_KEY:
         return {"matches": [], "error": "PINECONE_API_KEY not configured"}
     if not INDEX_HOST:
@@ -160,6 +168,7 @@ def query(text: str, top_k: int = 10) -> dict:
         "-H", "Content-Type: application/json",
         "-H", "X-Pinecone-API-Version: 2025-01",
     ]
+    # F2: redact API key from all exception paths — never surface str(e) from secret-bearing subprocesses
     try:
         embed_result = subprocess.run(
             ["curl", "-s", "-X", "POST", EMBED_URL] + embed_headers + ["-d", embed_payload],
@@ -167,8 +176,14 @@ def query(text: str, top_k: int = 10) -> dict:
         )
         embed_data = json.loads(embed_result.stdout)
         vector = embed_data["data"][0]["values"]
-    except Exception as e:
-        return {"matches": [], "error": f"Embedding failed: {e}"}
+    except subprocess.TimeoutExpired:
+        return {"matches": [], "error": "Embedding timed out"}
+    except subprocess.CalledProcessError:
+        return {"matches": [], "error": "Embedding subprocess failed"}
+    except (KeyError, IndexError, json.JSONDecodeError):
+        return {"matches": [], "error": "Embedding response parse error"}
+    except Exception:
+        return {"matches": [], "error": "Embedding failed"}
 
     # Query Pinecone
     query_body = {
