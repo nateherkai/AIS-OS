@@ -5,6 +5,7 @@ from pathlib import Path
 
 BASE = Path(__file__).parent.parent
 DATA = BASE / "data"
+CONFIG = BASE / "config.json"
 
 AI_CATEGORIES = {"AI Tools", "AI API", "AI Infrastructure"}
 
@@ -14,11 +15,22 @@ def _load(name: str) -> dict:
         return json.load(f)
 
 
+def _load_config() -> dict:
+    try:
+        with open(CONFIG) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
 def compute() -> dict:
     expenses = _load("expenses.json")["expenses"]
     skills_doc = _load("skills.json")
     skills = skills_doc["skills"]
-    hourly = skills_doc.get("hourly_rate", 75)
+
+    # Read hourly value from config.json (user-configurable); fall back to 100
+    cfg = _load_config()
+    hourly = cfg.get("hourly_value_usd", skills_doc.get("hourly_rate", 100))
 
     ai_spend = sum(e["amount"] for e in expenses if e.get("category") in AI_CATEGORIES)
     total_spend = sum(e["amount"] for e in expenses)
@@ -27,7 +39,7 @@ def compute() -> dict:
     minutes_saved = sum(s["value_saved_per_run"] * s["run_count"] for s in skills)
     value_saved = round(minutes_saved / 60 * hourly, 2)
 
-    net = round(value_saved - ai_spend, 2)
+    net = round(value_saved - total_spend, 2)
 
     # Inefficiency flags: skills with opus tier that run frequently on simple-sounding tasks
     flags = []

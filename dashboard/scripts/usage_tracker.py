@@ -17,10 +17,18 @@ ChatGPT/Gemini: Bryan uses subscriptions (not API), so no raw token events exist
 Budget: ~5s typical. Safe to call on every /api/usage hit.
 """
 import json
+import sys
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
+from pathlib import Path as _Path
+
+# Allow import whether running as script or module
+_HERE = _Path(__file__).parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
+from pricing import compute_api_cost
 
 HOME = Path.home()
 PROJECTS_ROOT = HOME / ".claude" / "projects"
@@ -286,17 +294,46 @@ def usage_stats() -> dict:
         # Billable usage = input (non-cached) + output + cache_creation (billed as input)
         used_billable = inp + out + cc
 
-        # API equivalent cost
-        models_seen = family_models.get(family, set())
-        best_model = next(iter(sorted(models_seen, key=lambda m: "opus" in m, reverse=True)), "")
-        rate = _get_rate_for_model(best_model, family)
-        # Cache creation billed at input rate; cache read at ~10% (approximate)
-        api_cost = (
-            (inp / 1_000_000) * rate["input_per_1m"] +
-            (out / 1_000_000) * rate["output_per_1m"] +
-            (cc / 1_000_000) * rate["input_per_1m"] +
-            (cr / 1_000_000) * rate["input_per_1m"] * 0.1  # cache reads ~10% of input price
-        )
+        # API equivalent cost — per-model accurate pricing
+        # Sum across every model bucket that belongs to this subscription family
+        api_cost = 0.0
+        sub_model_breakdown = []
+        for model_key, tok in model_tokens.items():
+            # Only count models that belong to this subscription's family
+            model_family = _classify_model(model_key)
+            if model_family != family:
+                continue
+            model_cost = compute_api_cost(
+                input_tokens=tok["input"],
+                output_tokens=tok["output"],
+                cache_creation_tokens=tok["cache_create"],
+                cache_read_tokens=tok["cache_read"],
+                model_str=model_key,
+            )
+            api_cost += model_cost
+            sub_model_breakdown.append({
+                "model": model_key,
+                "input_tokens": tok["input"],
+                "output_tokens": tok["output"],
+                "cache_read_tokens": tok["cache_read"],
+                "cache_creation_tokens": tok["cache_create"],
+                "equiv_usd": round(model_cost, 2),
+            })
+        # Sort breakdown by cost descending
+        sub_model_breakdown.sort(key=lambda x: x["equiv_usd"], reverse=True)
+
+        # If no per-model data for this family (e.g. openai/gemini with no jsonl events),
+        # fall back to family-level totals with default rates
+        if api_cost == 0.0 and used_billable > 0:
+            models_seen = family_models.get(family, set())
+            best_model = next(iter(sorted(models_seen, key=lambda m: "opus" in m, reverse=True)), "")
+            rate = _get_rate_for_model(best_model, family)
+            api_cost = (
+                (inp / 1_000_000) * rate["input_per_1m"] +
+                (out / 1_000_000) * rate["output_per_1m"] +
+                (cc / 1_000_000) * rate["input_per_1m"] +
+                (cr / 1_000_000) * rate["input_per_1m"] * 0.1
+            )
         api_cost = round(api_cost, 2)
         total_api_equiv += api_cost
 
@@ -327,6 +364,7 @@ def usage_stats() -> dict:
             "daily_burn": round(daily_rate),
             "api_equivalent_usd": api_cost,
             "net_savings_usd": round(sub_usd - api_cost, 2),
+            "model_breakdown": sub_model_breakdown,
         }
 
         # Claude Pro Max: attach 5h window stats

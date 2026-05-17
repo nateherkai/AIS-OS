@@ -29,7 +29,7 @@ from pillars import build_pillars
 from memory_feed import build_feed as build_memory_feed
 from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
-from pricing import tier_monthly_usd, TIER_MONTHLY_DEFAULT
+from pricing import tier_monthly_usd, TIER_MONTHLY_DEFAULT, is_recognized_tier
 import bridge as bridge_mod
 import notify_gc
 try:
@@ -94,28 +94,43 @@ def compute_monthly_revenue(paid_schools: list) -> dict:
     """Sum actual monthly revenue across paid schools using per-tier pricing.
 
     Each school should have a 'subscription_tier' field from Supabase.
-    Falls back to TIER_MONTHLY_DEFAULT ($124.58, Lone Star Elite) if missing.
-    Returns total and a per-school breakdown for transparency.
+    Falls back to TIER_MONTHLY_DEFAULT ($124.58, Lone Star Elite) if missing or unrecognized.
+    Returns total, per-school breakdown, and warning if any tier is unrecognized.
     """
     total = 0.0
     breakdown = []
     tier_fallback_used = False
+    unrecognized_tiers = set()
     for s in paid_schools:
         tier = s.get("subscription_tier") or ""
-        monthly = tier_monthly_usd(tier) if tier else TIER_MONTHLY_DEFAULT
         if not tier:
+            monthly = TIER_MONTHLY_DEFAULT
             tier_fallback_used = True
+        elif not is_recognized_tier(tier):
+            # Tier value exists but isn't a known tier name — use default, flag it
+            monthly = tier_monthly_usd(tier)  # pricing.py handles via _default
+            tier_fallback_used = True
+            unrecognized_tiers.add(tier)
+        else:
+            monthly = tier_monthly_usd(tier)
         total += monthly
         breakdown.append({
             "name": s.get("name", ""),
             "tier": tier or "unknown",
             "monthly_usd": monthly,
         })
-    return {
+    result = {
         "total": round(total, 2),
         "breakdown": breakdown,
         "tier_fallback_used": tier_fallback_used,
     }
+    if unrecognized_tiers:
+        result["revenue_warning"] = (
+            f"Unrecognized tier(s) in Supabase: {sorted(unrecognized_tiers)} — "
+            f"defaulting to Lone Star Elite (${TIER_MONTHLY_DEFAULT:.2f}/mo). "
+            "Update pricing.py TIER_PRICES to add these tier keys."
+        )
+    return result
 
 
 # ── Routes ────────────────────────────────────────────────────
@@ -195,6 +210,7 @@ def kpis():
         "debt_goal": debt["goal"],
         "revenue_breakdown": rev["breakdown"],
         "tier_fallback_used": rev["tier_fallback_used"],
+        **({"revenue_warning": rev["revenue_warning"]} if rev.get("revenue_warning") else {}),
     }
 
 # ── Tasks ─────────────────────────────────────────────────────
