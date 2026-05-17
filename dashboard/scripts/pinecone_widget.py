@@ -92,7 +92,7 @@ def _curl_pinecone(method: str, path: str, body: dict | None = None) -> dict:
 
 
 def stats() -> dict:
-    """Return {index, namespace, total_vectors, dimension}. Cached 60s."""
+    """Return index stats including per-namespace breakdown. Cached 60s."""
     global _stats_cache, _stats_cache_ts
     now = time.time()
     if _stats_cache and (now - _stats_cache_ts) < _STATS_TTL:
@@ -107,11 +107,19 @@ def stats() -> dict:
     total = ns_data.get("vectorCount", data.get("totalVectorCount", 0))
     dim = data.get("dimension", None)
 
+    # Per-namespace breakdown (includes aios-vault)
+    ns_breakdown = {
+        ns: ns_info.get("vectorCount", 0)
+        for ns, ns_info in namespaces.items()
+    }
+
     result = {
         "index": INDEX_NAME,
         "namespace": NAMESPACE,
         "total_vectors": total,
         "dimension": dim,
+        "namespaces": ns_breakdown,
+        "vault_vectors": ns_breakdown.get("aios-vault", 0),
     }
     _stats_cache = result
     _stats_cache_ts = now

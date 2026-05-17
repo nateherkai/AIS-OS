@@ -808,6 +808,29 @@ def api_ag_coach_mirror():
     return {"ok": res.returncode == 0, "stdout": res.stdout[-1000:], "stderr": res.stderr[-500:]}
 
 
+# ── Vault → Pinecone embed ────────────────────────────────────
+
+@app.post("/api/vault/embed")
+def api_vault_embed(force: bool = False):
+    """Trigger vault → Pinecone embed. Idempotent unless force=true."""
+    import subprocess
+    cmd = ["python3", str(SCRIPTS / "vault_to_pinecone.py")]
+    if force:
+        cmd.append("--full")
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    return {"ok": res.returncode == 0, "stdout": res.stdout[-2000:], "stderr": res.stderr[-1000:]}
+
+@app.get("/api/vault/embed-state")
+def api_vault_embed_state():
+    state_file = BASE / "data" / "vault_embed_state.json"
+    if not state_file.exists():
+        return {"files_embedded": 0, "files": {}}
+    s = json.loads(state_file.read_text())
+    files = s.get("files", {})
+    total_chunks = sum(f.get("chunks", 0) for f in files.values())
+    return {"files_embedded": len(files), "total_chunks": total_chunks, "last_files": list(files.keys())[-10:]}
+
+
 # ── Entry point ───────────────────────────────────────────────
 
 if __name__ == "__main__":
