@@ -2348,7 +2348,7 @@ function buildRow(n) {
   const color = (typeof KIND_COLORS !== 'undefined' && KIND_COLORS[n.kind]) || '#888';
   const labelTxt = (n.label || n.id || '').replace(/[<>&]/g,'');
   row.innerHTML = `<span class="dot" style="background:${color}"></span><span class="label">${labelTxt}</span><span class="badge">${__graphDegree.get(n.id) || 0}</span>`;
-  row.onclick = () => { try { graphFocusNode(n.id); } catch(e) {} highlightListRow(n.id); };
+  row.onclick = () => { try { graphFocusById(n.id); } catch(e) {} highlightListRow(n.id); };
   row.onmouseenter = () => hoverHighlightNode(n.id);
   row.onmouseleave = () => hoverHighlightNode(null);
   return row;
