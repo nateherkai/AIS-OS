@@ -35,6 +35,14 @@ Updated: 2026-05-16 (Pass 5 — Gravity Claw memory cross-vault ingest)
 - [[concepts/agcoach-farm-business-management-cde|Ag Coach Pro — Farm Business Management CDE]] — 1,200-pt contest format, economics domains, pre-built content pack
 - [[concepts/agcoach-brain-rules-accuracy|Ag Coach Pro — Brain Rules Accuracy (v3 Wiring)]] — intent classifier + verification gate; eliminates subcategory retrieval misses
 
+## Finance
+
+- [[finance/finance-overview|Finance Overview — 2026 YTD]] — 4-month burn rate, by-business + top-vendor breakdown
+- [[finance/finance-2026-01-january|Apple Card — 2026-01 January Statement]]
+- [[finance/finance-2026-02-february|Apple Card — 2026-02 February Statement]]
+- [[finance/finance-2026-03-march|Apple Card — 2026-03 March Statement]]
+- [[finance/finance-2026-04-april|Apple Card — 2026-04 April Statement]]
+
 ## Sources
 
 - [[sources/nate-herk-karpathy-walkthrough|Nate Herk — Karpathy LLM Wiki Walkthrough]] — YT transcript, April 2026

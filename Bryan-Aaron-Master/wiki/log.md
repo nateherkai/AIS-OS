@@ -390,3 +390,4 @@ Cross-vault summary ingest from `/Volumes/Samsung PSSD T7/gravity-claw/memory/`.
 ### Domains linked
 
 06-AI-WORKFLOW (all 4 pages)
+2026-05-17T04:47:39Z — ingest finance/ — 4 monthly Apple Card statements + finance-overview.md (YTD ,023.65)
