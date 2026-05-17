@@ -1,6 +1,6 @@
 # Wiki Index
 
-Updated: 2026-05-16 (Pass 1 — Ag Coach Pro batch)
+Updated: 2026-05-16 (Pass 4 — FBM content pack + brain-rules-accuracy + catalog updates)
 
 ## Tools
 
@@ -22,11 +22,18 @@ Updated: 2026-05-16 (Pass 1 — Ag Coach Pro batch)
 - [[concepts/agcoach-contest-modules|Ag Coach Pro — Contest Modules (40)]] — 29 CDEs + 11 LDEs; 4-screen practice module pattern; 9-step checklist to add new module
 - [[concepts/agcoach-rag-architecture|Ag Coach Pro — RAG Architecture]] — pgvector 3072-dim, Gemini Flash, match-knowledge v1/v2/v3, taxonomy classification
 - [[concepts/agcoach-billing-systems|Ag Coach Pro — Billing Systems (Dual)]] — legacy schools/subscriptions vs current biz_* chapter-level tables
-- [[concepts/agcoach-app-internal-skills-catalog|Ag Coach Pro — App Internal Skills Catalog]] — 15 development agent skills + 10 in-session Claude skills
+- [[concepts/agcoach-app-internal-skills-catalog|Ag Coach Pro — App Internal Skills Catalog]] — 15 development agent skills + 31 in-session Claude skills
 - [[concepts/agcoach-vet-science-cde|Ag Coach Pro — Veterinary Science CDE]] — contest format, knowledge domains, resources, gaps
 - [[concepts/agcoach-livestock-judging-cde|Ag Coach Pro — Livestock Judging CDE]] — Bryan's specialty; format, scoring, phenotype analyzer
 - [[concepts/agcoach-meat-science-cde|Ag Coach Pro — Meat Science CDE]] — USDA grading systems, marbling scores, yield grades
 - [[concepts/agcoach-creed-speaking-lde|Ag Coach Pro — Creed Speaking LDE]] — 1,000-pt AI video scoring rubric, judging criteria
+- [[concepts/agcoach-poultry-judging-cde|Ag Coach Pro — Poultry Judging CDE]] — 6-category contest; 30-MC exam; RAG + NotebookLM pipeline
+- [[concepts/agcoach-egg-evaluation-cde|Ag Coach Pro — Egg Evaluation CDE]] — image-based air-cell measurement training (Poultry subdomain)
+- [[concepts/agcoach-edge-functions-architecture|Ag Coach Pro — Edge Functions Architecture]] — 26 Deno fns: AI proxies, RAG v1/v2/v3, auth, Stripe, ops
+- [[concepts/agcoach-livestock-score-calculator|Ag Coach Pro — Livestock Contest Score Calculator]] — 725-pt blueprint; replaces coach spreadsheet
+- [[concepts/agcoach-prompt-catalog|Ag Coach Pro — Prompt Catalog]] — 10 `lib/prompts/` files, per-domain Gemini system prompts + rubrics
+- [[concepts/agcoach-farm-business-management-cde|Ag Coach Pro — Farm Business Management CDE]] — 1,200-pt contest format, economics domains, pre-built content pack
+- [[concepts/agcoach-brain-rules-accuracy|Ag Coach Pro — Brain Rules Accuracy (v3 Wiring)]] — intent classifier + verification gate; eliminates subcategory retrieval misses
 
 ## Sources
 
@@ -47,6 +54,19 @@ Updated: 2026-05-16 (Pass 1 — Ag Coach Pro batch)
 - [[sources/agcoach-ffa-resource-audit|Ag Coach Pro — FFA Resource Audit]] — gap analysis for 5 initial CDE/LDE modules
 - [[sources/agcoach-ffa-prerequisite-materials|Ag Coach Pro — Prerequisite Materials Sourcing Guide]] — Farm Business Management textbook sourcing
 - [[sources/agcoach-wool-study-guide|Ag Coach Pro — Wool & Mohair Study Guide]] — comprehensive Wool CDE content with grading systems + scorecards
+- [[sources/agcoach-agents-rules|Ag Coach Pro — AGENTS.md (Coding Conventions)]] — pre-CLAUDE.md rules file; mostly stale duplicate
+- [[sources/agcoach-gemini-schemas|Ag Coach Pro — Gemini Data Schemas]] — InterviewResult + CreedResult JSON contracts
+- [[sources/agcoach-task-plan-livestock-calc|Ag Coach Pro — Task Plan: Livestock Score Calculator]] — 7-step 725-pt blueprint
+- [[sources/agcoach-advisor-intelligence-skill|Ag Coach Pro — Advisor Intelligence Skill]] — 4 principles + PerformanceGap data model
+- [[sources/agcoach-deployment-guide|Ag Coach Pro — Deployment Guide (Vercel)]] — early pitch-day deploy; mostly superseded
+- [[sources/agcoach-migration-drift-audit|Ag Coach Pro — Migration Drift Audit (2026-05-15)]] — 53 remote-only + ~50 local-only versions blocking `db push`
+- [[sources/agcoach-egg-evaluation-feature|Ag Coach Pro — Egg Evaluation Feature]] — image-based air-cell measurement design spec
+- [[sources/agcoach-poultry-judging-feature|Ag Coach Pro — Poultry Judging Feature]] — full module-design + NotebookLM integration plan
+- [[sources/agcoach-brand-v0-docs|Ag Coach Pro — Brand v0 docs]] — pre-rebrand "Cyber-Agronomy" style guide; flagged conflicts with CLAUDE.md
+- [[sources/agcoach-superpowers-plans|Ag Coach Pro — Superpowers Plans Catalog]] — 11 LLM-executable implementation plans
+- [[sources/agcoach-superpowers-specs|Ag Coach Pro — Superpowers Specs Catalog]] — 12 design specs + 1 run record
+- [[sources/agcoach-ffa-pdf-inventory|Ag Coach Pro — FFA Source PDF Inventory]] — 7 PDFs + DOCX + CSVs in `docs/`; RAG ingest map
+- [[sources/agcoach-farm-business-management-content-pack|Ag Coach Pro — Farm Business Management Content Pack]] — 12 sections, 50+ questions, 243 economics terms
 
 ## People
 
