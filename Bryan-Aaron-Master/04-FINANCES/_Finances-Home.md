@@ -71,6 +71,15 @@ That answer lives in [[Goals]]. Everything else feeds into it.
 
 **4-month avg real burn:** $1,437.56/mo (ex interest, ex payments)
 
+### By Business (4-Month Avg/Mo)
+
+| Business | 4-Mo Avg/Mo |
+|---|---|
+| personal | $838.87 |
+| afl | $433.26 |
+| ag-coach-pro | $160.64 |
+| other | $4.79 |
+
 ### Statements Folder
 
 [[Statements/]] — one page per month, full transaction list.

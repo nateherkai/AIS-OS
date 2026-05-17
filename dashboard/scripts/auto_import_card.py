@@ -79,6 +79,7 @@ def write_vault_statement(csv_path: Path, parsed: dict, month_key: str):
     txn_count = parsed["txn_count"]
     by_category = parsed["by_category"]
     by_merchant = parsed["by_merchant"]
+    by_business = parsed.get("by_business", {})
     charges = parsed["charges"]
 
     lines = [
@@ -96,36 +97,51 @@ def write_vault_statement(csv_path: Path, parsed: dict, month_key: str):
     for cat, amt in by_category.items():
         lines.append(f"| {cat} | ${amt:,.2f} |")
 
+    # By-Business section
+    if by_business:
+        lines += [
+            "",
+            "## By Business",
+            "",
+            "| Business | Amount |",
+            "|---|---|",
+        ]
+        for biz, amt in sorted(by_business.items(), key=lambda x: -x[1]):
+            lines.append(f"| {biz} | ${amt:,.2f} |")
+
     lines += [
         "",
         "## Top Vendors",
         "",
-        "| Vendor | Amount | Category |",
-        "|---|---|---|",
+        "| Vendor | Amount | Category | Business |",
+        "|---|---|---|---|",
     ]
     # Top 15 by amount
     top_vendors = sorted(by_merchant.items(), key=lambda x: -x[1])[:15]
-    # Build merchant→category lookup from charges
+    # Build merchant→category and merchant→business lookup from charges
     merch_cat: dict[str, str] = {}
+    merch_biz: dict[str, str] = {}
     for c in charges:
         merch_cat.setdefault(c["merchant"], c["category"])
+        merch_biz.setdefault(c["merchant"], c.get("business", ""))
     for vendor, amt in top_vendors:
         cat = merch_cat.get(vendor, "")
-        lines.append(f"| {vendor} | ${amt:,.2f} | {cat} |")
+        biz = merch_biz.get(vendor, "")
+        lines.append(f"| {vendor} | ${amt:,.2f} | {cat} | {biz} |")
 
     lines += [
         "",
         "## All Transactions",
         "",
-        "| Date | Merchant | Category | Amount |",
-        "|---|---|---|---|",
+        "| Date | Merchant | Category | Business | Amount |",
+        "|---|---|---|---|---|",
     ]
     if interest > 0:
-        lines.append(f"| Interest | Interest Charge | Interest | ${interest:,.2f} |")
+        lines.append(f"| Interest | Interest Charge | Interest | personal | ${interest:,.2f} |")
     if installments > 0:
-        lines.append(f"| Installment | Monthly Installment | Installment | ${installments:,.2f} |")
+        lines.append(f"| Installment | Monthly Installment | Installment | | ${installments:,.2f} |")
     for c in sorted(charges, key=lambda x: x["date"], reverse=True):
-        lines.append(f"| {c['date']} | {c['merchant']} | {c['category']} | ${c['amount']:,.2f} |")
+        lines.append(f"| {c['date']} | {c['merchant']} | {c['category']} | {c.get('business','')} | ${c['amount']:,.2f} |")
 
     lines += [
         "",
@@ -172,6 +188,27 @@ def update_finances_home(period_summaries: list[dict]):
         stmt_lines += [
             "",
             f"**4-month avg real burn:** ${avg:,.2f}/mo (ex interest, ex payments)",
+        ]
+
+        # By-business 4-month summary
+        from collections import defaultdict
+        biz_totals: dict = defaultdict(float)
+        for p in period_summaries:
+            for biz, amt in p.get("by_business", {}).items():
+                biz_totals[biz] += amt
+        n = len(period_summaries)
+        if biz_totals:
+            stmt_lines += [
+                "",
+                "### By Business (4-Month Avg/Mo)",
+                "",
+                "| Business | 4-Mo Avg/Mo |",
+                "|---|---|",
+            ]
+            for biz, total in sorted(biz_totals.items(), key=lambda x: -x[1]):
+                stmt_lines.append(f"| {biz} | ${total/n:,.2f} |")
+
+        stmt_lines += [
             "",
             "### Statements Folder",
             "",
@@ -225,6 +262,7 @@ def run():
             "full": parsed["full_total"],
             "interest": parsed["interest"],
             "txn_count": parsed["txn_count"],
+            "by_business": parsed.get("by_business", {}),
         })
         if csv_path_obj.name in new_csv_names:
             out_path = write_vault_statement(csv_path_obj, parsed, month_key)

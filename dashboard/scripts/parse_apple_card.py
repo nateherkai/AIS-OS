@@ -4,6 +4,7 @@ Apple Card CSV format:
   Transaction Date,Clearing Date,Description,Merchant,Category,Type,Amount (USD),Purchased By
 
 R3a: Now outputs BOTH curated AI subset AND full card aggregation.
+Phase-E: Vendor → business attribution via vendor_attribution.json.
 """
 import csv
 import json
@@ -15,6 +16,33 @@ from collections import defaultdict
 
 IMPORTS_DIR = os.path.join(os.path.dirname(__file__), "..", "imports")
 EXPENSES_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "expenses.json")
+ATTRIBUTION_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "vendor_attribution.json")
+
+
+def _load_attribution() -> dict:
+    """Load vendor_attribution.json, return empty-safe defaults if missing."""
+    try:
+        with open(ATTRIBUTION_FILE) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"version": 1, "default_business": "other", "buckets": [], "vendor_map": {}, "category_fallbacks": {}}
+
+
+def _build_vendor_lookup(vendor_map: dict) -> list[tuple[str, str]]:
+    """Return vendor_map as list sorted longest-key-first for longest-match-wins."""
+    return sorted(vendor_map.items(), key=lambda x: -len(x[0]))
+
+
+def _assign_business(merchant: str, category: str, vendor_lookup: list[tuple[str, str]],
+                     category_fallbacks: dict, default_business: str) -> str:
+    """Case-insensitive substring match; longest-match-wins; then category fallback."""
+    merchant_lower = merchant.lower()
+    for key, biz in vendor_lookup:
+        if key in merchant_lower:
+            return biz
+    if category in category_fallbacks:
+        return category_fallbacks[category]
+    return default_business
 
 _MONTHS = {"january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
            "july":7,"august":8,"september":9,"october":10,"november":11,"december":12}
@@ -57,23 +85,31 @@ def match_vendor(description: str, merchant: str, vendor_keywords: list[str]) ->
     return any(kw.upper() in text for kw in vendor_keywords)
 
 
-def _parse_csv_full(csv_path: str) -> dict:
+def _parse_csv_full(csv_path: str, attr: dict | None = None) -> dict:
     """
     Parse one CSV and return a dict with:
-      - charges: list of {date, merchant, category, amount, type}
+      - charges: list of {date, merchant, category, amount, type, business}
       - full_total: total charges (purchases only, ex interest, ex payments/credits)
       - interest: total interest charged
       - installments: total installment charges
       - txn_count: number of purchase rows
       - by_merchant: {merchant: total}
       - by_category: {category: total}
+      - by_business: {business_id: total}
     """
+    if attr is None:
+        attr = _load_attribution()
+    vendor_lookup = _build_vendor_lookup(attr.get("vendor_map", {}))
+    category_fallbacks = attr.get("category_fallbacks", {})
+    default_business = attr.get("default_business", "other")
+
     charges = []
     interest = 0.0
     installments = 0.0
     full_total = 0.0
     by_merchant: dict[str, float] = defaultdict(float)
     by_category: dict[str, float] = defaultdict(float)
+    by_business: dict[str, float] = defaultdict(float)
 
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -102,16 +138,20 @@ def _parse_csv_full(csv_path: str) -> dict:
             if amount <= 0:
                 continue  # skip returns/credits if they slipped through
 
+            business = _assign_business(merchant, category, vendor_lookup, category_fallbacks, default_business)
+
             charges.append({
                 "date": txn_date,
                 "merchant": merchant,
                 "category": category,
                 "amount": round(amount, 2),
                 "type": txn_type,
+                "business": business,
             })
             full_total += amount
             by_merchant[merchant] += amount
             by_category[category] += amount
+            by_business[business] += amount
 
     return {
         "charges": charges,
@@ -121,6 +161,7 @@ def _parse_csv_full(csv_path: str) -> dict:
         "txn_count": len(charges),
         "by_merchant": {k: round(v, 2) for k, v in sorted(by_merchant.items(), key=lambda x: -x[1])},
         "by_category": {k: round(v, 2) for k, v in sorted(by_category.items(), key=lambda x: -x[1])},
+        "by_business": {k: round(v, 2) for k, v in sorted(by_business.items(), key=lambda x: -x[1])},
     }
 
 
@@ -129,6 +170,8 @@ def parse_and_update():
     Main entry point. Reads ALL CSVs in imports/, computes full aggregation,
     updates curated expense amounts from latest CSV, and writes enriched
     expenses.json with both curated and full-card data.
+
+    Phase-E: Also computes per-business aggregates and unmapped_vendors list.
     """
     all_csvs = find_all_csvs()
     if not all_csvs:
@@ -137,15 +180,18 @@ def parse_and_update():
     with open(EXPENSES_FILE) as f:
         data = json.load(f)
 
+    # Load attribution config once
+    attr = _load_attribution()
+    default_business = attr.get("default_business", "other")
+
     # --- Parse all CSVs ---
     period_data: list[dict] = []
-    all_charges_30d: list[dict] = []
 
     for csv_path in all_csvs:
         y, m = _filename_date(csv_path)
         month_key = f"{y}-{m:02d}"
         month_name = _MONTH_NAMES.get(m, str(m))
-        parsed = _parse_csv_full(csv_path)
+        parsed = _parse_csv_full(csv_path, attr)
         period_data.append({
             "month": month_key,
             "month_name": f"{month_name} {y}",
@@ -155,6 +201,7 @@ def parse_and_update():
             "txn_count": parsed["txn_count"],
             "by_merchant": parsed["by_merchant"],
             "by_category": parsed["by_category"],
+            "by_business": parsed["by_business"],
             "charges": parsed["charges"],
             "csv_file": os.path.basename(csv_path),
         })
@@ -165,7 +212,10 @@ def parse_and_update():
 
     # --- 30-day top vendors / category = latest month ---
     top_vendors_30d = [
-        {"merchant": k, "amount": v}
+        {"merchant": k, "amount": v, "business": _assign_business(
+            k, "", _build_vendor_lookup(attr.get("vendor_map", {})),
+            attr.get("category_fallbacks", {}), default_business
+        )}
         for k, v in list(latest_period["by_merchant"].items())[:15]
     ]
     by_category_30d = latest_period["by_category"]
@@ -173,6 +223,18 @@ def parse_and_update():
     # --- Rolling avg of full charges across all periods ---
     all_totals = [p["full"] for p in period_data]
     monthly_avg_full = round(sum(all_totals) / len(all_totals), 2) if all_totals else 0.0
+
+    # --- by_business_30d (latest month) ---
+    by_business_30d = latest_period["by_business"]
+
+    # --- by_business_4mo_avg (last 4 periods) ---
+    last4 = period_data[-4:]
+    biz_totals: dict[str, float] = defaultdict(float)
+    for p in last4:
+        for biz, amt in p["by_business"].items():
+            biz_totals[biz] += amt
+    n4 = len(last4)
+    by_business_4mo_avg = {k: round(v / n4, 2) for k, v in biz_totals.items()} if n4 else {}
 
     # --- Period summaries (for trend chart) ---
     period_summaries = []
@@ -184,7 +246,16 @@ def parse_and_update():
             "interest": p["interest"],
             "installments": p["installments"],
             "txn_count": p["txn_count"],
+            "by_business": p["by_business"],
         })
+
+    # --- Unmapped vendors (fell to default_business) ---
+    unmapped_merchants: set[str] = set()
+    for p in period_data[-4:]:
+        for charge in p["charges"]:
+            if charge.get("business") == default_business:
+                unmapped_merchants.add(charge["merchant"])
+    unmapped_vendors = sorted(unmapped_merchants)
 
     # --- Update curated expense amounts from latest CSV ---
     curated_charges: dict[str, float] = {}
@@ -210,7 +281,10 @@ def parse_and_update():
     data["monthly_avg_full"] = monthly_avg_full
     data["top_vendors_30d"] = top_vendors_30d
     data["by_category_30d"] = by_category_30d
+    data["by_business_30d"] = by_business_30d
+    data["by_business_4mo_avg"] = by_business_4mo_avg
     data["period_summaries"] = period_summaries
+    data["unmapped_vendors"] = unmapped_vendors
     data["expenses_full"] = latest_period["charges"]
     data["last_csv_date"] = latest_period["month"]
     data["last_updated"] = datetime.now().isoformat()
@@ -227,13 +301,16 @@ def parse_and_update():
         "monthly_avg_full": monthly_avg_full,
         "monthly_interest": latest_period["interest"],
         "periods_parsed": len(period_data),
+        "by_business_30d": by_business_30d,
+        "unmapped_count": len(unmapped_vendors),
     }
 
 
 def parse_all_periods() -> list[dict]:
     """Return full parsed data for all CSVs (used by auto_import_card.py)."""
+    attr = _load_attribution()
     return [
-        {**{"csv_path": csv_path, "month_key": _month_key(csv_path)}, **_parse_csv_full(csv_path)}
+        {**{"csv_path": csv_path, "month_key": _month_key(csv_path)}, **_parse_csv_full(csv_path, attr)}
         for csv_path in find_all_csvs()
     ]
 

@@ -722,6 +722,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div class="kpi-label">Monthly Burn</div>
       <div class="kpi-value red" id="kpi-burn">—</div>
       <div class="kpi-sub" id="kpi-burn-sub" style="line-height:1.6;">loading...</div>
+      <div id="kpi-burn-biz" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;line-height:1.5;"></div>
     </div>
     <div class="kpi-card glass">
       <div class="kpi-label">Active Trials</div>
@@ -977,6 +978,22 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <span style="font-size:15px;color:rgba(255,255,255,0.6);">AI/Dev burn this month: <strong id="fin-ai-label" style="color:#fff;">—</strong> vs revenue <strong id="fin-rev-label" style="color:#D4A574;">—</strong> = net <strong id="fin-net-label">—</strong></span>
     </div>
 
+    <!-- ── By-Business KPI row ─────────────────────────────── -->
+    <div id="fin-business-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;"></div>
+
+    <!-- ── Stacked 4-month chart ──────────────────────────── -->
+    <div class="panel glass" style="margin-bottom:16px;">
+      <div class="panel-title">Burn by Business — 4-Month Stacked</div>
+      <canvas id="fin-stacked-chart" height="160" style="width:100%;display:block;margin-top:8px;"></canvas>
+    </div>
+
+    <!-- ── Unmapped vendors panel ─────────────────────────── -->
+    <div class="panel glass" id="fin-unmapped-panel" style="margin-bottom:16px;display:none;">
+      <div class="panel-title">Unmapped Vendors <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;">(fell to "other")</span></div>
+      <div id="fin-unmapped-list" style="margin-top:8px;font-size:14px;color:rgba(255,255,255,0.6);"></div>
+      <div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.35);">Edit <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">dashboard/data/vendor_attribution.json</code> to assign these vendors to a business bucket.</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
       <!-- 4-month trend -->
       <div class="panel glass">
@@ -1085,6 +1102,16 @@ async function loadKPIs() {
 
   document.getElementById('kpi-burn').textContent = `$${burn.toFixed(0)}`;
   document.getElementById('kpi-burn-sub').innerHTML = `<span style="color:rgba(255,255,255,0.5);font-size:13px;">real card avg</span>`;
+  // Business split beneath burn card
+  const bizEl = document.getElementById('kpi-burn-biz');
+  if (bizEl && d.burn_by_business && Object.keys(d.burn_by_business).length) {
+    const BIZ_COLORS = {'personal':'#94A3B8','ag-coach-pro':'#FACC15','afl':'#22D3EE','afl-detailing':'#F472B6','rds':'#34D399','other':'#7A8799'};
+    const BIZ_SHORT = {'personal':'Personal','ag-coach-pro':'ACP','afl':'AFL','afl-detailing':'AFLd','rds':'RDS','other':'Other'};
+    const parts = Object.entries(d.burn_by_business)
+      .sort((a,b) => b[1]-a[1])
+      .map(([k,v]) => `<span style="color:${BIZ_COLORS[k]||'#aaa'}">${BIZ_SHORT[k]||k}: $${v.toFixed(0)}</span>`);
+    bizEl.innerHTML = parts.join(' · ');
+  }
 
   const trials = d.trial_schools ?? 0;
   document.getElementById('kpi-trials').textContent = trials;
@@ -1287,6 +1314,16 @@ async function loadTopSpendMiniCard() {
   }).join('');
 }
 
+// ── Business attribution helpers ──────────────────────────────
+const BIZ_COLORS = {'personal':'#94A3B8','ag-coach-pro':'#FACC15','afl':'#22D3EE','afl-detailing':'#F472B6','rds':'#34D399','other':'#7A8799'};
+const BIZ_LABELS = {'personal':'Personal','ag-coach-pro':'Ag Coach Pro','afl':'Aaron Family Livestock','afl-detailing':'AFL Detailing','rds':'Ranch Dad Strength','other':'Other'};
+const BIZ_SHORT  = {'personal':'Personal','ag-coach-pro':'ACP','afl':'AFL','afl-detailing':'AFLd','rds':'RDS','other':'Other'};
+function bizBadge(id) {
+  const c = BIZ_COLORS[id] || '#7A8799';
+  const l = BIZ_SHORT[id] || id;
+  return `<span style="display:inline-block;background:${c}22;color:${c};border:1px solid ${c}44;border-radius:4px;padding:1px 6px;font-size:11px;white-space:nowrap;">${l}</span>`;
+}
+
 async function loadFinances() {
   const d = _burnData || await loadBurnData();
   _burnData = d;
@@ -1312,6 +1349,73 @@ async function loadFinances() {
   const netLbl = document.getElementById('fin-net-label');
   netLbl.textContent = `${netVal >= 0 ? '+' : ''}$${netVal.toFixed(0)}`;
   netLbl.style.color = netVal >= 0 ? '#4ade80' : '#f87171';
+
+  // ── By-Business KPI row ──────────────────────────────────────
+  try {
+    const bizData = await api('/api/burn/by-business');
+    const kpiRow = document.getElementById('fin-business-kpis');
+    if (kpiRow && bizData.buckets?.length) {
+      const b30 = bizData.by_business_30d || {};
+      const b4a = bizData.by_business_4mo_avg || {};
+      kpiRow.innerHTML = bizData.buckets.map(b => {
+        const amt30 = b30[b.id] || 0;
+        const avg4  = b4a[b.id] || 0;
+        return `<div class="kpi-card glass" style="border-top:3px solid ${b.color};">
+          <div class="kpi-label" style="font-size:12px;">${b.label}</div>
+          <div class="kpi-value" style="font-size:22px;color:${b.color};">$${amt30.toFixed(0)}</div>
+          <div class="kpi-sub" style="font-size:11px;">4mo avg $${avg4.toFixed(0)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Stacked 4-month chart ───────────────────────────────
+    const periods4 = bizData.period_summaries_business || [];
+    if (periods4.length && typeof Chart !== 'undefined') {
+      const ctx2 = document.getElementById('fin-stacked-chart')?.getContext('2d');
+      if (ctx2) {
+        if (window._finStackedChart) window._finStackedChart.destroy();
+        const buckets = bizData.buckets || [];
+        const labels = periods4.map(p => p.month_name || p.month);
+        const datasets = buckets.map(b => ({
+          label: b.label,
+          data: periods4.map(p => (p.by_business || {})[b.id] || 0),
+          backgroundColor: b.color + 'AA',
+          borderColor: b.color,
+          borderWidth: 1,
+        }));
+        window._finStackedChart = new Chart(ctx2, {
+          type: 'bar',
+          data: { labels, datasets },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: 'rgba(255,255,255,0.55)', font: { size: 12 } } },
+              tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}` } },
+            },
+            scales: {
+              x: { stacked: true, ticks: { color: 'rgba(255,255,255,0.45)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+              y: { stacked: true, ticks: { color: 'rgba(255,255,255,0.45)', font: { size: 12 }, callback: v => '$' + v.toFixed(0) }, grid: { color: 'rgba(255,255,255,0.07)' } },
+            },
+          },
+        });
+      }
+    }
+
+    // ── Unmapped vendors panel ─────────────────────────────
+    const unmapped = bizData.unmapped_vendors || [];
+    const unmappedPanel = document.getElementById('fin-unmapped-panel');
+    const unmappedList  = document.getElementById('fin-unmapped-list');
+    if (unmappedPanel && unmapped.length > 0) {
+      unmappedPanel.style.display = '';
+      unmappedList.innerHTML = unmapped.map(v =>
+        `<span style="display:inline-block;background:rgba(255,255,255,0.05);border-radius:4px;padding:2px 8px;margin:2px 4px 2px 0;font-size:13px;">${v}</span>`
+      ).join('');
+    } else if (unmappedPanel) {
+      unmappedPanel.style.display = 'none';
+    }
+  } catch(e) {
+    console.warn('loadFinances: by-business fetch failed', e);
+  }
 
   // Category bars
   const catEl = document.getElementById('fin-category-bars');
@@ -1340,11 +1444,12 @@ async function loadFinances() {
   else {
     vendorEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px;">
       <thead><tr style="color:rgba(255,255,255,0.3);text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);">
-        <th style="padding:6px 0;">#</th><th style="padding:6px 8px;">Vendor</th><th style="padding:6px 8px;text-align:right;">Amount</th>
+        <th style="padding:6px 0;">#</th><th style="padding:6px 8px;">Vendor</th><th style="padding:6px 8px;">Business</th><th style="padding:6px 8px;text-align:right;">Amount</th>
       </tr></thead><tbody>
       ${vendors.map((v,i) => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
         <td style="padding:7px 0;color:rgba(255,255,255,0.25);">${i+1}</td>
         <td style="padding:7px 8px;">${v.merchant}</td>
+        <td style="padding:7px 8px;">${v.business ? bizBadge(v.business) : ''}</td>
         <td style="padding:7px 8px;text-align:right;color:#f87171;">$${v.amount.toFixed(2)}</td>
       </tr>`).join('')}
       </tbody></table>`;

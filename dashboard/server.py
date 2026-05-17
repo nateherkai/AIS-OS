@@ -179,6 +179,24 @@ def api_burn():
         "last_updated": data.get("last_updated"),
     }
 
+@app.get("/api/burn/by-business")
+def api_burn_by_business():
+    """Business-attributed burn: 30d totals, 4-mo avg, per-period breakdown, unmapped vendors."""
+    data = read_json("expenses.json")
+    attr = read_json("vendor_attribution.json")
+    return {
+        "buckets": attr.get("buckets", []),
+        "by_business_30d": data.get("by_business_30d", {}),
+        "by_business_4mo_avg": data.get("by_business_4mo_avg", {}),
+        "period_summaries_business": [
+            {"month": p["month"], "month_name": p.get("month_name", p["month"]),
+             "by_business": p.get("by_business", {}), "total": p["full"]}
+            for p in data.get("period_summaries", [])
+        ],
+        "unmapped_vendors": data.get("unmapped_vendors", []),
+        "top_vendors_30d": data.get("top_vendors_30d", []),
+    }
+
 @app.post("/api/burn/refresh")
 def api_burn_refresh():
     """Manually trigger Apple Card CSV reimport (idempotent)."""
@@ -210,6 +228,7 @@ def kpis():
         "debt_goal": debt["goal"],
         "revenue_breakdown": rev["breakdown"],
         "tier_fallback_used": rev["tier_fallback_used"],
+        "burn_by_business": expenses.get("by_business_30d", {}),
         **({"revenue_warning": rev["revenue_warning"]} if rev.get("revenue_warning") else {}),
     }
 
