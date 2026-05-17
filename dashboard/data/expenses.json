@@ -104,7 +104,7 @@
       ]
     }
   ],
-  "last_updated": "2026-05-16T21:46:26.896955",
+  "last_updated": "2026-05-16T21:50:34.515561",
   "monthly_charges_full": 1781.48,
   "monthly_charges_curated": 373.39,
   "monthly_interest": 77.24,
@@ -158,7 +158,7 @@
     {
       "merchant": "Tiktok Shop",
       "amount": 8.52,
-      "business": "other"
+      "business": "personal"
     },
     {
       "merchant": "elevenlabs.io",
@@ -193,8 +193,7 @@
       "txn_count": 17,
       "by_business": {
         "ag-coach-pro": 167.64,
-        "personal": 134.14,
-        "other": 10.63
+        "personal": 144.77
       }
     },
     {
@@ -218,9 +217,8 @@
       "txn_count": 23,
       "by_business": {
         "afl": 1397.25,
-        "personal": 227.63,
-        "ag-coach-pro": 148.08,
-        "other": 8.52
+        "personal": 236.15,
+        "ag-coach-pro": 148.08
       }
     }
   ],
@@ -367,7 +365,7 @@
       "category": "Other",
       "amount": 8.52,
       "type": "purchase",
-      "business": "other"
+      "business": "personal"
     },
     {
       "date": "04/10/2026",
@@ -413,18 +411,13 @@
   "last_csv_date": "2026-04",
   "by_business_30d": {
     "afl": 1397.25,
-    "personal": 227.63,
-    "ag-coach-pro": 148.08,
-    "other": 8.52
+    "personal": 236.15,
+    "ag-coach-pro": 148.08
   },
   "by_business_4mo_avg": {
     "afl": 433.26,
     "ag-coach-pro": 160.64,
-    "personal": 838.87,
-    "other": 4.79
+    "personal": 843.66
   },
-  "unmapped_vendors": [
-    "Fitbod",
-    "Tiktok Shop"
-  ]
+  "unmapped_vendors": []
 }
