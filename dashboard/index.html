@@ -274,6 +274,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .pc-activity-count { font-size:12px; color:#4ade80; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <style>
@@ -973,9 +974,16 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       </div>
     </div>
 
+    <!-- Interest callout -->
+    <div id="fin-interest-callout" class="panel glass" style="padding:12px 20px;margin-bottom:16px;border:1px solid rgba(251,146,60,0.45);background:rgba(251,146,60,0.06);display:none;">
+      <span style="font-size:15px;">&#9888; Interest: <strong id="fin-callout-monthly" style="color:#fb923c;">—</strong>/mo &middot; ~<strong id="fin-callout-annual" style="color:#fb923c;">—</strong>/yr</span>
+      <span style="font-size:14px;color:rgba(255,255,255,0.5);margin-left:12px;">Pay balance to $0 to recover that (&#8776; <strong id="fin-callout-schools" style="color:#fb923c;">—</strong> new Greenhand schools)</span>
+    </div>
+
     <!-- ROI line: AI spend vs revenue -->
     <div class="panel glass" id="fin-roi-bar" style="padding:14px 20px;margin-bottom:16px;">
       <span style="font-size:15px;color:rgba(255,255,255,0.6);">AI/Dev burn this month: <strong id="fin-ai-label" style="color:#fff;">—</strong> vs revenue <strong id="fin-rev-label" style="color:#D4A574;">—</strong> = net <strong id="fin-net-label">—</strong></span>
+      <div id="fin-roi-sub" style="margin-top:6px;font-size:13px;color:rgba(255,255,255,0.45);display:none;"></div>
     </div>
 
     <!-- ── By-Business KPI row ─────────────────────────────── -->
@@ -1340,15 +1348,24 @@ async function loadFinances() {
   document.getElementById('fin-ai-burn').textContent = `$${aiSubset.toFixed(0)}`;
   document.getElementById('fin-interest').textContent = `$${interest.toFixed(2)}`;
 
-  // ROI line
+  // Interest callout card
+  if (interest > 0) {
+    const annualInterest = interest * 12;
+    const greenhands = Math.round(annualInterest / 495);
+    const callout = document.getElementById('fin-interest-callout');
+    if (callout) {
+      document.getElementById('fin-callout-monthly').textContent = `$${interest.toFixed(2)}`;
+      document.getElementById('fin-callout-annual').textContent = `$${annualInterest.toFixed(0)}`;
+      document.getElementById('fin-callout-schools').textContent = greenhands;
+      callout.style.display = '';
+    }
+  }
+
+  // ROI line — updated after bizData fetch with ACP bucket value
   const kpisD = await api('/api/kpis').catch(() => null);
   const rev = kpisD?.monthly_revenue || 0;
-  const netVal = rev - aiSubset;
-  document.getElementById('fin-ai-label').textContent = `$${aiSubset.toFixed(0)}`;
+  // Preliminary render with curated AI subset; gets overwritten once bizData loads
   document.getElementById('fin-rev-label').textContent = `$${rev.toFixed(2)}`;
-  const netLbl = document.getElementById('fin-net-label');
-  netLbl.textContent = `${netVal >= 0 ? '+' : ''}$${netVal.toFixed(0)}`;
-  netLbl.style.color = netVal >= 0 ? '#4ade80' : '#f87171';
 
   // ── By-Business KPI row ──────────────────────────────────────
   try {
@@ -1366,6 +1383,29 @@ async function loadFinances() {
           <div class="kpi-sub" style="font-size:11px;">4mo avg $${avg4.toFixed(0)}</div>
         </div>`;
       }).join('');
+    }
+
+    // ── ROI ribbon — ACP bucket ──────────────────────────────
+    const acpBurn = (bizData.by_business_30d || {})['ag-coach-pro'] || 0;
+    const revForRibbon = kpisD?.monthly_revenue || 0;
+    const netAcp = revForRibbon - acpBurn;
+    const finAiLbl = document.getElementById('fin-ai-label');
+    const finNetLbl = document.getElementById('fin-net-label');
+    if (finAiLbl) finAiLbl.textContent = `$${acpBurn.toFixed(0)}`;
+    if (finNetLbl) {
+      finNetLbl.textContent = `${netAcp >= 0 ? '+' : ''}$${netAcp.toFixed(0)}`;
+      finNetLbl.style.color = netAcp >= 0 ? '#4ade80' : '#f87171';
+    }
+    // Second line: include Claude Pro Max sub
+    const claudeProMax = 200;
+    const trueAcp = acpBurn + claudeProMax;
+    const gapBreakeven = trueAcp - revForRibbon;
+    const gapGreenhand = Math.ceil(gapBreakeven / 495);
+    const gapBlueGold  = Math.ceil(gapBreakeven / 895);
+    const roiSub = document.getElementById('fin-roi-sub');
+    if (roiSub) {
+      roiSub.textContent = `Including Claude Pro Max sub ($${claudeProMax}): true ACP cost $${trueAcp.toFixed(0)}, gap to break-even: $${Math.max(0, gapBreakeven).toFixed(0)}/mo (≈${gapGreenhand} more Greenhand or ${gapBlueGold} Blue & Gold)`;
+      roiSub.style.display = '';
     }
 
     // ── Stacked 4-month chart ───────────────────────────────
