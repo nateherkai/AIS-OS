@@ -363,3 +363,30 @@ All 36 pass2 files archived.
 ### Domains linked
 
 01-AG-COACH-PRO (all new pages)
+
+---
+
+## 2026-05-16 — Step 3 — Gravity Claw cross-vault ingest (00_Core + 01_Bryan + 03_Decisions)
+
+Cross-vault summary ingest from `/Volumes/Samsung PSSD T7/gravity-claw/memory/`. Pages link to originals via path — not copied.
+
+### Pages created (4)
+
+- [[wiki/gravity-claw/gc-memory-core]] — 9 durable truths + 7 Pinecone-indexed YouTube sources; source: `00_Core/MEMORY.md`
+- [[wiki/gravity-claw/gc-soul]] — GC identity lock, voice rules, job order, business context; source: `00_Core/SOUL.md`
+- [[wiki/gravity-claw/gc-bryan-context]] — Bryan working constraints + voice preference; source: `01_Bryan/bryan.md`
+- [[wiki/gravity-claw/gc-decisions]] — 4 architecture decisions, 2026-05-02 log entry, 3 rejected/deferred ideas; source: `03_Decisions/`
+
+### Sections updated (1)
+
+- [[wiki/index.md]] — Added "Gravity Claw Memory" section with 4 entries
+
+### Skipped (per instructions)
+
+- `07_Daily/` — too many session logs, low signal
+- `02_Businesses/`, `04_Lessons/`, `05_Projects/`, `06_Sources/` — out of scope for this pass (Core + Bryan + Decisions only)
+- `00_Core/HEARTBEAT.md`, `WORKSPACE.md`, `OPENCLAW.md`, `AGENTS.md`, `CLAUDE.md`, `memory-map.md` — minor operational files, content captured in gc-memory-core and gc-decisions
+
+### Domains linked
+
+06-AI-WORKFLOW (all 4 pages)

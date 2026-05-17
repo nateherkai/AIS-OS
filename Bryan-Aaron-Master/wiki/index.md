@@ -1,6 +1,6 @@
 # Wiki Index
 
-Updated: 2026-05-16 (Pass 4 — FBM content pack + brain-rules-accuracy + catalog updates)
+Updated: 2026-05-16 (Pass 5 — Gravity Claw memory cross-vault ingest)
 
 ## Tools
 
@@ -88,6 +88,15 @@ Updated: 2026-05-16 (Pass 4 — FBM content pack + brain-rules-accuracy + catalo
 
 - [[analysis/why-wiki-compounds|Why Wiki Compounds]] — why this pattern creates compounding knowledge vs ephemeral AI chat
 - [[analysis/visualization-layer-analysis|Visualization Layer Analysis]] — why visual AI dashboards are the next major trend
+
+## Gravity Claw Memory
+
+Mirror summaries of Bryan's separate operator AI vault (`/Volumes/Samsung PSSD T7/gravity-claw/memory/`). These are summary pages — not copies. Links back to original files via path.
+
+- [[gravity-claw/gc-memory-core|Gravity Claw — Core Memory (MEMORY.md)]] — 9 durable truths, 7 indexed YouTube sources in Pinecone
+- [[gravity-claw/gc-soul|Gravity Claw — Identity Core (SOUL.md)]] — persona lock, voice rules, primary job order, business context
+- [[gravity-claw/gc-bryan-context|Gravity Claw — Bryan Operating Context]] — constraints, working schedule, voice preference
+- [[gravity-claw/gc-decisions|Gravity Claw — Decisions]] — architecture decisions (Pinecone RAG, OpenClaw pattern, accuracy stack, red-line guardrails, Obsidian+Pinecone memory); decisions log; rejected ideas
 
 ## Domain Map
 
