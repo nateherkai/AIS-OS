@@ -374,6 +374,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .graph-list-row.active { background:rgba(212,165,116,0.2); color:#D4A574; }
 #graph-minimap { position:absolute; bottom:14px; right:14px; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.1); border-radius:8px; backdrop-filter:blur(8px); cursor:crosshair; z-index:6; }
 .graph-dimmed { opacity:0.15 !important; transition:opacity 0.18s; }
+.graph-chip { font-size:11px; padding:4px 8px; border-radius:11px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.4); color:rgba(255,255,255,0.65); cursor:pointer; }
+.graph-chip.active { background:rgba(212,165,116,0.22); color:#D4A574; border-color:rgba(212,165,116,0.4); }
+#memory-graph svg .graph-node.graph-dimmed { opacity:0.15; }
+#memory-graph svg .graph-edge.graph-dimmed { opacity:0.05; }
 </style>
 </head>
 <body>
@@ -2110,6 +2114,163 @@ function runForceGraph(nodes, edges) {
 
   // Initial highlight state
   applyHighlight(null);
+
+  // Sidebar (search, sort, filter chips, list)
+  try { setupGraphSidebar(); } catch(e) { console.warn('setupGraphSidebar failed', e); }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Graph sidebar: search, sort, filter chips, virtualized node list
+// ──────────────────────────────────────────────────────────────
+const GRAPH_LS = { sidebar: 'graph.sidebarOpen', sort: 'graph.sort', filter: 'graph.filterGroups' };
+let __graphSearch = '';
+let __graphSortMode = localStorage.getItem(GRAPH_LS.sort) || 'degree';
+let __graphActiveGroups = new Set(JSON.parse(localStorage.getItem(GRAPH_LS.filter) || '[]'));
+let __graphDegree = new Map();
+
+function toggleGraphSidebar() {
+  const el = document.getElementById('graph-sidebar');
+  el.classList.toggle('open');
+  localStorage.setItem(GRAPH_LS.sidebar, el.classList.contains('open') ? '1' : '0');
+}
+
+function computeDegrees() {
+  __graphDegree.clear();
+  for (const l of window.__graphLinks || []) {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    __graphDegree.set(s, (__graphDegree.get(s) || 0) + 1);
+    __graphDegree.set(t, (__graphDegree.get(t) || 0) + 1);
+  }
+}
+
+function nodeMatches(n) {
+  if (!n) return false;
+  if (__graphSearch && !((n.label || n.id || '').toLowerCase().includes(__graphSearch))) return false;
+  if (__graphActiveGroups.size > 0 && !__graphActiveGroups.has(n.kind)) return false;
+  return true;
+}
+
+function sortedNodes() {
+  const arr = [...(window.__graphNodes || [])];
+  if (__graphSortMode === 'degree') arr.sort((a,b) => (__graphDegree.get(b.id)||0) - (__graphDegree.get(a.id)||0));
+  else if (__graphSortMode === 'alpha') arr.sort((a,b) => (a.label||'').localeCompare(b.label||''));
+  else if (__graphSortMode === 'recent') arr.sort((a,b) => (b.mtime||0) - (a.mtime||0));
+  else if (__graphSortMode === 'type') arr.sort((a,b) => (a.kind||'').localeCompare(b.kind||'') || (a.label||'').localeCompare(b.label||''));
+  return arr;
+}
+
+function renderFilterChips() {
+  const row = document.getElementById('graph-filter-row');
+  if (!row) return;
+  const counts = new Map();
+  for (const n of window.__graphNodes || []) counts.set(n.kind, (counts.get(n.kind)||0)+1);
+  row.innerHTML = '';
+  for (const [g, c] of [...counts].sort()) {
+    const chip = document.createElement('button');
+    chip.className = 'graph-chip' + (__graphActiveGroups.has(g) ? ' active' : '');
+    chip.textContent = `${g} (${c})`;
+    chip.onclick = () => {
+      if (__graphActiveGroups.has(g)) __graphActiveGroups.delete(g); else __graphActiveGroups.add(g);
+      localStorage.setItem(GRAPH_LS.filter, JSON.stringify([...__graphActiveGroups]));
+      renderFilterChips();
+      renderNodeList();
+      applyVisibility();
+    };
+    row.appendChild(chip);
+  }
+}
+
+function renderNodeList() {
+  const container = document.getElementById('graph-list');
+  if (!container) return;
+  const all = sortedNodes().filter(nodeMatches);
+  const useVirtual = all.length > 200;
+  if (!useVirtual) {
+    container.innerHTML = '';
+    if (all.length === 0) { container.innerHTML = '<div style="padding:8px;color:rgba(255,255,255,0.4);font-size:13px">No matches</div>'; return; }
+    for (const n of all) container.appendChild(buildRow(n));
+    return;
+  }
+  const ROW_H = 28;
+  const scrollTop = container.scrollTop;
+  const viewportH = container.clientHeight || 400;
+  const startIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - 10);
+  const endIdx = Math.min(all.length, Math.ceil((scrollTop + viewportH) / ROW_H) + 10);
+  container.innerHTML = '';
+  const topSpacer = document.createElement('div'); topSpacer.style.height = (startIdx * ROW_H) + 'px'; container.appendChild(topSpacer);
+  for (let i = startIdx; i < endIdx; i++) container.appendChild(buildRow(all[i]));
+  const botSpacer = document.createElement('div'); botSpacer.style.height = ((all.length - endIdx) * ROW_H) + 'px'; container.appendChild(botSpacer);
+  if (!container.__virtScroll) {
+    container.__virtScroll = true;
+    container.addEventListener('scroll', () => renderNodeList(), { passive: true });
+  }
+}
+
+function buildRow(n) {
+  const row = document.createElement('div');
+  row.className = 'graph-list-row';
+  row.dataset.nodeId = n.id;
+  const color = (typeof KIND_COLORS !== 'undefined' && KIND_COLORS[n.kind]) || '#888';
+  const labelTxt = (n.label || n.id || '').replace(/[<>&]/g,'');
+  row.innerHTML = `<span class="dot" style="background:${color}"></span><span class="label">${labelTxt}</span><span class="badge">${__graphDegree.get(n.id) || 0}</span>`;
+  row.onclick = () => { try { graphFocusNode(n.id); } catch(e) {} highlightListRow(n.id); };
+  row.onmouseenter = () => hoverHighlightNode(n.id);
+  row.onmouseleave = () => hoverHighlightNode(null);
+  return row;
+}
+
+function highlightListRow(id) {
+  document.querySelectorAll('.graph-list-row.active').forEach(r => r.classList.remove('active'));
+  const row = document.querySelector(`.graph-list-row[data-node-id="${CSS.escape(String(id))}"]`);
+  if (row) { row.classList.add('active'); row.scrollIntoView({ block: 'nearest' }); }
+}
+
+function hoverHighlightNode(id) {
+  const nodes = window.__graphNodes || [];
+  const els = window.__graphNodeEls || [];
+  for (let i = 0; i < els.length; i++) {
+    const n = nodes[i];
+    els[i].classList.toggle('graph-dimmed', id !== null && n && n.id !== id);
+  }
+}
+
+function applyVisibility() {
+  const nodes = window.__graphNodes || [];
+  const nodeEls = window.__graphNodeEls || [];
+  const links = window.__graphLinks || [];
+  const edgeEls = window.__graphEdgeEls || [];
+  for (let i = 0; i < nodeEls.length; i++) {
+    nodeEls[i].classList.toggle('graph-dimmed', !nodeMatches(nodes[i]));
+  }
+  for (let i = 0; i < edgeEls.length; i++) {
+    const l = links[i];
+    if (!l) continue;
+    const s = nodes[l.s];
+    const t = nodes[l.t];
+    edgeEls[i].classList.toggle('graph-dimmed', !(s && t && nodeMatches(s) && nodeMatches(t)));
+  }
+}
+
+function setupGraphSidebar() {
+  const sb = document.getElementById('graph-sidebar');
+  if (!sb) return;
+  if (localStorage.getItem(GRAPH_LS.sidebar) === '0') sb.classList.remove('open');
+  const sortEl = document.getElementById('graph-sort');
+  if (sortEl) {
+    sortEl.value = __graphSortMode;
+    sortEl.onchange = () => { __graphSortMode = sortEl.value; localStorage.setItem(GRAPH_LS.sort, __graphSortMode); renderNodeList(); };
+  }
+  const searchEl = document.getElementById('graph-search');
+  if (searchEl) {
+    let t;
+    searchEl.oninput = () => { clearTimeout(t); t = setTimeout(() => { __graphSearch = searchEl.value.trim().toLowerCase(); renderNodeList(); applyVisibility(); }, 120); };
+    searchEl.onkeydown = (e) => { if (e.key === 'Escape') { searchEl.value = ''; __graphSearch = ''; renderNodeList(); applyVisibility(); } };
+  }
+  computeDegrees();
+  renderFilterChips();
+  renderNodeList();
+  applyVisibility();
 }
 
 function showGraphNode(n) {
