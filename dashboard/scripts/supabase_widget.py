@@ -6,8 +6,10 @@ SECURITY: Never logs SUPABASE_SERVICE_ROLE_KEY.
 
 import os
 import json
+import time
 import urllib.request
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
@@ -166,20 +168,32 @@ def status() -> dict:
         return {"project_id": pid, "status": "error", "error": str(e), "tables_count": 0, "last_insert_ts": None}
 
 
+_list_tables_cache: tuple[float, list] | None = None
+_LIST_TABLES_TTL = 60.0
+
+
 def list_tables() -> list:
     """Return [{name, rows, last_modified}] for ALL discovered tables.
-    Fetches row counts for all tables; capped at 80 per call to avoid timeouts.
+    Parallelized (20 workers) + 60s cache to keep latency under 2s.
     """
-    all_tables = discover_tables()
-    result = []
-    for name in all_tables[:80]:
-        count = _count_table(name)
-        last_ts = _last_created_at(name)
-        result.append({
+    global _list_tables_cache
+    now = time.time()
+    if _list_tables_cache and now - _list_tables_cache[0] < _LIST_TABLES_TTL:
+        return _list_tables_cache[1]
+
+    all_tables = discover_tables()[:80]
+
+    def fetch(name):
+        return {
             "name": name,
-            "rows": count,
-            "last_modified": last_ts,
-        })
+            "rows": _count_table(name),
+            "last_modified": _last_created_at(name),
+        }
+
+    with ThreadPoolExecutor(max_workers=20) as pool:
+        result = list(pool.map(fetch, all_tables))
+
+    _list_tables_cache = (now, result)
     return result
 
 
