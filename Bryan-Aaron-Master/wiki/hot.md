@@ -1,5 +1,5 @@
 # Hot Cache
 
-Updated: 2026-05-16 (Step 3 — Gravity Claw cross-vault ingest)
+Updated: 2026-05-16 (Full vault buildout — Steps 1-4 complete)
 
-Step 3 done. 4 new wiki pages mirror GC operator brain (MEMORY.md, SOUL.md, Bryan context, Decisions). Key: 9 durable truths (Athens renewal 2027-05-11; Pinecone=primary RAG; email=drafts only), identity lock ("Gravity Claw, not Claude"), 4 arch decisions (Pinecone-first, OpenClaw-as-pattern, accuracy-stack, red-lines). Vault: 70+ wiki pages. 01-AG-COACH-PRO fully backfilled (8 domain files + Athens detail). Sales pipeline live: 1 Lone Star Elite active, ~12 trials, 10 demo leads.
+All 4 buildout steps done. Vault: 103 active md files (166 total incl. archived raw), 70 wiki pages. Pass 4 ingest: +3 wiki pages (FBM CDE, FBM content pack, Brain Rules Accuracy). 01-AG-COACH-PRO backfilled: 8 subdomain files + Athens ISD live data (1 Lone Star Elite active + 12 trials + 10 demo leads, pulled from Supabase). GC cross-vault: 4 summary pages (MEMORY.md, SOUL.md, Bryan context, Decisions). Domains 02-AFL/03-TEACHING/05-PERSONAL/06-AI-WORKFLOW backfilled: F-250 full service log (208K–237K mi), family detail, MagnaWave/EPD/Embryos/FFA stubs, MCP connections registry. Lint: 53 issues — 50 are outside_vault false positives (intentional cross-domain links), 3 pre-existing missing_target (linter artifacts). Memory graph: 157 nodes, 455 edges.
