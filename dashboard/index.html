@@ -373,7 +373,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .graph-list-row .badge { font-size:11px; color:rgba(255,255,255,0.45); }
 .graph-list-row.active { background:rgba(212,165,116,0.2); color:#D4A574; }
 #graph-minimap { position:absolute; bottom:14px; right:14px; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.1); border-radius:8px; backdrop-filter:blur(8px); cursor:crosshair; z-index:6; }
-.graph-dimmed { opacity:0.15 !important; transition:opacity 0.18s; }
+.graph-dimmed { transition:opacity 0.18s; }
 .graph-chip { font-size:11px; padding:4px 8px; border-radius:11px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.4); color:rgba(255,255,255,0.65); cursor:pointer; }
 .graph-chip.active { background:rgba(212,165,116,0.22); color:#D4A574; border-color:rgba(212,165,116,0.4); }
 #memory-graph svg .graph-node.graph-dimmed { opacity:0.15; }
@@ -2361,12 +2361,15 @@ function highlightListRow(id) {
 }
 
 function hoverHighlightNode(id) {
-  const nodes = window.__graphNodes || [];
-  const els = window.__graphNodeEls || [];
-  for (let i = 0; i < els.length; i++) {
-    const n = nodes[i];
-    els[i].classList.toggle('graph-dimmed', id !== null && n && n.id !== id);
+  // Sidebar row hover → use existing canvas focus mechanism so neighbors light up
+  if (window.__graphFocusCurrentIdx !== null) return; // don't override active focus
+  if (id === null) {
+    if (typeof _applyFocusOpacity === 'function') _applyFocusOpacity(null);
+    return;
   }
+  const nodes = window.__graphNodes || [];
+  const idx = nodes.findIndex(n => n && n.id === id);
+  if (idx >= 0 && typeof _applyFocusOpacity === 'function') _applyFocusOpacity(idx);
 }
 
 function applyVisibility() {
