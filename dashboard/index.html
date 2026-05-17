@@ -357,6 +357,23 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .filter-chip { font-size:12px; padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.15s; user-select:none; }
 .filter-chip.on { background:rgba(212,165,116,0.14); border-color:rgba(212,165,116,0.35); color:#D4A574; }
 .filter-chip:hover { border-color:rgba(255,255,255,0.25); color:rgba(255,255,255,0.8); }
+
+/* ── GRAPH SIDEBAR + MINIMAP ────────────────────────────────── */
+.graph-sidebar { position:absolute; top:0; left:0; bottom:0; width:280px; background:rgba(0,0,0,0.55); backdrop-filter:blur(10px); border-right:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; transition:width 0.18s; z-index:5; overflow:hidden; }
+.graph-sidebar:not(.open) { width:0; }
+.graph-sidebar-toggle { position:absolute; top:10px; right:-36px; width:32px; height:32px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.55); color:#D4A574; border-radius:7px; cursor:pointer; font-size:18px; backdrop-filter:blur(8px); }
+.graph-sidebar-body { padding:14px 12px; display:flex; flex-direction:column; gap:10px; height:100%; box-sizing:border-box; overflow:hidden; }
+#graph-search { background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); border-radius:7px; padding:8px 10px; color:#fff; font-size:14px; }
+#graph-sort { background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); border-radius:7px; padding:7px 10px; color:#fff; font-size:13px; }
+.graph-list { flex:1; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; position:relative; }
+.graph-list-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:5px; cursor:pointer; height:28px; box-sizing:border-box; font-size:13px; color:rgba(255,255,255,0.82); }
+.graph-list-row:hover { background:rgba(212,165,116,0.12); color:#D4A574; }
+.graph-list-row .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.graph-list-row .label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.graph-list-row .badge { font-size:11px; color:rgba(255,255,255,0.45); }
+.graph-list-row.active { background:rgba(212,165,116,0.2); color:#D4A574; }
+#graph-minimap { position:absolute; bottom:14px; right:14px; background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.1); border-radius:8px; backdrop-filter:blur(8px); cursor:crosshair; z-index:6; }
+.graph-dimmed { opacity:0.15 !important; transition:opacity 0.18s; }
 </style>
 </head>
 <body>
@@ -447,8 +464,6 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-memory" class="view">
-    <!-- Filter chips (N5) -->
-    <div class="graph-filter-row" id="graph-filter-row"></div>
     <!-- Pinecone mini-card -->
     <div class="panel glass" id="pc-mini-card" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
       <div>
@@ -463,6 +478,20 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <a onclick="showView('pinecone')" style="cursor:pointer;font-size:14px;color:rgba(74,222,128,0.7);text-decoration:none;white-space:nowrap;">Open Pinecone view →</a>
     </div>
     <div class="graph-wrap">
+      <aside id="graph-sidebar" class="graph-sidebar open">
+        <button class="graph-sidebar-toggle" onclick="toggleGraphSidebar()" title="Toggle sidebar">≡</button>
+        <div class="graph-sidebar-body">
+          <input type="search" id="graph-search" placeholder="Find node…" autocomplete="off">
+          <select id="graph-sort">
+            <option value="degree">Connections (high→low)</option>
+            <option value="alpha">A → Z</option>
+            <option value="recent">Recently touched</option>
+            <option value="type">Type</option>
+          </select>
+          <div class="graph-filter-row" id="graph-filter-row"></div>
+          <div class="graph-list" id="graph-list"></div>
+        </div>
+      </aside>
       <div class="graph-title">Memory Graph<b id="graph-headline">— · — · —</b></div>
       <div class="graph-stats" id="graph-stats">loading…</div>
       <!-- Focus mode breadcrumb (N3) -->
@@ -473,6 +502,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
         <button class="graph-focus-btn" onclick="graphCenterFocus()">⌖ Center</button>
       </div>
       <svg class="graph-svg" id="graph-svg"></svg>
+      <canvas id="graph-minimap" width="180" height="120"></canvas>
       <div class="graph-legend">
         <span><i style="background:#00E676;box-shadow:0 0 10px #00E676;"></i>Memory Core</span>
         <span><i style="background:#FACC15;box-shadow:0 0 10px #FACC15;"></i>Domain Hub</span>
