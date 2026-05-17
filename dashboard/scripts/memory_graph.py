@@ -210,6 +210,46 @@ def build():
             if tgt in wiki_ids and tgt != src:
                 edges.append({"source": src, "target": tgt})
 
+    # ── Gravity Claw cluster ─────────────────────────────────────
+    # Hub node connecting GC vault memory files to AIOS
+    gc_hub_id = "gc:gravity-claw"
+    if GC.exists():
+        nodes.append({"id": gc_hub_id, "label": "Gravity Claw", "kind": "gc-hub", "size": 12})
+        edges.append({"source": "aios", "target": gc_hub_id})
+        existing_ids.add(gc_hub_id)
+
+        # Key memory files from GC vault
+        gc_priority_files = [
+            GC / "memory" / "00_Core" / "MEMORY.md",
+            GC / "memory" / "00_Core" / "SOUL.md",
+            GC / "memory" / "00_Core" / "CLAUDE.md",
+            GC / "memory" / "01_Bryan" / "bryan.md",
+        ]
+        for gf in gc_priority_files:
+            if gf.exists():
+                gfid = f"gc-file:{gf.name}"
+                age = now - gf.stat().st_mtime
+                kind = "stale" if age > STALE_AGE else "gc-file"
+                nodes.append({"id": gfid, "label": gf.name, "kind": kind, "size": 4})
+                edges.append({"source": gc_hub_id, "target": gfid})
+                existing_ids.add(gfid)
+
+        # Walk all GC memory sub-folders for additional files (cap 20)
+        gc_extra_count = 0
+        for sub in sorted((GC / "memory").iterdir()):
+            if not sub.is_dir() or gc_extra_count >= 20:
+                break
+            for gf in sorted(sub.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)[:3]:
+                gfid = f"gc-file:{sub.name}-{gf.name}"
+                if gfid in existing_ids:
+                    continue
+                age = now - gf.stat().st_mtime
+                kind = "stale" if age > STALE_AGE else "gc-file"
+                nodes.append({"id": gfid, "label": f"{sub.name}/{gf.stem}", "kind": kind, "size": 3})
+                edges.append({"source": gc_hub_id, "target": gfid})
+                existing_ids.add(gfid)
+                gc_extra_count += 1
+
     counts = defaultdict(int)
     for n in nodes:
         counts[n["kind"]] += 1
@@ -223,6 +263,7 @@ def build():
         "sessions": counts.get("session", 0),
         "stale": counts.get("stale", 0),
         "wiki": counts.get("wiki", 0),
+        "gc_files": counts.get("gc-file", 0),
         "nodes_total": len(nodes),
         "edges_total": len(edges),
     }

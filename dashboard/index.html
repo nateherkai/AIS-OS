@@ -407,6 +407,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('roi',this)"><span class="nav-icon">📈</span><span class="nav-label">ROI</span></div>
   <div class="nav-item" onclick="showView('dreams',this)"><span class="nav-icon">🌙</span><span class="nav-label">Dreams</span></div>
   <div class="nav-item" onclick="showView('bridge',this)"><span class="nav-icon">🔗</span><span class="nav-label">GC Bridge</span></div>
+  <div class="nav-item" onclick="showView('gravityclaw',this)"><span class="nav-icon">🦅</span><span class="nav-label">Gravity Claw</span></div>
   <div class="nav-item" onclick="showView('supabase',this)"><span class="nav-icon">🗄</span><span class="nav-label">Supabase</span></div>
   <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
   <div class="nav-item" onclick="showView('usage',this)"><span class="nav-icon">📊</span><span class="nav-label">Usage</span></div>
@@ -486,6 +487,8 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
         <span><i style="background:#22D3EE;box-shadow:0 0 10px #22D3EE;"></i>Wiki Org</span>
         <span><i style="background:#FACC15;box-shadow:0 0 10px #FACC15;"></i>Comparison</span>
         <span><i style="background:#34D399;box-shadow:0 0 10px #34D399;"></i>Analysis</span>
+        <span><i style="background:#FF6B9D;box-shadow:0 0 10px #FF6B9D;"></i>GC Hub</span>
+        <span><i style="background:#FFB3CC;box-shadow:0 0 8px #FFB3CC;"></i>GC File</span>
       </div>
     </div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
@@ -542,6 +545,38 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     <div class="panel glass">
       <div class="panel-title">Install Snippet — paste into GC's CLAUDE.md</div>
       <pre id="bridge-install" style="font-family:monospace;font-size:15px;color:rgba(255,255,255,0.55);white-space:pre-wrap;max-height:300px;overflow:auto;">Loading...</pre>
+    </div>
+  </div>
+
+  <!-- ══ GRAVITY CLAW VIEW ══ -->
+  <div id="view-gravityclaw" class="view">
+    <div class="panel-title">Gravity Claw <span id="gc-status-badge" style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.35);">loading…</span></div>
+    <div class="sb-stats-row">
+      <div class="sb-stat"><div class="sb-stat-label">Vault Path</div><div class="sb-stat-value" id="gc-vault-path" style="font-size:13px;color:rgba(255,255,255,0.6);">/Volumes/Samsung PSSD T7/gravity-claw</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Memory Files</div><div class="sb-stat-value" id="gc-mem-count">—</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Pinecone Vectors</div><div class="sb-stat-value" id="gc-vec-count" style="color:#4ade80;">1</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Deployment</div><div class="sb-stat-value" id="gc-deploy-status" style="font-size:14px;">Railway</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Recent Memory Files</div>
+      <div id="gc-memory-list"><div class="loading">Loading…</div></div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Core Files</div>
+      <div id="gc-core-files">
+        <div class="sb-table-row"><span class="sb-table-name">00_Core/MEMORY.md</span><span class="sb-table-count">durable truths</span></div>
+        <div class="sb-table-row"><span class="sb-table-name">00_Core/SOUL.md</span><span class="sb-table-count">GC personality</span></div>
+        <div class="sb-table-row"><span class="sb-table-name">00_Core/CLAUDE.md</span><span class="sb-table-count">operator instructions</span></div>
+        <div class="sb-table-row"><span class="sb-table-name">01_Bryan/bryan.md</span><span class="sb-table-count">Bryan's working context</span></div>
+      </div>
+    </div>
+    <div class="panel glass">
+      <div class="panel-title">Pinecone Index — gravityclaw-vector / knowledge namespace</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.8;padding:4px 0;">
+        <strong style="color:#4ade80;">1 vector</strong> confirmed in index (queried 2026-05-16).<br>
+        Content: ag_rules_claude — Ag Coach Pro CLAUDE.md rules ingested during bootstrap.<br>
+        To add more: run <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">python3 ~/.claude/pinecone_memory.py upsert &lt;text&gt; &lt;id&gt;</code> from a session.
+      </div>
     </div>
   </div>
 
@@ -1196,6 +1231,7 @@ const VIEW_LOADERS = {
   agent: loadAgent,
   wiki: () => loadWiki && loadWiki(),
   settings: loadSettings,
+  gravityclaw: loadGravityClaw,
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},
@@ -1347,6 +1383,9 @@ const KIND_COLORS = {
   'wiki-concept': '#A78BFA',
   'wiki-comparison': '#FACC15',
   'wiki-analysis': '#34D399',
+  // Gravity Claw cluster
+  'gc-hub': '#FF6B9D',
+  'gc-file': '#FFB3CC',
 };
 
 function hexToRgba(hex, a) {
@@ -1365,7 +1404,7 @@ async function loadMemoryGraph() {
   document.getElementById('graph-headline').textContent =
     `${s.workspaces} workspaces · ${s.memory_files} memory files · ${s.vector_indexes} vector indexes`;
   document.getElementById('graph-stats').innerHTML =
-    `<b>${s.nodes_total}</b> nodes · <b>${s.edges_total}</b> edges<br>${s.decisions} decisions · ${s.skills} skills · ${s.sessions} sessions${s.stale ? ' · <span style="color:#facc15;">'+s.stale+' stale</span>' : ''}`;
+    `<b>${s.nodes_total}</b> nodes · <b>${s.edges_total}</b> edges<br>${s.decisions} decisions · ${s.skills} skills · ${s.sessions} sessions${s.gc_files ? ' · <span style="color:#FF6B9D;">'+s.gc_files+' GC files</span>' : ''}${s.stale ? ' · <span style="color:#facc15;">'+s.stale+' stale</span>' : ''}`;
   runForceGraph(data.nodes, data.edges);
 }
 
@@ -1574,18 +1613,30 @@ function runForceGraph(nodes, edges) {
     .force('charge', d3.forceManyBody().strength(-1200))
     .force('link', d3.forceLink(linkObjs).id(d => d.id).distance(l => 160 + ((degree[l.source.id || l.source] || 0) + (degree[l.target.id || l.target] || 0)) * 4).strength(0.08))
     .force('collide', d3.forceCollide().radius(d => d.size + 14))
-    .force('center', d3.forceCenter(W/2, H/2).strength(0.02))
+    .force('center', d3.forceCenter(W/2, H/2).strength(0.005))
     .alphaDecay(0)
     .alphaMin(0)
-    .alphaTarget(0.006)
-    .velocityDecay(0.55);
+    .alphaTarget(0.0015)
+    .velocityDecay(0.75);
 
   window.__graphSim = sim;
+
+  // Idle-stop: after 8s of no interaction, drop alphaTarget to 0 (near-still)
+  let _graphIdleTimer = null;
+  function _resetIdleTimer() {
+    if (_graphIdleTimer) clearTimeout(_graphIdleTimer);
+    sim.alphaTarget(0.0015).restart();
+    _graphIdleTimer = setTimeout(() => { sim.alphaTarget(0); }, 8000);
+  }
+  _resetIdleTimer();
+  svgEl.addEventListener('mousemove', _resetIdleTimer, { passive: true });
+  svgEl.addEventListener('wheel', _resetIdleTimer, { passive: true });
 
   // Drag behavior
   const dragBehavior = d3.drag()
     .on('start', function(event, d) {
       if (!event.active) sim.alphaTarget(0.15).restart();
+      _resetIdleTimer();
       d.fx = d.x;
       d.fy = d.y;
     })
@@ -1594,7 +1645,8 @@ function runForceGraph(nodes, edges) {
       d.fy = event.y;
     })
     .on('end', function(event, d) {
-      if (!event.active) sim.alphaTarget(0.006);
+      if (!event.active) sim.alphaTarget(0.0015);
+      _resetIdleTimer();
       d.fx = null;
       d.fy = null;
     });
@@ -1881,6 +1933,35 @@ async function testBridge() {
     el.textContent = r.ok ? '✓ Sent — check Telegram' : ('ERROR: ' + (r.error || 'unknown'));
   } catch (e) {
     el.textContent = 'ERROR: ' + e;
+  }
+}
+
+// ── GRAVITY CLAW VIEW ─────────────────────────────────────────
+
+async function loadGravityClaw() {
+  const badge = document.getElementById('gc-status-badge');
+  const memList = document.getElementById('gc-memory-list');
+  const memCount = document.getElementById('gc-mem-count');
+  try {
+    const d = await api('/api/gravityclaw/status');
+    if (!d.connected) {
+      if (badge) badge.textContent = '✗ vault not mounted';
+      if (memList) memList.innerHTML = `<div class="loading">Gravity Claw vault not found at /Volumes/Samsung PSSD T7/gravity-claw. Is the SSD mounted?</div>`;
+      return;
+    }
+    if (badge) badge.textContent = '✓ connected';
+    if (memCount) memCount.textContent = d.memory_files_sampled;
+    if (memList && d.memory_files) {
+      memList.innerHTML = d.memory_files.map(f => `
+        <div class="sb-table-row">
+          <span class="sb-table-name" style="font-family:monospace;font-size:13px;">${escapeHtml(f.path)}</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.3);">${escapeHtml(f.modified)}</span>
+          <span class="sb-table-count">${f.size_kb}kb</span>
+        </div>`).join('');
+    }
+  } catch (e) {
+    if (badge) badge.textContent = 'error';
+    if (memList) memList.innerHTML = `<div class="loading">Error: ${escapeHtml(e.message)}</div>`;
   }
 }
 
@@ -2184,15 +2265,15 @@ function usageBarColor(pct) {
 }
 
 function renderUsageMiniBar(sub) {
-  const color = usageBarColor(sub.pct);
+  const hasPct = sub.pct !== null && sub.pct !== undefined;
+  const color = hasPct ? usageBarColor(sub.pct) : 'green';
+  const pctLabel = hasPct ? `${sub.pct}%` : 'rate-limited';
   return `<div style="margin-bottom:8px;">
     <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:3px;">
       <span>${escapeHtml(sub.name)}</span>
-      <span style="color:rgba(255,255,255,0.4);">${sub.pct}% · ${sub.days_left}d left</span>
+      <span style="color:rgba(255,255,255,0.4);">${pctLabel} · ${sub.days_left}d left</span>
     </div>
-    <div class="usage-bar-wrap">
-      <div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div>
-    </div>
+    ${hasPct ? `<div class="usage-bar-wrap"><div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div></div>` : ''}
   </div>`;
 }
 
@@ -2209,19 +2290,42 @@ async function loadUsage() {
   // Sub cards
   const subCards = document.getElementById('usage-sub-cards');
   subCards.innerHTML = (d.subscriptions || []).map(sub => {
-    const color = usageBarColor(sub.pct);
+    const hasPct = sub.pct !== null && sub.pct !== undefined;
+    const color = hasPct ? usageBarColor(sub.pct) : 'green';
     const savings = sub.net_savings_usd;
     const savingsHtml = savings >= 0
       ? `<span class="save">saving $${savings.toFixed(2)}</span>`
       : `<span class="cost">overpaying $${Math.abs(savings).toFixed(2)}</span>`;
+
+    // Per-token breakdown
+    const cacheInfo = sub.cache_read_tokens > 0
+      ? `<div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px;">Cache served: ${(sub.cache_read_tokens||0).toLocaleString()} tok (free re-reads) · Cache written: ${(sub.cache_creation_tokens||0).toLocaleString()} tok</div>`
+      : '';
+
+    // Claude Pro Max: show 5h window instead of % of plan
+    let windowHtml = '';
+    if (sub.window_5h) {
+      const w = sub.window_5h;
+      windowHtml = `<div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:6px;">Current 5h window: <strong style="color:#D4A574;">${(w.total_tokens||0).toLocaleString()}</strong> tokens · ${w.events} events</div>`;
+    }
+
+    // Manual tracking note for ChatGPT/Gemini
+    const manualHtml = sub.manual_tracking
+      ? `<div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px;">Manual — track usage in ${sub.name} app directly</div>`
+      : '';
+
+    const metaLabel = hasPct
+      ? `${(sub.used_tokens||0).toLocaleString()} / ${(sub.plan_tokens||0).toLocaleString()} tokens · ${sub.days_left}d left`
+      : `${(sub.used_tokens||0).toLocaleString()} billable tokens (30d) · ${sub.rate_limit_note || 'rate-limited'}`;
+
     return `<div class="usage-sub-card">
       <div class="usage-sub-header">
         <span class="usage-sub-name">${escapeHtml(sub.name)}</span>
-        <span class="usage-sub-meta">${(sub.used_tokens||0).toLocaleString()} / ${(sub.plan_tokens||0).toLocaleString()} tokens · ${sub.days_left}d left</span>
+        <span class="usage-sub-meta">${metaLabel}</span>
       </div>
-      <div class="usage-bar-wrap"><div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div></div>
-      <div class="usage-bar-label"><span>${sub.pct}% used</span><span>${(sub.daily_burn||0).toLocaleString()} tok/day avg</span></div>
+      ${hasPct ? `<div class="usage-bar-wrap"><div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div></div><div class="usage-bar-label"><span>${sub.pct}% used</span><span>${(sub.daily_burn||0).toLocaleString()} tok/day avg</span></div>` : `<div class="usage-bar-label"><span>${(sub.daily_burn||0).toLocaleString()} billable tok/day avg (30d)</span></div>`}
       <div class="usage-api-line">$${sub.monthly_usd}/mo sub · $${sub.api_equivalent_usd} API equivalent · ${savingsHtml}</div>
+      ${cacheInfo}${windowHtml}${manualHtml}
     </div>`;
   }).join('');
 
@@ -2520,16 +2624,15 @@ function _cmdkActivate(idx) {
 
 // Keyboard navigation for palette
 document.addEventListener('keydown', e => {
-  // Open palette: Cmd+K or Cmd+P or /
-  if ((e.metaKey && (e.key === 'k' || e.key === 'K')) ||
-      (e.metaKey && (e.key === 'p' || e.key === 'P'))) {
-    // Only intercept if not in an input
-    const tag = document.activeElement?.tagName;
-    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-      e.preventDefault();
-      openCmdk();
-      return;
-    }
+  // Open palette: Cmd+K, Cmd+P, Ctrl+K, Ctrl+P, or / (when not in input)
+  const tag = document.activeElement?.tagName;
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
+  if (((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P'))) {
+    e.preventDefault();
+    openCmdk();
+    return;
+  }
+  if (e.key === '/' && !inInput && !document.getElementById('cmdk-overlay').classList.contains('open')) {
     e.preventDefault();
     openCmdk();
     return;
@@ -2966,6 +3069,8 @@ const FILTER_KINDS = [
   { key: 'wiki-org', label: 'Wiki Org' },
   { key: 'wiki-comparison', label: 'Comparison' },
   { key: 'wiki-analysis', label: 'Analysis' },
+  { key: 'gc-hub', label: 'GC Hub' },
+  { key: 'gc-file', label: 'GC File' },
 ];
 
 function _initFilterChips() {

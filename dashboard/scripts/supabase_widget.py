@@ -24,7 +24,7 @@ HEADERS = {
     "Prefer": "count=exact",
 }
 
-# Tables known to exist in the Ag Coach Pro schema
+# Fallback list if information_schema query fails
 KNOWN_TABLES = [
     "schools",
     "biz_accounts",
@@ -34,8 +34,48 @@ KNOWN_TABLES = [
     "subscriptions",
 ]
 
-# Whitelist for preview_table — prevents injection
+# Whitelist for preview_table — populated dynamically from discovered tables
+# Starts with known tables; extended by discover_tables()
 ALLOWED_TABLES = set(KNOWN_TABLES)
+
+# Module-level cache so we don't hit information_schema on every request
+_discovered_tables: list | None = None
+
+
+def discover_tables() -> list[str]:
+    """Discover all public tables via PostgREST OpenAPI schema endpoint.
+    Falls back to KNOWN_TABLES on error. Caches result for process lifetime.
+    Returns sorted list of table name strings.
+    """
+    global _discovered_tables, ALLOWED_TABLES
+    if _discovered_tables is not None:
+        return _discovered_tables
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        _discovered_tables = list(KNOWN_TABLES)
+        return _discovered_tables
+    try:
+        # PostgREST exposes an OpenAPI document at /rest/v1/ listing all table paths
+        url = f"{SUPABASE_URL}/rest/v1/"
+        headers = {**HEADERS, "Accept": "application/openapi+json"}
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read())
+        paths = list(data.get("paths", {}).keys())
+        # Filter: no leading /, not empty, not rpc paths, not view-like (views start with v_)
+        # We include all — views are still queryable
+        names = sorted(
+            p.lstrip("/") for p in paths
+            if p and p != "/" and not p.startswith("/rpc")
+        )
+        if not names:
+            raise ValueError("OpenAPI returned no table paths")
+        _discovered_tables = names
+        ALLOWED_TABLES = set(names)
+        return _discovered_tables
+    except Exception:
+        # Fall back to hardcoded list
+        _discovered_tables = list(KNOWN_TABLES)
+        return _discovered_tables
 
 
 def _project_id() -> str:
@@ -101,11 +141,14 @@ def status() -> dict:
         return {"project_id": pid, "status": "error", "error": "Credentials not configured", "tables_count": 0, "last_insert_ts": None}
 
     try:
-        # Try a simple ping
-        schools_count = _count_table("schools")
-        # Find most-recent insert across key tables
+        # Discover all tables via information_schema
+        all_tables = discover_tables()
+        schools_count = _count_table("schools") if "schools" in all_tables else -1
+        # Find most-recent insert across key tables (if they exist)
         latest_ts = None
         for tbl in ["schools", "events", "attempts"]:
+            if tbl not in all_tables:
+                continue
             ts = _last_created_at(tbl)
             if ts:
                 if latest_ts is None or ts > latest_ts:
@@ -114,7 +157,8 @@ def status() -> dict:
         return {
             "project_id": pid,
             "status": "ok",
-            "tables_count": len(KNOWN_TABLES),
+            "tables_count": len(all_tables),
+            "tables_shown": len(all_tables),
             "schools_count": schools_count,
             "last_insert_ts": latest_ts,
         }
@@ -123,9 +167,12 @@ def status() -> dict:
 
 
 def list_tables() -> list:
-    """Return [{name, rows, last_modified}] for known tables."""
+    """Return [{name, rows, last_modified}] for ALL discovered tables.
+    Fetches row counts for all tables; capped at 80 per call to avoid timeouts.
+    """
+    all_tables = discover_tables()
     result = []
-    for name in KNOWN_TABLES:
+    for name in all_tables[:80]:
         count = _count_table(name)
         last_ts = _last_created_at(name)
         result.append({

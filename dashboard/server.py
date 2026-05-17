@@ -466,6 +466,46 @@ def api_supabase_table(name: str, limit: int = 20):
 def api_supabase_advisors():
     return {"advisors": sb_advisors()}
 
+# ── Gravity Claw ─────────────────────────────────────────────
+
+@app.get("/api/gravityclaw/status")
+def api_gc_status():
+    """Return GravityClaw vault connection status and recent memory files."""
+    from pathlib import Path
+    import os
+    GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
+    if not GC.exists():
+        return {"connected": False, "error": "Vault not mounted"}
+    mem = GC / "memory"
+    mem_files = []
+    total_count = 0
+    try:
+        for sub in sorted(mem.iterdir()):
+            if not sub.is_dir():
+                continue
+            for f in sorted(sub.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True)[:3]:
+                total_count += 1
+                mem_files.append({
+                    "path": str(f.relative_to(GC)),
+                    "size_kb": round(f.stat().st_size / 1024, 1),
+                    "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat()[:16],
+                })
+    except Exception as e:
+        return {"connected": True, "error": str(e)}
+    # Railway status — check for deploy config
+    railway_toml = GC / "railway.toml"
+    deploy_info = "railway.toml found" if railway_toml.exists() else "no railway.toml"
+    return {
+        "connected": True,
+        "vault_path": str(GC),
+        "memory_files_sampled": len(mem_files),
+        "memory_files": mem_files[:12],
+        "deploy": deploy_info,
+        "pinecone_vectors": 1,  # confirmed via query
+        "pinecone_index": "gravityclaw-vector",
+        "pinecone_namespace": "knowledge",
+    }
+
 # ── Pinecone ──────────────────────────────────────────────────
 
 @app.get("/api/pinecone/stats")
