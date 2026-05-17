@@ -1928,7 +1928,7 @@ function runForceGraph(nodes, edges) {
       <circle class="node-halo" r="${n.size+8}" fill="${color}" filter="url(#g)" opacity="${n.kind === 'stale' ? 0.08 : 0.22}"/>
       <circle class="node-core" r="${n.size}" fill="${color}" opacity="${n.kind === 'stale' ? 0.5 : 0.95}"><title>${(n.label||'').replace(/[<>&]/g,'')} · ${n.kind}</title></circle>
       <circle class="node-hot" r="${Math.max(1.4, n.size * 0.4)}" fill="rgba(255,255,255,0.95)" opacity="${n.kind === 'stale' ? 0.25 : 0.85}"/>
-      <text class="node-label" dy="${n.size+14}" text-anchor="middle" fill="rgba(245,248,255,0.95)" font-size="13" font-weight="560" style="text-shadow:0 0 10px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1); pointer-events:none; opacity:${isHub ? 1 : 0}; transition:opacity 0.15s;">${(n.label||'').replace(/[<>&]/g,'').slice(0,22)}</text>
+      <text class="node-label" dy="${n.size+16}" text-anchor="middle" fill="rgba(245,248,255,0.98)" font-size="${isHub ? 22 : 17}" font-weight="640" style="text-shadow:0 0 12px rgba(0,0,0,1),0 0 4px rgba(0,0,0,1),0 0 2px rgba(0,0,0,1); pointer-events:none; opacity:${isHub ? 1 : 0}; transition:opacity 0.15s;">${(n.label||'').replace(/[<>&]/g,'').slice(0,28)}</text>
     `;
     gNodes.appendChild(g);
     return g;
@@ -3637,11 +3637,13 @@ function _applyFocusOpacity(focusIdx) {
   if (!nodeEls || !edgeEls) return;
 
   if (focusIdx === null) {
-    // Apply only filter state
+    // Apply only filter state — clear any focus-mode highlight styling
     nodeEls.forEach((g, i) => {
       const n = nodes[i];
       const kindOff = filterState[n.kind] === false;
       g.style.opacity = kindOff ? 0.05 : 1;
+      const circ = g.querySelector('circle');
+      if (circ) { circ.style.stroke = ''; circ.style.strokeWidth = ''; circ.style.filter = ''; }
       const lbl = g.querySelector('.node-label');
       if (lbl) lbl.style.opacity = (!kindOff && hubIds && hubIds.has(n.id)) ? 1 : 0;
     });
@@ -3651,6 +3653,8 @@ function _applyFocusOpacity(focusIdx) {
       const tgtOff = filterState[nodes[l.t]?.kind] === false;
       e.style.opacity = (srcOff || tgtOff) ? 0.02 : 0.08;
       e.style.strokeWidth = '0.7';
+      e.style.stroke = '';
+      e.style.filter = '';
     });
     return;
   }
@@ -3661,15 +3665,40 @@ function _applyFocusOpacity(focusIdx) {
     const n = nodes[i];
     const kindOff = filterState[n.kind] === false;
     const inFocus = focused.has(i);
-    g.style.opacity = kindOff ? 0.04 : inFocus ? 1 : 0.04;
+    const isPrimary = i === focusIdx;
+    g.style.opacity = kindOff ? 0.03 : inFocus ? 1 : 0.06;
+    // Bright glow ring on primary focus + neighbors
+    const circ = g.querySelector('circle');
+    if (circ) {
+      if (inFocus && !kindOff) {
+        circ.style.stroke = '#FFD78A';
+        circ.style.strokeWidth = isPrimary ? '4' : '2.5';
+        circ.style.filter = isPrimary
+          ? 'drop-shadow(0 0 14px rgba(255,215,138,0.95)) drop-shadow(0 0 6px rgba(212,165,116,0.7))'
+          : 'drop-shadow(0 0 8px rgba(255,215,138,0.7))';
+      } else {
+        circ.style.stroke = '';
+        circ.style.strokeWidth = '';
+        circ.style.filter = '';
+      }
+    }
     const lbl = g.querySelector('.node-label');
     if (lbl) lbl.style.opacity = (!kindOff && inFocus) ? 1 : 0;
   });
   edgeEls.forEach((e, i) => {
     const l = links[i];
     const touch = focused.has(l.s) || focused.has(l.t);
-    e.style.opacity = touch ? 0.85 : 0.02;
-    e.style.strokeWidth = touch ? '1.2' : '0.7';
+    if (touch) {
+      e.style.opacity = '1';
+      e.style.strokeWidth = '3';
+      e.style.stroke = '#FFD78A';
+      e.style.filter = 'drop-shadow(0 0 6px rgba(255,215,138,0.8))';
+    } else {
+      e.style.opacity = '0.015';
+      e.style.strokeWidth = '0.7';
+      e.style.stroke = '';
+      e.style.filter = '';
+    }
   });
 }
 
