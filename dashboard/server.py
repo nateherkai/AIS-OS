@@ -24,11 +24,12 @@ ROOT = BASE.parent  # AIS-OS root (one level up from dashboard/)
 import sys
 sys.path.insert(0, str(SCRIPTS))
 from supabase_client import get_schools, get_pipeline_summary
-from parse_apple_card import parse_and_update
+from parse_apple_card import parse_and_update, find_all_csvs
 from pillars import build_pillars
 from memory_feed import build_feed as build_memory_feed
 from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
+from pricing import tier_monthly_usd, TIER_MONTHLY_DEFAULT
 import bridge as bridge_mod
 import notify_gc
 try:
@@ -87,6 +88,36 @@ def write_json(name: str, data: dict):
     with open(DATA / name, "w") as f:
         json.dump(data, f, indent=2)
 
+# ── Revenue helpers ───────────────────────────────────────────
+
+def compute_monthly_revenue(paid_schools: list) -> dict:
+    """Sum actual monthly revenue across paid schools using per-tier pricing.
+
+    Each school should have a 'subscription_tier' field from Supabase.
+    Falls back to TIER_MONTHLY_DEFAULT ($124.58, Lone Star Elite) if missing.
+    Returns total and a per-school breakdown for transparency.
+    """
+    total = 0.0
+    breakdown = []
+    tier_fallback_used = False
+    for s in paid_schools:
+        tier = s.get("subscription_tier") or ""
+        monthly = tier_monthly_usd(tier) if tier else TIER_MONTHLY_DEFAULT
+        if not tier:
+            tier_fallback_used = True
+        total += monthly
+        breakdown.append({
+            "name": s.get("name", ""),
+            "tier": tier or "unknown",
+            "monthly_usd": monthly,
+        })
+    return {
+        "total": round(total, 2),
+        "breakdown": breakdown,
+        "tier_fallback_used": tier_fallback_used,
+    }
+
+
 # ── Routes ────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
@@ -117,18 +148,44 @@ def sync_expenses():
     result = parse_and_update()
     return result
 
+@app.get("/api/burn")
+def api_burn():
+    """Real card burn — full monthly spend, AI subset, categories, trends."""
+    data = read_json("expenses.json")
+    return {
+        "monthly_full": data.get("monthly_charges_full", 0),
+        "monthly_curated_ai": data.get("monthly_charges_curated", 0),
+        "monthly_avg_full": data.get("monthly_avg_full", 0),
+        "monthly_interest": data.get("monthly_interest", 0),
+        "top_vendors": data.get("top_vendors_30d", []),
+        "by_category": data.get("by_category_30d", {}),
+        "period_summaries": data.get("period_summaries", []),
+        "last_csv_date": data.get("last_csv_date"),
+        "last_updated": data.get("last_updated"),
+    }
+
+@app.post("/api/burn/refresh")
+def api_burn_refresh():
+    """Manually trigger Apple Card CSV reimport (idempotent)."""
+    res = subprocess.run(
+        ["python3", str(SCRIPTS / "auto_import_card.py")],
+        capture_output=True, text=True, timeout=30,
+    )
+    return {"ok": res.returncode == 0, "stdout": res.stdout[-500:], "stderr": res.stderr[-300:]}
+
 @app.get("/api/kpis")
 def kpis():
     schools = get_schools()
     summary = get_pipeline_summary(schools)
     expenses = read_json("expenses.json")
     debt = read_json("debt.json")
-    total_burn = sum(e["amount"] for e in expenses["expenses"])
-    # Athens: $1,495/yr = ~$124.58/mo
-    monthly_revenue = 124.58 * summary["paid_count"]
+    # R3c: use real full card burn if available, fallback to curated AI subset sum
+    total_burn = expenses.get("monthly_charges_full") or sum(e["amount"] for e in expenses["expenses"])
+    rev = compute_monthly_revenue(summary["paid"])
+    monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
     return {
-        "monthly_revenue": round(monthly_revenue, 2),
+        "monthly_revenue": monthly_revenue,
         "monthly_burn": round(total_burn, 2),
         "net": round(net, 2),
         "paid_schools": summary["paid_count"],
@@ -136,6 +193,8 @@ def kpis():
         "school_goal": 50,
         "debt_total_paid": debt["total_paid"],
         "debt_goal": debt["goal"],
+        "revenue_breakdown": rev["breakdown"],
+        "tier_fallback_used": rev["tier_fallback_used"],
     }
 
 # ── Tasks ─────────────────────────────────────────────────────
@@ -200,8 +259,9 @@ def pipeline_check():
     schools = get_schools()
     summary = get_pipeline_summary(schools)
     expenses = read_json("expenses.json")
-    total_burn = sum(e["amount"] for e in expenses["expenses"])
-    monthly_revenue = 124.58 * summary["paid_count"]
+    total_burn = expenses.get("monthly_charges_full") or sum(e["amount"] for e in expenses["expenses"])
+    rev = compute_monthly_revenue(summary["paid"])
+    monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
 
     for s in summary["trials"]:
@@ -653,6 +713,7 @@ def api_search_index():
             ("pinecone", "Pinecone", "Vector memory search"),
             ("usage", "Token Usage", "Token usage and subscription stats"),
             ("agent", "Personal Agent", "AI assistant with vault context"),
+            ("finances", "Finances", "Full card burn, top vendors, 4-month trend, interest tracking"),
         ]
         for route, label, ctx in views:
             index.append({"type": "view", "id": route, "label": label, "context": ctx, "route": route, "action_payload": {"view": route}})

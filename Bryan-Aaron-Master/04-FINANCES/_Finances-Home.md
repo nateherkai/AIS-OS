@@ -53,3 +53,24 @@ That answer lives in [[Goals]]. Everything else feeds into it.
 - [ ] Set the retirement income target in [[Goals]]
 - [ ] Start tracking business revenue monthly in [[Business-Revenue]]
 - [ ] Review TRS projection and retirement date in [[Teaching-Income]]
+
+---
+
+## Apple Card Statements
+
+> Auto-ingested from `dashboard/imports/`. Last updated 2026-05-16.
+
+### 4-Month Summary
+
+| Month | Charges | Interest | Transactions |
+|---|---|---|---|
+| [[Statements/2026-04-april|April 2026]] | $1,781.48 | $77.24 | 23 |
+| [[Statements/2026-03-march|March 2026]] | $2,907.63 | $29.74 | 21 |
+| [[Statements/2026-02-february|February 2026]] | $312.41 | $45.68 | 17 |
+| [[Statements/2026-01-january|January 2026]] | $748.71 | $47.68 | 27 |
+
+**4-month avg real burn:** $1,437.56/mo (ex interest, ex payments)
+
+### Statements Folder
+
+[[Statements/]] — one page per month, full transaction list.

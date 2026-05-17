@@ -413,6 +413,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
   <div class="nav-item" onclick="showView('usage',this)"><span class="nav-icon">📊</span><span class="nav-label">Usage</span></div>
   <div class="nav-item" onclick="showView('settings',this)"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></div>
+  <div class="nav-item" onclick="showView('finances',this)"><span class="nav-icon">💳</span><span class="nav-label">Finances</span></div>
   <div class="sidebar-section">Skills</div>
   <div class="nav-item" onclick="showView('agent',this)"><span class="nav-icon">🤖</span><span class="nav-label">Personal Agent</span></div>
   <div class="action-btn" onclick="runPipelineCheck()"><span class="nav-icon">▶</span><span>Pipeline Check</span></div>
@@ -717,10 +718,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div class="kpi-sub">goal: 50 · deadline Aug 2026</div>
       <div class="kpi-progress"><div class="kpi-progress-fill" id="prog-schools" style="width:0%"></div></div>
     </div>
-    <div class="kpi-card glass clickable" onclick="showDashboardSection('expenses')">
+    <div class="kpi-card glass clickable" onclick="showView('finances',this)">
       <div class="kpi-label">Monthly Burn</div>
       <div class="kpi-value red" id="kpi-burn">—</div>
-      <div class="kpi-sub" id="kpi-burn-sub">loading...</div>
+      <div class="kpi-sub" id="kpi-burn-sub" style="line-height:1.6;">loading...</div>
     </div>
     <div class="kpi-card glass">
       <div class="kpi-label">Active Trials</div>
@@ -778,6 +779,12 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="panel glass" id="card-dreams">
     <div class="panel-title">Tonight's Dreams <small id="dream-date" style="font-size:15px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></small></div>
     <ol id="dream-cards" style="padding-left:20px;font-size:15px;color:rgba(255,255,255,0.7);line-height:1.9;"><li>loading…</li></ol>
+  </div>
+
+  <!-- Top Spend mini-card on Dashboard -->
+  <div class="panel glass" id="card-top-spend" style="padding:16px 20px;">
+    <div class="panel-title" style="margin-bottom:10px;">Top Spend <span id="top-spend-month" style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></span> <a onclick="showView('finances',this)" style="cursor:pointer;font-size:12px;color:rgba(212,165,116,0.7);text-decoration:none;margin-left:auto;display:inline-block;float:right;">Full view →</a></div>
+    <div id="top-spend-list" style="font-size:15px;color:rgba(255,255,255,0.7);line-height:1.9;"><span class="loading" style="font-size:13px;">Loading…</span></div>
   </div>
 
   <!-- Supabase mini-card on Dashboard -->
@@ -933,6 +940,64 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
     </div>
   </div>
 
+  <!-- ══ FINANCES VIEW (R3e) ══ -->
+  <div id="view-finances" class="view">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:6px;flex-wrap:wrap;">
+      <div class="panel-title" style="margin-bottom:0;">Finances</div>
+      <button class="btn-secondary" id="burn-refresh-btn" onclick="burnRefresh()" style="font-size:13px;padding:6px 14px;">↻ Refresh CSVs</button>
+      <span id="burn-refresh-status" style="font-size:13px;color:rgba(255,255,255,0.4);"></span>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+      <div class="kpi-card glass">
+        <div class="kpi-label">Avg Monthly Burn</div>
+        <div class="kpi-value red" id="fin-avg-burn">—</div>
+        <div class="kpi-sub">4-month real avg</div>
+      </div>
+      <div class="kpi-card glass">
+        <div class="kpi-label">This Month</div>
+        <div class="kpi-value red" id="fin-month-burn">—</div>
+        <div class="kpi-sub" id="fin-month-label">charges (ex interest)</div>
+      </div>
+      <div class="kpi-card glass">
+        <div class="kpi-label">AI/Dev Subset</div>
+        <div class="kpi-value" id="fin-ai-burn">—</div>
+        <div class="kpi-sub">curated tools only</div>
+      </div>
+      <div class="kpi-card glass">
+        <div class="kpi-label">Interest (this mo)</div>
+        <div class="kpi-value yellow" id="fin-interest">—</div>
+        <div class="kpi-sub">pay this off — ~$50/mo avg</div>
+      </div>
+    </div>
+
+    <!-- ROI line: AI spend vs revenue -->
+    <div class="panel glass" id="fin-roi-bar" style="padding:14px 20px;margin-bottom:16px;">
+      <span style="font-size:15px;color:rgba(255,255,255,0.6);">AI/Dev burn this month: <strong id="fin-ai-label" style="color:#fff;">—</strong> vs revenue <strong id="fin-rev-label" style="color:#D4A574;">—</strong> = net <strong id="fin-net-label">—</strong></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <!-- 4-month trend -->
+      <div class="panel glass">
+        <div class="panel-title">4-Month Trend</div>
+        <canvas id="fin-trend-chart" height="160" style="width:100%;display:block;margin-top:8px;"></canvas>
+      </div>
+      <!-- Category breakdown -->
+      <div class="panel glass">
+        <div class="panel-title">Category Breakdown <span id="fin-cat-month" style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+        <div id="fin-category-bars" style="margin-top:10px;font-size:15px;color:rgba(255,255,255,0.7);line-height:2;"></div>
+      </div>
+    </div>
+
+    <!-- Top 15 vendors -->
+    <div class="panel glass">
+      <div class="panel-title">Top Vendors <span id="fin-vendor-month" style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+      <div id="fin-vendor-list" style="margin-top:10px;"></div>
+    </div>
+
+  </div><!-- /view-finances -->
+
   <!-- ══ WIKI BROWSER VIEW (N2) ══ -->
   <div id="view-wiki" class="view" style="padding-bottom:0;">
     <div class="wiki-layout">
@@ -1019,7 +1084,7 @@ async function loadKPIs() {
   document.getElementById('prog-schools').style.width = paidPct + '%';
 
   document.getElementById('kpi-burn').textContent = `$${burn.toFixed(0)}`;
-  document.getElementById('kpi-burn-sub').textContent = 'monthly total';
+  document.getElementById('kpi-burn-sub').innerHTML = `<span style="color:rgba(255,255,255,0.5);font-size:13px;">real card avg</span>`;
 
   const trials = d.trial_schools ?? 0;
   document.getElementById('kpi-trials').textContent = trials;
@@ -1191,11 +1256,163 @@ async function runTrialFollowUp() {
   openModal('↑ Trial Follow-Up', `${trials.length} active trial${trials.length !== 1 ? 's' : ''}`, `Run /trial-follow-up in Claude Code for personalized close emails.\n\n${lines}`);
 }
 
+// ── Finances / Burn (R3d, R3e) ────────────────────────────────
+
+let _burnData = null;
+
+async function loadBurnData() {
+  _burnData = await api('/api/burn');
+  return _burnData;
+}
+
+async function loadTopSpendMiniCard() {
+  const d = _burnData || await loadBurnData();
+  const vendors = d.top_vendors || [];
+  const label = d.last_csv_date || '';
+  document.getElementById('top-spend-month').textContent = label ? `(${label})` : '';
+  const el = document.getElementById('top-spend-list');
+  if (!el) return;
+  const top5 = vendors.slice(0, 5);
+  if (!top5.length) { el.textContent = 'No data yet — click Refresh CSVs'; return; }
+  const maxAmt = top5[0]?.amount || 1;
+  el.innerHTML = top5.map(v => {
+    const pct = Math.round((v.amount / maxAmt) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <span style="width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;">${v.merchant}</span>
+      <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:rgba(248,113,113,0.6);border-radius:3px;"></div>
+      </div>
+      <span style="font-size:14px;color:#f87171;width:58px;text-align:right;">$${v.amount.toFixed(0)}</span>
+    </div>`;
+  }).join('');
+}
+
+async function loadFinances() {
+  const d = _burnData || await loadBurnData();
+  _burnData = d;
+
+  // KPIs
+  const avgBurn = d.monthly_avg_full || 0;
+  const thisMo = d.monthly_full || 0;
+  const aiSubset = d.monthly_curated_ai || 0;
+  const interest = d.monthly_interest || 0;
+
+  document.getElementById('fin-avg-burn').textContent = `$${avgBurn.toFixed(0)}`;
+  document.getElementById('fin-month-burn').textContent = `$${thisMo.toFixed(0)}`;
+  document.getElementById('fin-month-label').textContent = d.last_csv_date ? `${d.last_csv_date} charges` : 'charges (ex interest)';
+  document.getElementById('fin-ai-burn').textContent = `$${aiSubset.toFixed(0)}`;
+  document.getElementById('fin-interest').textContent = `$${interest.toFixed(2)}`;
+
+  // ROI line
+  const kpisD = await api('/api/kpis').catch(() => null);
+  const rev = kpisD?.monthly_revenue || 0;
+  const netVal = rev - aiSubset;
+  document.getElementById('fin-ai-label').textContent = `$${aiSubset.toFixed(0)}`;
+  document.getElementById('fin-rev-label').textContent = `$${rev.toFixed(2)}`;
+  const netLbl = document.getElementById('fin-net-label');
+  netLbl.textContent = `${netVal >= 0 ? '+' : ''}$${netVal.toFixed(0)}`;
+  netLbl.style.color = netVal >= 0 ? '#4ade80' : '#f87171';
+
+  // Category bars
+  const catEl = document.getElementById('fin-category-bars');
+  const byCat = d.by_category || {};
+  const catMonth = document.getElementById('fin-cat-month');
+  if (catMonth && d.last_csv_date) catMonth.textContent = `(${d.last_csv_date})`;
+  const catEntries = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
+  const catMax = catEntries[0]?.[1] || 1;
+  catEl.innerHTML = catEntries.slice(0,8).map(([cat, amt]) => {
+    const pct = Math.round((amt / catMax) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <span style="width:130px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cat}</span>
+      <div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:rgba(212,165,116,0.7);border-radius:3px;"></div>
+      </div>
+      <span style="font-size:13px;color:#D4A574;width:56px;text-align:right;">$${amt.toFixed(0)}</span>
+    </div>`;
+  }).join('');
+
+  // Vendor table
+  const vendorEl = document.getElementById('fin-vendor-list');
+  const vendorMonth = document.getElementById('fin-vendor-month');
+  if (vendorMonth && d.last_csv_date) vendorMonth.textContent = `(${d.last_csv_date})`;
+  const vendors = d.top_vendors || [];
+  if (!vendors.length) { vendorEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:14px;">No data — click Refresh CSVs above</div>'; }
+  else {
+    vendorEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead><tr style="color:rgba(255,255,255,0.3);text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <th style="padding:6px 0;">#</th><th style="padding:6px 8px;">Vendor</th><th style="padding:6px 8px;text-align:right;">Amount</th>
+      </tr></thead><tbody>
+      ${vendors.map((v,i) => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:7px 0;color:rgba(255,255,255,0.25);">${i+1}</td>
+        <td style="padding:7px 8px;">${v.merchant}</td>
+        <td style="padding:7px 8px;text-align:right;color:#f87171;">$${v.amount.toFixed(2)}</td>
+      </tr>`).join('')}
+      </tbody></table>`;
+  }
+
+  // 4-month trend chart
+  const periods = d.period_summaries || [];
+  if (periods.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('fin-trend-chart')?.getContext('2d');
+    if (ctx) {
+      if (window._finTrendChart) window._finTrendChart.destroy();
+      window._finTrendChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: periods.map(p => p.month_name || p.month),
+          datasets: [{
+            label: 'Full Charges',
+            data: periods.map(p => p.full),
+            backgroundColor: 'rgba(248,113,113,0.5)',
+            borderColor: 'rgba(248,113,113,0.9)',
+            borderWidth: 1,
+          },{
+            label: 'Interest',
+            data: periods.map(p => p.interest),
+            backgroundColor: 'rgba(250,204,21,0.4)',
+            borderColor: 'rgba(250,204,21,0.7)',
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: 'rgba(255,255,255,0.55)', font: { size: 12 } } } },
+          scales: {
+            x: { ticks: { color: 'rgba(255,255,255,0.45)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: 'rgba(255,255,255,0.45)', font: { size: 12 }, callback: v => '$' + v.toFixed(0) }, grid: { color: 'rgba(255,255,255,0.07)' } },
+          },
+        },
+      });
+    }
+  }
+}
+
+async function burnRefresh() {
+  const btn = document.getElementById('burn-refresh-btn');
+  const status = document.getElementById('burn-refresh-status');
+  if (btn) btn.disabled = true;
+  if (status) status.textContent = 'Importing…';
+  try {
+    const d = await api('/api/burn/refresh', { method: 'POST' });
+    if (status) status.textContent = d.ok ? 'Done — reloading data…' : `Error: ${d.stderr?.slice(0,80) || 'unknown'}`;
+    if (d.ok) {
+      _burnData = null;
+      await loadFinances();
+      await loadTopSpendMiniCard();
+    }
+  } catch(e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+  }
+  if (btn) btn.disabled = false;
+}
+
 // ── Load all ──────────────────────────────────────────────────
 
 async function loadAll() {
   await Promise.all([loadKPIs(), loadPipeline(), loadExpenses(), loadTasks(), loadDebt()]);
   loadUsageMiniCard(); // fire-and-forget: non-blocking, slower endpoint
+  loadBurnData().then(loadTopSpendMiniCard); // fire-and-forget
 }
 
 async function refreshCurrentView() {
@@ -1233,6 +1450,7 @@ const VIEW_LOADERS = {
   wiki: () => loadWiki && loadWiki(),
   settings: loadSettings,
   gravityclaw: loadGravityClaw,
+  finances: loadFinances,
   dashboard: () => {},
   revenue: () => {},
   schools: () => {},

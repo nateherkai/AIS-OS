@@ -104,5 +104,257 @@
       ]
     }
   ],
-  "last_updated": "2026-05-12T09:58:33.207155"
+  "last_updated": "2026-05-16T21:30:29.958746",
+  "monthly_charges_full": 1781.48,
+  "monthly_charges_curated": 373.39,
+  "monthly_interest": 77.24,
+  "monthly_avg_full": 1437.56,
+  "top_vendors_30d": [
+    {
+      "merchant": "Show Circuit Online Sales",
+      "amount": 1397.25
+    },
+    {
+      "merchant": "Apple Services",
+      "amount": 194.59
+    },
+    {
+      "merchant": "Anthropic",
+      "amount": 47.43
+    },
+    {
+      "merchant": "Openrouter, Inc",
+      "amount": 34.14
+    },
+    {
+      "merchant": "Paddle.Net* N8n Cloud1",
+      "amount": 25.58
+    },
+    {
+      "merchant": "Supabase",
+      "amount": 25.0
+    },
+    {
+      "merchant": "Google",
+      "amount": 21.31
+    },
+    {
+      "merchant": "Peacock",
+      "amount": 11.73
+    },
+    {
+      "merchant": "Fal Features Labels",
+      "amount": 10.66
+    },
+    {
+      "merchant": "Tiktok Shop",
+      "amount": 8.52
+    },
+    {
+      "merchant": "elevenlabs.io",
+      "amount": 5.27
+    }
+  ],
+  "by_category_30d": {
+    "Other": 1769.75,
+    "Utilities": 11.73
+  },
+  "period_summaries": [
+    {
+      "month": "2026-01",
+      "month_name": "January 2026",
+      "full": 748.71,
+      "interest": 47.68,
+      "installments": 8.29,
+      "txn_count": 27
+    },
+    {
+      "month": "2026-02",
+      "month_name": "February 2026",
+      "full": 312.41,
+      "interest": 45.68,
+      "installments": 8.29,
+      "txn_count": 17
+    },
+    {
+      "month": "2026-03",
+      "month_name": "March 2026",
+      "full": 2907.63,
+      "interest": 29.74,
+      "installments": 8.29,
+      "txn_count": 21
+    },
+    {
+      "month": "2026-04",
+      "month_name": "April 2026",
+      "full": 1781.48,
+      "interest": 77.24,
+      "installments": 8.29,
+      "txn_count": 23
+    }
+  ],
+  "expenses_full": [
+    {
+      "date": "04/29/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase"
+    },
+    {
+      "date": "04/29/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 9.99,
+      "type": "purchase"
+    },
+    {
+      "date": "04/29/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 11.73,
+      "type": "purchase"
+    },
+    {
+      "date": "04/28/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 42.68,
+      "type": "purchase"
+    },
+    {
+      "date": "04/27/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase"
+    },
+    {
+      "date": "04/27/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase"
+    },
+    {
+      "date": "04/26/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 10.54,
+      "type": "purchase"
+    },
+    {
+      "date": "04/26/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase"
+    },
+    {
+      "date": "04/25/2026",
+      "merchant": "Fal Features Labels",
+      "category": "Other",
+      "amount": 10.66,
+      "type": "purchase"
+    },
+    {
+      "date": "04/23/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 18.12,
+      "type": "purchase"
+    },
+    {
+      "date": "04/22/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 21.08,
+      "type": "purchase"
+    },
+    {
+      "date": "04/22/2026",
+      "merchant": "Paddle.Net* N8n Cloud1",
+      "category": "Other",
+      "amount": 25.58,
+      "type": "purchase"
+    },
+    {
+      "date": "04/21/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase"
+    },
+    {
+      "date": "04/19/2026",
+      "merchant": "Google",
+      "category": "Other",
+      "amount": 21.31,
+      "type": "purchase"
+    },
+    {
+      "date": "04/18/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase"
+    },
+    {
+      "date": "04/17/2026",
+      "merchant": "Show Circuit Online Sales",
+      "category": "Other",
+      "amount": 1397.25,
+      "type": "purchase"
+    },
+    {
+      "date": "04/13/2026",
+      "merchant": "Peacock",
+      "category": "Utilities",
+      "amount": 11.73,
+      "type": "purchase"
+    },
+    {
+      "date": "04/11/2026",
+      "merchant": "Tiktok Shop",
+      "category": "Other",
+      "amount": 8.52,
+      "type": "purchase"
+    },
+    {
+      "date": "04/10/2026",
+      "merchant": "elevenlabs.io",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase"
+    },
+    {
+      "date": "04/09/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 48.03,
+      "type": "purchase"
+    },
+    {
+      "date": "04/08/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 42.7,
+      "type": "purchase"
+    },
+    {
+      "date": "04/07/2026",
+      "merchant": "Supabase",
+      "category": "Other",
+      "amount": 25.0,
+      "type": "purchase"
+    },
+    {
+      "date": "04/06/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 21.34,
+      "type": "purchase"
+    }
+  ],
+  "last_csv_date": "2026-04"
 }
