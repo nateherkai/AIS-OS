@@ -2068,6 +2068,7 @@ function runForceGraph(nodes, edges) {
     });
   d3.select(svgEl).call(zoomBehavior);
   window.__graphZoomBehavior = zoomBehavior;
+  window.__graphZoom = zoomBehavior;
 
   // Apply filter chip state on fresh graph load
   setTimeout(() => _applyFocusOpacity(null), 50);
@@ -2117,6 +2118,126 @@ function runForceGraph(nodes, edges) {
 
   // Sidebar (search, sort, filter chips, list)
   try { setupGraphSidebar(); } catch(e) { console.warn('setupGraphSidebar failed', e); }
+  try { setupMinimap(); } catch(e) { console.warn('setupMinimap failed', e); }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Minimap: render + drag-to-pan + click-to-jump + wheel passthrough
+// ──────────────────────────────────────────────────────────────
+let __minimapTimer = null;
+
+function setupMinimap() {
+  const c = document.getElementById('graph-minimap');
+  if (!c) return;
+  const svg = document.querySelector('#memory-graph svg');
+  if (!svg) return;
+  if (!c.__bound) {
+    c.addEventListener('mousedown', (e) => startMinimapDrag(e, c, svg));
+    c.addEventListener('click', (e) => { if (!c.__dragging) minimapJumpTo(e, c, svg); });
+    c.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      svg.dispatchEvent(new WheelEvent('wheel', {
+        deltaY: e.deltaY,
+        clientX: window.innerWidth / 2,
+        clientY: window.innerHeight / 2,
+        bubbles: true
+      }));
+    }, { passive: false });
+    c.__bound = true;
+  }
+  if (__minimapTimer) clearInterval(__minimapTimer);
+  __minimapTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') drawMinimap();
+  }, 100);
+}
+
+function getGraphBounds() {
+  const ns = window.__graphNodes || [];
+  if (ns.length === 0) return { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const n of ns) {
+    if (n.x == null || n.y == null) continue;
+    if (n.x < minX) minX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y > maxY) maxY = n.y;
+  }
+  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+  const padX = (maxX - minX) * 0.1 || 50;
+  const padY = (maxY - minY) * 0.1 || 50;
+  return { minX: minX - padX, minY: minY - padY, maxX: maxX + padX, maxY: maxY + padY };
+}
+
+function drawMinimap() {
+  const c = document.getElementById('graph-minimap');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const ns = window.__graphNodes || [];
+  if (ns.length === 0) return;
+  const b = getGraphBounds();
+  const sx = c.width / (b.maxX - b.minX);
+  const sy = c.height / (b.maxY - b.minY);
+  const s = Math.min(sx, sy);
+  for (const n of ns) {
+    if (n.x == null) continue;
+    ctx.fillStyle = (typeof KIND_COLORS !== 'undefined' && KIND_COLORS[n.kind]) || n.color || '#888';
+    ctx.globalAlpha = nodeMatches(n) ? 0.6 : 0.15;
+    ctx.beginPath();
+    ctx.arc((n.x - b.minX) * s, (n.y - b.minY) * s, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const svg = document.querySelector('#memory-graph svg');
+  const t = svg && d3.zoomTransform(svg);
+  if (t && svg) {
+    const w = svg.clientWidth || svg.parentElement.clientWidth;
+    const h = svg.clientHeight || svg.parentElement.clientHeight;
+    const x0 = (-t.x / t.k - b.minX) * s;
+    const y0 = (-t.y / t.k - b.minY) * s;
+    const ww = (w / t.k) * s;
+    const hh = (h / t.k) * s;
+    ctx.strokeStyle = 'rgba(212,165,116,0.9)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x0, y0, ww, hh);
+  }
+}
+
+function minimapJumpTo(e, c, svg) {
+  if (!window.__graphZoom) return;
+  const rect = c.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const b = getGraphBounds();
+  const s = Math.min(c.width / (b.maxX - b.minX), c.height / (b.maxY - b.minY));
+  const wx = mx / s + b.minX, wy = my / s + b.minY;
+  const t = d3.zoomTransform(svg);
+  const w = svg.clientWidth, h = svg.clientHeight;
+  const newT = d3.zoomIdentity.translate(w / 2 - wx * t.k, h / 2 - wy * t.k).scale(t.k);
+  d3.select(svg).transition().duration(250).call(window.__graphZoom.transform, newT);
+}
+
+function startMinimapDrag(e, c, svg) {
+  if (!window.__graphZoom) return;
+  c.__dragging = false;
+  let last = { x: e.clientX, y: e.clientY };
+  const onMove = (mv) => {
+    c.__dragging = true;
+    const b = getGraphBounds();
+    const s = Math.min(c.width / (b.maxX - b.minX), c.height / (b.maxY - b.minY));
+    const t = d3.zoomTransform(svg);
+    const dx = (mv.clientX - last.x) / s * t.k;
+    const dy = (mv.clientY - last.y) / s * t.k;
+    last = { x: mv.clientX, y: mv.clientY };
+    const newT = d3.zoomIdentity.translate(t.x - dx, t.y - dy).scale(t.k);
+    d3.select(svg).call(window.__graphZoom.transform, newT);
+  };
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+    setTimeout(() => { c.__dragging = false; }, 50);
+  };
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
 }
 
 // ──────────────────────────────────────────────────────────────
