@@ -175,6 +175,13 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .dream-pri-low { border-color:rgba(255,255,255,0.1); background:rgba(255,255,255,0.03); }
 .dream-dim { font-size:15px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-bottom:8px; }
 .dream-head { font-size:21px; color:#fff; font-weight:500; line-height:1.4; }
+.dream-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.dream-action-btn { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.72); border-radius:8px; padding:7px 10px; font-size:13px; cursor:pointer; transition:all 0.15s; }
+.dream-action-btn:hover { border-color:rgba(212,165,116,0.42); color:#D4A574; background:rgba(212,165,116,0.1); }
+.dream-status { display:inline-flex; align-items:center; gap:5px; margin-left:8px; font-size:12px; color:rgba(255,255,255,0.42); text-transform:none; letter-spacing:0; }
+.dream-status::before { content:''; width:6px; height:6px; border-radius:50%; background:#D4A574; box-shadow:0 0 8px rgba(212,165,116,0.7); }
+.dream-status.dismissed::before { background:#7A8799; box-shadow:none; }
+.dream-status.completed::before { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.6); }
 
 /* Memory Graph — force-directed glow viz */
 .graph-wrap { position:relative; height:820px; overflow:hidden; border-radius:14px; background:
@@ -260,6 +267,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .pc-stat { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 18px; flex:1; min-width:120px; }
 .pc-stat-label { font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.35); margin-bottom:5px; }
 .pc-stat-value { font-size:22px; font-weight:700; color:#4ade80; }
+.pc-namespace-panel { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:16px; padding:12px 14px; border-radius:10px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.08); }
+.pc-merge-badge { font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:#4ade80; padding:5px 8px; border:1px solid rgba(74,222,128,0.3); border-radius:6px; background:rgba(74,222,128,0.08); }
+.pc-namespace-list { display:flex; gap:10px; flex-wrap:wrap; color:rgba(255,255,255,0.62); font-size:13px; }
+.pc-namespace-chip { padding:5px 8px; border-radius:6px; background:rgba(255,255,255,0.055); border:1px solid rgba(255,255,255,0.07); }
 .pc-search-row { display:flex; gap:10px; margin-bottom:16px; }
 .pc-search-input { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:8px; padding:9px 14px; font-size:15px; outline:none; }
 .pc-search-input:focus { border-color:rgba(74,222,128,0.4); }
@@ -526,6 +537,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
         <span><i style="background:#34D399;box-shadow:0 0 10px #34D399;"></i>Analysis</span>
         <span><i style="background:#FF6B9D;box-shadow:0 0 10px #FF6B9D;"></i>GC Hub</span>
         <span><i style="background:#FFB3CC;box-shadow:0 0 8px #FFB3CC;"></i>GC File</span>
+        <span><i style="background:#7CFFCB;box-shadow:0 0 12px #7CFFCB;"></i>GC Agent</span>
+        <span><i style="background:#B57CFF;box-shadow:0 0 12px #B57CFF;"></i>Dream</span>
+        <span><i style="background:#FF4D6D;box-shadow:0 0 12px #FF4D6D;"></i>Approval</span>
+        <span><i style="background:#5EEAD4;box-shadow:0 0 12px #5EEAD4;"></i>Workflow</span>
       </div>
     </div>
     <div class="panel-title">Memory Feed <span id="memory-ts">—</span></div>
@@ -663,6 +678,13 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div class="pc-stat"><div class="pc-stat-label">Namespace</div><div class="pc-stat-value" id="pc-ns" style="font-size:16px;">—</div></div>
       <div class="pc-stat"><div class="pc-stat-label">Vectors</div><div class="pc-stat-value" id="pc-total">—</div></div>
       <div class="pc-stat"><div class="pc-stat-label">Dimension</div><div class="pc-stat-value" id="pc-dim">—</div></div>
+    </div>
+    <div class="pc-namespace-panel">
+      <div>
+        <div class="pc-stat-label">Namespace Breakdown</div>
+        <div class="pc-namespace-list" id="pc-namespace-breakdown">Loading…</div>
+      </div>
+      <div class="pc-merge-badge" id="pc-merge-status">Checking merge</div>
     </div>
     <div class="panel glass">
       <div class="panel-title">Vector Search</div>
@@ -1784,6 +1806,10 @@ const KIND_COLORS = {
   // Gravity Claw cluster
   'gc-hub': '#FF6B9D',
   'gc-file': '#FFB3CC',
+  agent: '#7CFFCB',
+  dream: '#B57CFF',
+  approval: '#FF4D6D',
+  workflow: '#5EEAD4',
 };
 
 function hexToRgba(hex, a) {
@@ -1800,9 +1826,9 @@ async function loadMemoryGraph() {
   const data = await fetch('/api/memory-graph').then(r => r.json());
   const s = data.stats;
   document.getElementById('graph-headline').textContent =
-    `${s.workspaces} workspaces · ${s.memory_files} memory files · ${s.vector_indexes} vector indexes`;
+    `${s.workspaces} workspaces · ${s.memory_files} memory files · ${s.dreams || 0} dreams · ${s.approvals || 0} approvals`;
   document.getElementById('graph-stats').innerHTML =
-    `<b>${s.nodes_total}</b> nodes · <b>${s.edges_total}</b> edges<br>${s.decisions} decisions · ${s.skills} skills · ${s.sessions} sessions${s.gc_files ? ' · <span style="color:#FF6B9D;">'+s.gc_files+' GC files</span>' : ''}${s.stale ? ' · <span style="color:#facc15;">'+s.stale+' stale</span>' : ''}`;
+    `<b>${s.nodes_total}</b> nodes · <b>${s.edges_total}</b> edges<br>${s.decisions} decisions · ${s.skills} skills · ${s.sessions} sessions${s.agents ? ' · <span style="color:#7CFFCB;">'+s.agents+' agent</span>' : ''}${s.dreams ? ' · <span style="color:#B57CFF;">'+s.dreams+' dreams</span>' : ''}${s.approvals ? ' · <span style="color:#FF4D6D;">'+s.approvals+' approvals</span>' : ''}${s.gc_files ? ' · <span style="color:#FF6B9D;">'+s.gc_files+' GC files</span>' : ''}${s.stale ? ' · <span style="color:#facc15;">'+s.stale+' stale</span>' : ''}`;
   runForceGraph(data.nodes, data.edges);
 }
 
@@ -2502,13 +2528,40 @@ async function loadDreams() {
   }
   body.innerHTML = `
     <div class="kpi-sub" style="margin-bottom:12px;">Analyzed ${d.files_analyzed} files · ${d.events_total} events · generated ${d.generated_at}</div>
-    ${d.recommendations.map(r => `
-      <div class="dream-card dream-pri-${r.priority}">
-        <div class="dream-dim">${r.dimension} · ${r.priority} <span style="float:right;font-size:12px;cursor:pointer;color:rgba(212,165,116,0.6);" onclick="openCmdk('${r.dimension.replace(/'/g,"\\'")}')">Find related →</span></div>
-        <div class="dream-head">${r.headline.replace(/</g,'&lt;')}</div>
+    ${d.recommendations.map((r, idx) => {
+      const card = (d.cards || []).find(c => c.title === r.headline) || {};
+      const status = card.status || 'open';
+      const dreamId = card.id || `rec-${idx + 1}`;
+      return `
+      <div class="dream-card dream-pri-${r.priority}" data-dream-id="${escapeHtml(dreamId)}">
+        <div class="dream-dim">${escapeHtml(r.dimension || 'dream')} · ${escapeHtml(r.priority || 'medium')} <span class="dream-status ${escapeHtml(status)}">${escapeHtml(status)}</span><span style="float:right;font-size:12px;cursor:pointer;color:rgba(212,165,116,0.6);" onclick="openCmdk('${String(r.dimension || '').replace(/'/g,"\\'")}')">Find related →</span></div>
+        <div class="dream-head">${escapeHtml(r.headline)}</div>
+        <div class="dream-actions">
+          <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','accept','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Accept</button>
+          <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','task','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Turn into task</button>
+          <button class="dream-action-btn" onclick="showView('memory');setTimeout(()=>graphFocusById('dream:${escapeHtml(String(dreamId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0,80))}'),500)">View node</button>
+          <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','dismiss','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Dismiss</button>
+        </div>
       </div>
-    `).join('')}
+    `}).join('')}
   `;
+}
+
+async function dreamAction(dreamId, action, headline) {
+  try {
+    const r = await api('/api/dreams/action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ dream_id: dreamId, headline, action }),
+    });
+    showToast(action === 'task' ? `Task created${r.task_id ? ' #' + r.task_id : ''}` : `Dream ${r.status}`);
+    await loadDreams();
+    if (document.getElementById('view-memory')?.classList.contains('active')) {
+      await loadMemoryGraph();
+    }
+  } catch (e) {
+    showToast('Dream action failed');
+  }
 }
 
 async function runDreams() {
@@ -2886,6 +2939,19 @@ async function loadPinecone() {
     document.getElementById('pc-ns').textContent = s.namespace || '—';
     document.getElementById('pc-total').textContent = s.total_vectors != null ? s.total_vectors.toLocaleString() : '—';
     document.getElementById('pc-dim').textContent = s.dimension || '—';
+    const nsBreakdown = document.getElementById('pc-namespace-breakdown');
+    if (nsBreakdown) {
+      const entries = Object.entries(s.namespaces || {}).sort((a, b) => b[1] - a[1]);
+      nsBreakdown.innerHTML = entries.length
+        ? entries.map(([name, count]) => `<span class="pc-namespace-chip">${escapeHtml(name)}: ${Number(count || 0).toLocaleString()}</span>`).join('')
+        : '<span style="color:rgba(255,255,255,0.35);">No namespace data</span>';
+    }
+    const mergeStatus = document.getElementById('pc-merge-status');
+    if (mergeStatus) {
+      const active = s.namespace || 'knowledge';
+      const activeCount = s.total_vectors != null ? Number(s.total_vectors).toLocaleString() : '—';
+      mergeStatus.textContent = s.merged ? `${active} active: ${activeCount}` : `${active} active`;
+    }
     // Mini card on memory view
     const miniIdx = document.getElementById('pc-mini-index');
     if (miniIdx) miniIdx.textContent = (s.index || '—') + ' / ' + (s.namespace || '—');
@@ -3749,12 +3815,26 @@ function showGraphNode(n) {
   if (n.kind === 'core') lines.push('This is the AIS-OS center node.');
   if (n.kind === 'workspace') lines.push('Workspace scanned from ~/.claude/projects.');
   if (n.kind === 'vector') lines.push('Vector index from Gravity Claw environment.');
+  if (n.kind === 'agent') lines.push(n.summary || 'Live Gravity Claw operator node.');
+  if (n.kind === 'workflow') lines.push(n.summary || 'AIOS workflow node.');
+  if (n.kind === 'dream') {
+    lines.push(`Status: ${n.status || 'open'}`);
+    lines.push(`Priority: ${n.priority || 'medium'}`);
+    lines.push(`Dimension: ${n.dimension || 'dream'}`);
+    lines.push(`Action: ${n.action || 'Review and decide'}`);
+  }
+  if (n.kind === 'approval') {
+    lines.push(n.summary || 'Approval gate.');
+    lines.push('This should pause risky or customer-facing work until Bryan approves.');
+  }
 
   // Build extra action buttons for modal
   let extraButtons = '';
   const isWiki = n.kind?.startsWith('wiki');
   const isSkill = n.kind === 'skill';
   const isDomain = n.kind === 'domain';
+  const isDream = n.kind === 'dream';
+  const isApproval = n.kind === 'approval';
 
   // We'll use openModalWithActions for extended buttons
   document.getElementById('modal-title').textContent = label;
@@ -3776,6 +3856,19 @@ function showGraphNode(n) {
     if (isSkill) {
       const cmd = '/' + (n.id?.replace('skill:', '') || label);
       extraHtml += `<button class="btn-secondary" onclick="navigator.clipboard.writeText('${escapeHtml(cmd)}').catch(()=>{});showToast('Copied: ${escapeHtml(cmd)}');closeModal()">⚡ Copy ${escapeHtml(cmd)}</button>`;
+    }
+    if (isDream) {
+      const did = escapeHtml(n.dream_id || n.id?.replace('dream:', '') || '');
+      const headline = escapeHtml(n.headline || label).replace(/'/g, "\\'");
+      extraHtml += `<button class="btn-secondary" onclick="dreamAction('${did}','accept','${headline}');closeModal()">Accept dream</button>`;
+      extraHtml += `<button class="btn-secondary" onclick="dreamAction('${did}','task','${headline}');closeModal()">Turn into task</button>`;
+      extraHtml += `<button class="btn-secondary" onclick="dreamAction('${did}','dismiss','${headline}');closeModal()">Dismiss</button>`;
+      extraHtml += `<button class="btn-secondary" onclick="closeModal();showView('dreams')">Open Dreams</button>`;
+    }
+    if (isApproval) {
+      const did = escapeHtml(n.dream_id || n.id?.replace('approval:', '') || '');
+      extraHtml += `<button class="btn-secondary" onclick="closeModal();showView('dreams')">Review in Dreams</button>`;
+      if (did) extraHtml += `<button class="btn-secondary" onclick="dreamAction('${did}','task','${escapeHtml(n.summary || label).replace(/'/g, "\\'")}');closeModal()">Make task</button>`;
     }
     // Always close + done
     actionDiv.innerHTML = `<button class="btn-primary" onclick="closeModal()">Done</button><button class="btn-secondary" onclick="closeModal()">Close</button>${extraHtml}`;
@@ -3803,6 +3896,10 @@ const FILTER_KINDS = [
   { key: 'wiki-analysis', label: 'Analysis' },
   { key: 'gc-hub', label: 'GC Hub' },
   { key: 'gc-file', label: 'GC File' },
+  { key: 'agent', label: 'Agent' },
+  { key: 'dream', label: 'Dream' },
+  { key: 'approval', label: 'Approval' },
+  { key: 'workflow', label: 'Workflow' },
 ];
 
 function _initFilterChips() {

@@ -365,6 +365,77 @@ def api_dreams(date: str | None = None):
         return {"items": [], "message": "No dreams yet — run scripts/dream_machine.py"}
     return json.loads(files[0].read_text())
 
+class DreamAction(BaseModel):
+    dream_id: str | None = None
+    headline: str | None = None
+    action: str
+    date: str | None = None
+
+def _dream_file(date: str | None = None) -> Path:
+    dreams_dir = DATA / "dreams"
+    if date:
+        return dreams_dir / f"{date}.json"
+    files = sorted(dreams_dir.glob("*.json"), reverse=True)
+    if not files:
+        raise HTTPException(404, "No dream files found")
+    return files[0]
+
+def _find_dream_card(dream: dict, body: DreamAction):
+    cards = dream.setdefault("cards", [])
+    target_id = body.dream_id
+    target_headline = body.headline
+    for card in cards:
+        if target_id and str(card.get("id")) == str(target_id):
+            return card
+        if target_headline and card.get("title") == target_headline:
+            return card
+    if target_headline:
+        card = {
+            "id": target_id or f"d{len(cards) + 1}",
+            "dim": "manual",
+            "title": target_headline,
+            "insight": target_headline,
+            "action": "Review and decide",
+            "estimated_value_minutes": 30,
+            "status": "open",
+        }
+        cards.append(card)
+        return card
+    raise HTTPException(404, "Dream card not found")
+
+@app.post("/api/dreams/action")
+def api_dreams_action(body: DreamAction):
+    """Accept, dismiss, complete, or convert a dream card into a task."""
+    action = body.action.lower().strip()
+    if action not in {"accept", "dismiss", "complete", "task"}:
+        raise HTTPException(400, "action must be accept, dismiss, complete, or task")
+    f = _dream_file(body.date)
+    dream = json.loads(f.read_text())
+    card = _find_dream_card(dream, body)
+    status_map = {
+        "accept": "accepted",
+        "dismiss": "dismissed",
+        "complete": "completed",
+        "task": "accepted",
+    }
+    card["status"] = status_map[action]
+    card["updated_at"] = datetime.now().isoformat()
+    task_id = None
+    if action == "task":
+        tasks = read_json("tasks.json")
+        task_id = max((t["id"] for t in tasks["tasks"]), default=0) + 1
+        tasks["tasks"].append({
+            "id": task_id,
+            "text": f"Dream: {card.get('title', 'Untitled recommendation')}",
+            "tag": "AIOS",
+            "done": False,
+        })
+        write_json("tasks.json", tasks)
+        card["task_id"] = task_id
+    f.write_text(json.dumps(dream, indent=2))
+    _invalidate_search_cache()
+    return {"ok": True, "status": card["status"], "task_id": task_id, "card": card}
+
 @app.post("/api/dreams/run")
 def api_dreams_run():
     res = subprocess.run(
@@ -622,15 +693,19 @@ def api_gc_status():
     # Railway status — check for deploy config
     railway_toml = GC / "railway.toml"
     deploy_info = "railway.toml found" if railway_toml.exists() else "no railway.toml"
+    try:
+        pinecone = pc_stats()
+    except Exception:
+        pinecone = {}
     return {
         "connected": True,
         "vault_path": str(GC),
         "memory_files_sampled": len(mem_files),
         "memory_files": mem_files[:12],
         "deploy": deploy_info,
-        "pinecone_vectors": 1,  # confirmed via query
-        "pinecone_index": "gravityclaw-vector",
-        "pinecone_namespace": "knowledge",
+        "pinecone_vectors": pinecone.get("total_vectors"),
+        "pinecone_index": pinecone.get("index", "gravityclaw-vector"),
+        "pinecone_namespace": pinecone.get("namespace", "knowledge"),
     }
 
 # ── Pinecone ──────────────────────────────────────────────────

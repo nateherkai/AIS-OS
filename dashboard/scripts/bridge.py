@@ -13,6 +13,7 @@ DREAMS = DATA / "dreams"
 sys.path.insert(0, str(BASE / "scripts"))
 from pillars import build_pillars
 from memory_feed import build_feed as build_memory_feed
+from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
 from supabase_client import get_schools, get_pipeline_summary
 import notify_gc
@@ -26,7 +27,7 @@ def handshake() -> dict:
         "name": NAME,
         "version": VERSION,
         "ts": datetime.now().isoformat(),
-        "scopes": ["pipeline", "dreams", "memory", "roi", "pillars"],
+        "scopes": ["pipeline", "dreams", "memory", "graph", "roi", "pillars"],
         "bridge_endpoints": ["/api/bridge/handshake", "/api/bridge/query", "/api/bridge/push"],
     }
 
@@ -41,7 +42,7 @@ def latest_dream() -> dict:
 
 
 def snapshot(scope: list[str] | None = None) -> dict:
-    scope = scope or ["pipeline", "dreams", "memory", "roi", "pillars"]
+    scope = scope or ["pipeline", "dreams", "memory", "graph", "roi", "pillars"]
     out = {"ts": datetime.now().isoformat(), "version": VERSION}
 
     if "pipeline" in scope:
@@ -77,6 +78,18 @@ def snapshot(scope: list[str] | None = None) -> dict:
             out["memory"] = build_memory_feed(limit=15)
         except Exception as e:
             out["memory"] = {"error": str(e)}
+
+    if "graph" in scope:
+        try:
+            graph = build_memory_graph()
+            out["graph"] = {
+                "stats": graph.get("stats", {}),
+                "dream_nodes": [n for n in graph.get("nodes", []) if n.get("kind") == "dream"][:12],
+                "approval_nodes": [n for n in graph.get("nodes", []) if n.get("kind") == "approval"][:12],
+                "agent_nodes": [n for n in graph.get("nodes", []) if n.get("kind") == "agent"][:5],
+            }
+        except Exception as e:
+            out["graph"] = {"error": str(e)}
 
     if "roi" in scope:
         try:

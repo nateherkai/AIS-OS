@@ -4,7 +4,7 @@ Walks all .md files, chunks ~600-1000 chars w/ 100-char overlap, embeds via
 OpenAI text-embedding-3-small (1536 dim) — but gravityclaw-vector is 1024 dim
 so use text-embedding-3-small with dimensions=1024 param.
 
-Upserts to namespace 'aios-vault'.
+Upserts to the configured Pinecone namespace, defaulting to 'knowledge'.
 
 Each vector metadata:
   - path: relative path from vault root
@@ -38,7 +38,7 @@ VAULT = Path("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master")
 STATE_FILE = Path("/Volumes/Samsung PSSD T7/AIS-OS/dashboard/data/vault_embed_state.json")
 LOG_FILE = Path.home() / ".claude" / "pinecone_writes.jsonl"
 INDEX_NAME = "gravityclaw-vector"
-NAMESPACE = "aios-vault"
+CONFIG_FILE = Path("/Volumes/Samsung PSSD T7/AIS-OS/dashboard/config.json")
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1024
 CHUNK_SIZE = 800
@@ -47,6 +47,20 @@ CHUNK_OVERLAP = 100
 # Excludes (don't embed these)
 EXCLUDE_DIRS = {"raw/_ingested", ".obsidian", ".git", "node_modules"}
 EXCLUDE_FILES = {".gitkeep", ".DS_Store"}
+
+
+def pinecone_config() -> tuple[str, str]:
+    index_name = os.environ.get("PINECONE_INDEX_NAME")
+    namespace = os.environ.get("PINECONE_NAMESPACE")
+    if CONFIG_FILE.exists():
+        try:
+            cfg = json.loads(CONFIG_FILE.read_text())
+            pc = (cfg.get("memory") or {}).get("pinecone") or {}
+            index_name = index_name or pc.get("index")
+            namespace = namespace or pc.get("namespace")
+        except Exception:
+            pass
+    return index_name or INDEX_NAME, namespace or "knowledge"
 
 
 def load_env() -> dict:
@@ -128,12 +142,13 @@ def save_state(state: dict) -> None:
 
 
 def log_write(summary: str, count: int) -> None:
+    _, namespace = pinecone_config()
     try:
         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         entry = {
             "ts": datetime.utcnow().isoformat() + "Z",
             "action": "upsert",
-            "namespace": NAMESPACE,
+            "namespace": namespace,
             "summary": summary,
             "count": count,
         }
@@ -165,6 +180,7 @@ def main() -> int:
     args = parser.parse_args()
 
     env = load_env()
+    configured_index, namespace = pinecone_config()
     if not args.dry_run:
         if not env.get("OPENAI_API_KEY"):
             print("ERR: OPENAI_API_KEY not found", file=sys.stderr)
@@ -212,7 +228,7 @@ def main() -> int:
 
     oa = OpenAI(api_key=env["OPENAI_API_KEY"])
     pc = Pinecone(api_key=env["PINECONE_API_KEY"])
-    index_name = env.get("PINECONE_INDEX_NAME", INDEX_NAME)
+    index_name = env.get("PINECONE_INDEX_NAME", configured_index)
     index = pc.Index(index_name)
 
     total_chunks = 0
@@ -225,7 +241,7 @@ def main() -> int:
         if not batch_vectors:
             return
         try:
-            index.upsert(vectors=batch_vectors, namespace=NAMESPACE)
+            index.upsert(vectors=batch_vectors, namespace=namespace)
         except Exception as e:
             print(f"WARN: upsert failed: {e}", file=sys.stderr)
         batch_vectors = []
@@ -289,7 +305,7 @@ def main() -> int:
     save_state(state)
     log_write(f"Vault embed: {total_files} files, {total_chunks} chunks", total_chunks)
 
-    print(f"Done. Embedded {total_files} files / {total_chunks} chunks to {index_name}/{NAMESPACE}")
+    print(f"Done. Embedded {total_files} files / {total_chunks} chunks to {index_name}/{namespace}")
     return 0
 
 

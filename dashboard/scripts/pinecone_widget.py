@@ -13,15 +13,29 @@ import subprocess
 import time
 from pathlib import Path
 from dotenv import load_dotenv
-from functools import lru_cache
 
 load_dotenv("/Volumes/Samsung PSSD T7/gravity-claw/.env")
 load_dotenv("/Volumes/Samsung PSSD T7/AIS-OS/.env")
 load_dotenv()
 
 # ── Config pulled from pinecone_memory.py (same creds) ────────
+BASE = Path(__file__).parent.parent
+CONFIG_FILE = BASE / "config.json"
 _PINECONE_MEMORY_PY = Path.home() / ".claude/pinecone_memory.py"
 _PINECONE_WRITES_LOG = Path.home() / ".claude/pinecone_writes.jsonl"
+
+
+def _read_dashboard_config() -> dict:
+    if not CONFIG_FILE.exists():
+        return {}
+    try:
+        return json.loads(CONFIG_FILE.read_text())
+    except Exception:
+        return {}
+
+
+_CFG = _read_dashboard_config()
+_CFG_PC = (_CFG.get("memory") or {}).get("pinecone") or {}
 
 # Read hardcoded values from pinecone_memory.py as primary source
 def _read_pinecone_memory_py() -> dict:
@@ -49,12 +63,19 @@ API_KEY: str = (
 )
 INDEX_HOST: str = (
     os.environ.get("PINECONE_INDEX_HOST")
+    or _PM.get("index_host")
     or "https://gravityclaw-vector-7macm39.svc.aped-4627-b74a.pinecone.io"
 )
 INDEX_NAME: str = (
-    os.environ.get("PINECONE_INDEX_NAME", "gravityclaw-vector")
+    os.environ.get("PINECONE_INDEX_NAME")
+    or _CFG_PC.get("index")
+    or "gravityclaw-vector"
 )
-NAMESPACE: str = os.environ.get("PINECONE_NAMESPACE", "aios-vault")
+NAMESPACE: str = (
+    os.environ.get("PINECONE_NAMESPACE")
+    or _CFG_PC.get("namespace")
+    or "knowledge"
+)
 OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
 
 _stats_cache: dict | None = None
@@ -107,7 +128,7 @@ def stats() -> dict:
     total = ns_data.get("vectorCount", data.get("totalVectorCount", 0))
     dim = data.get("dimension", None)
 
-    # Per-namespace breakdown (includes aios-vault)
+    # Per-namespace breakdown.
     ns_breakdown = {
         ns: ns_info.get("vectorCount", 0)
         for ns, ns_info in namespaces.items()
@@ -120,6 +141,8 @@ def stats() -> dict:
         "dimension": dim,
         "namespaces": ns_breakdown,
         "vault_vectors": ns_breakdown.get("aios-vault", 0),
+        "knowledge_vectors": ns_breakdown.get("knowledge", 0),
+        "merged": NAMESPACE == "knowledge" and ns_breakdown.get("knowledge", 0) > 0,
     }
     _stats_cache = result
     _stats_cache_ts = now

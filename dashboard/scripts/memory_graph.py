@@ -16,6 +16,9 @@ from pathlib import Path
 from collections import defaultdict
 
 HOME = Path.home()
+BASE = Path(__file__).parent.parent
+DATA = BASE / "data"
+DREAMS = DATA / "dreams"
 GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
 GC_ENV = GC / ".env"
 
@@ -38,6 +41,22 @@ def _gc_env_keys():
             k, v = line.split("=", 1)
             out[k.strip()] = v.strip().strip('"').strip("'")
     return out
+
+
+def _latest_dream():
+    if not DREAMS.exists():
+        return {}
+    files = sorted(DREAMS.glob("*.json"), reverse=True)
+    if not files:
+        return {}
+    try:
+        return json.loads(files[0].read_text())
+    except Exception:
+        return {}
+
+
+def _safe_id(value):
+    return "".join(ch.lower() if ch.isalnum() else "-" for ch in str(value)).strip("-")[:80]
 
 
 def build():
@@ -296,6 +315,92 @@ def build():
                 existing_ids.add(gfid)
                 gc_extra_count += 1
 
+    # ── Living AIOS overlay: GC operator, dreams, approvals, workflows ──
+    # These nodes make the graph the operating surface, not just a memory map.
+    operator_id = "agent:gravity-claw-operator"
+    if operator_id not in existing_ids:
+        nodes.append({
+            "id": operator_id,
+            "label": "GC Operator",
+            "kind": "agent",
+            "size": 18,
+            "status": "connected" if GC.exists() else "offline",
+            "summary": "Gravity Claw's live operator node: reads memory, acts on dreams, and waits on approval gates.",
+        })
+        edges.append({"source": "aios", "target": operator_id})
+        if gc_hub_id in existing_ids:
+            edges.append({"source": gc_hub_id, "target": operator_id})
+        existing_ids.add(operator_id)
+
+    workflow_id = "workflow:dreams-to-actions"
+    nodes.append({
+        "id": workflow_id,
+        "label": "Dreams → Actions",
+        "kind": "workflow",
+        "size": 15,
+        "summary": "Nightly dreams become reviewed recommendations, then tasks, skills, or approved actions.",
+    })
+    edges.append({"source": "aios", "target": workflow_id})
+    edges.append({"source": operator_id, "target": workflow_id})
+    existing_ids.add(workflow_id)
+
+    dream = _latest_dream()
+    dream_date = dream.get("date")
+    recommendations = dream.get("recommendations") or dream.get("top_3") or []
+    cards_by_title = {c.get("title"): c for c in dream.get("cards", []) if c.get("title")}
+    for idx, rec in enumerate(recommendations[:12], start=1):
+        headline = rec.get("headline") or rec.get("title") or f"Dream recommendation {idx}"
+        card = cards_by_title.get(headline, {})
+        priority = rec.get("priority") or card.get("priority") or "medium"
+        dimension = rec.get("dimension") or card.get("dim") or "dream"
+        dream_id = card.get("id") or f"{dream_date or 'latest'}-{idx}"
+        nid = f"dream:{_safe_id(dream_id)}"
+        status = card.get("status", "open")
+        nodes.append({
+            "id": nid,
+            "label": headline[:30],
+            "kind": "dream",
+            "size": 9 if priority == "high" else 7,
+            "priority": priority,
+            "status": status,
+            "date": dream_date,
+            "dimension": dimension,
+            "headline": headline,
+            "action": card.get("action") or "Review and decide",
+            "detail": rec.get("detail", {}),
+            "dream_id": dream_id,
+        })
+        edges.append({"source": workflow_id, "target": nid})
+        edges.append({"source": operator_id, "target": nid})
+
+        if dimension:
+            dim_id = f"dream-dim:{_safe_id(dimension)}"
+            if dim_id not in existing_ids:
+                nodes.append({
+                    "id": dim_id,
+                    "label": dimension.replace("-", " ").title()[:24],
+                    "kind": "workflow",
+                    "size": 8,
+                    "summary": f"Dream signal class: {dimension}",
+                })
+                edges.append({"source": workflow_id, "target": dim_id})
+                existing_ids.add(dim_id)
+            edges.append({"source": dim_id, "target": nid})
+
+        if status in ("open", "accepted") or priority == "high":
+            aid = f"approval:{_safe_id(dream_id)}"
+            nodes.append({
+                "id": aid,
+                "label": "Approval Gate",
+                "kind": "approval",
+                "size": 7,
+                "status": status,
+                "summary": f"Review dream before action: {headline}",
+                "dream_id": dream_id,
+            })
+            edges.append({"source": nid, "target": aid})
+            edges.append({"source": operator_id, "target": aid})
+
     counts = defaultdict(int)
     for n in nodes:
         counts[n["kind"]] += 1
@@ -310,6 +415,10 @@ def build():
         "stale": counts.get("stale", 0),
         "wiki": counts.get("wiki", 0),
         "gc_files": counts.get("gc-file", 0),
+        "agents": counts.get("agent", 0),
+        "dreams": counts.get("dream", 0),
+        "approvals": counts.get("approval", 0),
+        "workflows": counts.get("workflow", 0),
         "nodes_total": len(nodes),
         "edges_total": len(edges),
     }

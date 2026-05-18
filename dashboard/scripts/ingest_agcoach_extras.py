@@ -6,7 +6,7 @@ Walks two sources:
   2. /Volumes/Samsung PSSD T7/ag-coach-app/Notebooklm knowledge/**/*  (anything Bryan drops)
 
 Chunks ~800 chars w/ 100 overlap, embeds via OpenAI text-embedding-3-small (dim=1024),
-upserts to Pinecone index `gravityclaw-vector` namespace `aios-vault` with id prefix `agcoach-extra-`.
+upserts to the configured Pinecone namespace, defaulting to `knowledge`, with id prefix `agcoach-extra-`.
 
 Incremental: skips files unchanged since last run (mtime-based state in
 `dashboard/data/.agcoach_extras_state.json`). Pass --full to force re-embed.
@@ -53,7 +53,7 @@ SOURCES = [
 ]
 ALLOWED_SUFFIXES = {".ts", ".tsx", ".md", ".txt", ".json"}
 INDEX_NAME = "gravityclaw-vector"
-NAMESPACE = "aios-vault"
+CONFIG_FILE = Path("/Volumes/Samsung PSSD T7/AIS-OS/dashboard/config.json")
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1024
 CHUNK_SIZE = 800
@@ -62,6 +62,20 @@ BATCH_SIZE = 50
 
 STATE_FILE = Path("/Volumes/Samsung PSSD T7/AIS-OS/dashboard/data/.agcoach_extras_state.json")
 LOG_FILE = Path.home() / ".claude/pinecone_writes.jsonl"
+
+
+def pinecone_config() -> tuple[str, str]:
+    index_name = os.environ.get("PINECONE_INDEX_NAME")
+    namespace = os.environ.get("PINECONE_NAMESPACE")
+    if CONFIG_FILE.exists():
+        try:
+            cfg = json.loads(CONFIG_FILE.read_text())
+            pc = (cfg.get("memory") or {}).get("pinecone") or {}
+            index_name = index_name or pc.get("index")
+            namespace = namespace or pc.get("namespace")
+        except Exception:
+            pass
+    return index_name or INDEX_NAME, namespace or "knowledge"
 
 
 def walk_sources() -> Iterator[Path]:
@@ -104,12 +118,13 @@ def save_state(state: dict) -> None:
 
 
 def log_write(summary: str, count: int) -> None:
+    _, namespace = pinecone_config()
     try:
         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         entry = {
             "ts": datetime.utcnow().isoformat() + "Z",
             "action": "upsert",
-            "namespace": NAMESPACE,
+            "namespace": namespace,
             "summary": summary,
             "count": count,
         }
@@ -157,7 +172,8 @@ def main():
 
     oai = OpenAI(api_key=openai_key)
     pc = Pinecone(api_key=pinecone_key)
-    index = pc.Index(INDEX_NAME)
+    index_name, namespace = pinecone_config()
+    index = pc.Index(index_name)
 
     total_chunks = 0
     embedded_files = 0
@@ -204,19 +220,19 @@ def main():
             })
             total_chunks += 1
             if len(batch) >= BATCH_SIZE:
-                index.upsert(vectors=batch, namespace=NAMESPACE)
+                index.upsert(vectors=batch, namespace=namespace)
                 batch = []
 
         file_state[str(path)] = mtime
         embedded_files += 1
 
     if batch:
-        index.upsert(vectors=batch, namespace=NAMESPACE)
+        index.upsert(vectors=batch, namespace=namespace)
 
     state["files"] = file_state
     save_state(state)
     log_write(f"agcoach-extras: {embedded_files} files, {total_chunks} chunks", total_chunks)
-    print(f"Done. Embedded {embedded_files} files / {total_chunks} chunks to {INDEX_NAME}/{NAMESPACE}")
+    print(f"Done. Embedded {embedded_files} files / {total_chunks} chunks to {index_name}/{namespace}")
 
 
 if __name__ == "__main__":
