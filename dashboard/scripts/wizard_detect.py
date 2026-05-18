@@ -130,8 +130,9 @@ def _detect_models(env_keys: dict) -> list:
 
 
 def _detect_storage() -> list:
+    bryan_master = "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master"
     paths = [
-        ("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master", "Bryan-Aaron-Master vault"),
+        (bryan_master, "Bryan-Aaron-Master vault"),
         (str(Path.home() / ".claude"), "Claude config"),
         ("/Volumes/Samsung PSSD T7/gravity-claw", "Gravity Claw"),
         ("/Volumes/Samsung PSSD T7/ag-coach-app", "Ag Coach App"),
@@ -166,7 +167,7 @@ def _detect_memory(env_keys: dict) -> dict:
         if m:
             project_id = m.group(1)
 
-    obsidian = str(Path("/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master"))
+    obsidian = "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master"
 
     return {
         "obsidian": obsidian,

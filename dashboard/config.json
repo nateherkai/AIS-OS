@@ -1,7 +1,7 @@
 {
   "hourly_value_usd": 120.0,
-  "vault_path": "../Bryan-Aaron-Master",
-  "wiki_path": "../Bryan-Aaron-Master/wiki",
+  "vault_path": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master",
+  "wiki_path": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master/wiki",
   "dreams_dir": "./data/dreams",
   "skills_global": "~/.claude/skills",
   "skills_project": "../.claude/skills",

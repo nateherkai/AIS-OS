@@ -2,6 +2,10 @@
   "tasks": [
     {"id": 1, "text": "Follow up with 5 trial schools", "tag": "Sales", "done": false},
     {"id": 2, "text": "Reply to Trinity — livestock feedback", "tag": "Support", "done": false},
-    {"id": 3, "text": "Send MailerLite blast to 560 teachers", "tag": "Marketing", "done": false}
+    {"id": 3, "text": "Send MailerLite blast to 560 teachers", "tag": "Marketing", "done": false},
+    {"id": 4, "text": "Add structured dream feedback: accepted, dismissed, completed", "tag": "AIOS", "done": false},
+    {"id": 5, "text": "Convert accepted dreams automatically into tasks or skills", "tag": "AIOS", "done": false},
+    {"id": 6, "text": "Tighten Ag Coach Pro action loops: leads, outreach, churn, content, product fixes", "tag": "AIOS", "done": false},
+    {"id": 7, "text": "Build weekly executive rhythm: dreams → priorities → actions → results", "tag": "AIOS", "done": false}
   ]
 }
