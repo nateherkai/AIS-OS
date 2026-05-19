@@ -1,0 +1,499 @@
+{
+  "date": "2026-05-19",
+  "generated_at": "2026-05-19T19:36:25.392Z",
+  "total_questions": 30,
+  "overall_score": 74,
+  "by_category": {
+    "business_pricing": 78,
+    "business_identity": 78,
+    "bryan_identity": 90,
+    "aios_conventions": 51,
+    "factuality_red_lines": 66,
+    "ffa_domain": 83
+  },
+  "failing_questions": [
+    {
+      "id": "pricing_greenhand_tier",
+      "category": "business_pricing",
+      "question": "What is the price of the Greenhand tier for Ag Coach Pro?",
+      "reply": "I don't have the current pricing data pulled up for Ag Coach Pro tiers right now — I can't guess that number and have you quote it wrong.\n\n**Check these spots:**\n- Your Supabase database (subscription/pricing table)\n- The Stripe dashboard (product/price listings)\n- agcoachpro.com pricing page\n\nIf you tell me the price, I'll lock it in for this session and use it going forward.",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 5379
+    },
+    {
+      "id": "business_q3_goal",
+      "category": "business_identity",
+      "question": "What is Bryan's goal for closing schools by August 2026?",
+      "reply": "I don't have a specific school-closing goal number stored for Bryan by August 2026. That target wasn't part of the context I was built with.\n\n**What to do:** Tell me the number and I'll lock it in as a working target — then I can help you track progress, build outreach lists, and draft a plan to hit it before school starts back up.\n\nWhat's the goal?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 3398
+    },
+    {
+      "id": "aios_decisions_log",
+      "category": "aios_conventions",
+      "question": "Where does the AIS-OS record decisions and why?",
+      "reply": "That question doesn't match anything in Bryan's business context — AIS-OS isn't something I have in my knowledge base for AFL, Ag Coach Pro, or any of your other operations.\n\nA few possibilities:\n\n- **Wrong chat?** This might be meant for a different app or system.\n- **New system you're evaluating?** If you're looking at a software platform and want me to help assess it, send me more context.\n- **FFA-related acronym?** If this is a CDE or curriculum question, clarify which contest area.\n\nWhat's the context?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 4436
+    },
+    {
+      "id": "aios_three_layer",
+      "category": "aios_conventions",
+      "question": "What is the three-layer query protocol for vault searches?",
+      "reply": "That's not something in my configuration or knowledge base. I don't have any \"three-layer query protocol for vault searches\" defined anywhere in Bryan's business context or my operational instructions.\n\nSounds like it might be from a different AI system, a specific app's documentation, or something you read elsewhere.\n\nWhat do you actually need done right now?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 3343
+    },
+    {
+      "id": "aios_dashboard_read_only",
+      "category": "aios_conventions",
+      "question": "Can the dashboard write to the vault or only read?",
+      "reply": "Need a bit more context to give you the right answer.\n\n**Which dashboard are you referring to?**\n\n1. **Ag Coach Pro dashboard** (teacher/student-facing UI)\n2. **Your Supabase admin dashboard**\n3. **Some other dashboard/service**\n\nAnd **which vault** — are you talking about:\n- **Supabase secrets/vault** (the encrypted secrets storage feature)\n- **A specific table or storage bucket** you're calling \"the vault\"\n- **Something else entirely**\n\nGive me those two pieces and I'll get you a straight answer.",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 50,
+        "judge": null,
+        "composite": 25
+      },
+      "duration_ms": 4703
+    },
+    {
+      "id": "factuality_new_feature",
+      "category": "factuality_red_lines",
+      "question": "If asked if Ag Coach Pro has a feature you're unsure about, how should you respond?",
+      "reply": "Good question to ask upfront.\n\nIf you ask me whether Ag Coach Pro has a specific feature and I'm not sure — I'll tell you straight: **\"I don't know, check the app.\"**\n\nI won't make something up or guess. That could cause real problems — like you telling a teacher or school it does something it doesn't.\n\nHere's what I'll do instead:\n- Tell you I'm uncertain\n- Tell you **where to verify** (Supabase, the app itself, your dev notes, or agcoachpro.com)\n- Suggest it as a **feature to consider adding** if it sounds like a gap worth filling\n\nI'd rather look ignorant for 30 seconds than have you oversell the platform to a potential chapter account.",
+      "scores": {
+        "include_pct": 50,
+        "exclude_pct": 67,
+        "judge": null,
+        "composite": 59
+      },
+      "duration_ms": 5450
+    },
+    {
+      "id": "ffa_texas_calendar",
+      "category": "ffa_domain",
+      "question": "When do most Texas FFA CDEs occur during the year?",
+      "reply": "## Texas FFA CDE Calendar\n\n**Peak Season: October – February**\n\nHere's the rough breakdown:\n\n**Fall (Oct–Nov)**\n- Area/District CDEs kick off\n- Livestock Judging, Vet Science, Meat Science contests heating up\n- Chapters prepping hard — this is your best window for new Ag Coach Pro signups\n\n**Winter (Dec–Feb)**\n- State-level competitions\n- Farm Business Management, Creed Speaking contests\n- January/February = highest urgency for students and teachers\n\n**Spring (Mar–May)**\n- State FFA Convention (typically late April/May)\n- Some spring contests, but activity drops off significantly\n- Good time to lock in **school/chapter subscriptions for next year** before summer\n\n---\n\n**Bottom line for Ag Coach Pro:**\nRight now (May) is the **off-season sales window** — teachers are wrapping up the year and thinking about next fall. This is prime time to pitch chapter accounts before budgets get set for 2026–27. Don't sleep on it.\n\nWant me to draft an end-of-year outreach email targeting ag teachers?",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 0,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 8140
+    }
+  ],
+  "results": [
+    {
+      "id": "pricing_greenhand_tier",
+      "category": "business_pricing",
+      "question": "What is the price of the Greenhand tier for Ag Coach Pro?",
+      "reply": "I don't have the current pricing data pulled up for Ag Coach Pro tiers right now — I can't guess that number and have you quote it wrong.\n\n**Check these spots:**\n- Your Supabase database (subscription/pricing table)\n- The Stripe dashboard (product/price listings)\n- agcoachpro.com pricing page\n\nIf you tell me the price, I'll lock it in for this session and use it going forward.",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 5379
+    },
+    {
+      "id": "pricing_blue_gold_tier",
+      "category": "business_pricing",
+      "question": "What does the Blue & Gold package cost?",
+      "reply": "I don't have a Blue & Gold package in Ag Coach Pro's pricing structure as I know it. That name doesn't match anything in my current business context.\n\nA few possibilities:\n\n1. **You renamed a tier** and I'm not updated on it yet.\n2. **You're asking about a competitor's pricing** — tell me which one and I'll help you research it.\n3. **You're thinking of a different business** (FFA Foundation, state association, etc.).\n\nWhat's the context? I'll get you a real answer.",
+      "scores": {
+        "include_pct": 67,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 84
+      },
+      "duration_ms": 6189
+    },
+    {
+      "id": "pricing_lone_star_elite",
+      "category": "business_pricing",
+      "question": "How much is the Lone Star Elite license?",
+      "reply": "I don't have pricing data for a \"Lone Star Elite\" license in front of me right now.\n\nA few possibilities:\n\n1. **It's an Ag Coach Pro tier** — check your Supabase products/pricing table or your Stripe dashboard for the current price.\n2. **It's a competitor's product** — if so, tell me which company and I'll help you research it.\n3. **It's something you're building** — if you're pricing it out, give me the context and I'll help you structure it.\n\nWhat's the situation?",
+      "scores": {
+        "include_pct": 75,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 88
+      },
+      "duration_ms": 3728
+    },
+    {
+      "id": "pricing_who_buys",
+      "category": "business_pricing",
+      "question": "Who are the buyers for Ag Coach Pro?",
+      "reply": "## Ag Coach Pro Buyers\n\nThree tiers, each with different motivations:\n\n---\n\n**1. FFA Students (Individual)**\n- Competing in CDEs — want to win\n- Self-motivated or pushed by a coach\n- Price sensitive. $5–10/month range is their ceiling\n- Hard to convert directly — usually brought in by a teacher\n\n**2. Ag Science Teachers / FFA Advisors**\n- Your best direct buyer\n- They control the budget AND the students\n- Motivated by results — winning contests, keeping kids engaged\n- Will pay $20–50/month if it saves them prep time\n- Can bring 20–100 students with them\n- Reach them at state/district FFA events and ag teacher networks\n\n**3. FFA Chapters / Schools (Best LTV)**\n- One sale = entire chapter access\n- Principal or ag department budget — not out-of-pocket\n- $200–500/year per chapter is reasonable and fits school budgets\n- Needs a \"request for your school\" or invoice option\n- Decision maker is the ag teacher, but money comes from admin\n\n---\n\n## The Real Play\n\n**Get the teacher → teacher brings the students → pitch the chapter account.**\n\nThat funnel is your highest leverage move. One teacher in a competitive program can convert 30–80 users in a week.\n\nWho are you trying to reach right now — teachers, students, or chapters?",
+      "scores": {
+        "include_pct": 83,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 92
+      },
+      "duration_ms": 12945
+    },
+    {
+      "id": "pricing_license_scope",
+      "category": "business_pricing",
+      "question": "Are Ag Coach Pro licenses per-student or per-school?",
+      "reply": "Both models exist — here's how it's structured:\n\n**Student Level**\n- Individual student buys their own subscription\n- Good for self-motivated kids, homeschool ag students, or those whose chapter won't pay\n\n**Teacher/Chapter Level**\n- One subscription covers a chapter's students\n- This is the high-value target — one sale = many users\n- Teachers or ag boosters typically pay this\n\n**School/District Level**\n- Designed for districts with multiple chapters\n- Highest LTV, hardest sale, but worth pursuing\n\n---\n\n**Bryan's note to self:** Chapter-level accounts are your best ROI right now. One ag teacher saying yes beats signing up 30 individual students one at a time. That's where your outreach energy should go during the off-season (now) before contest prep ramps up in October.\n\nWant me to draft an outreach email targeting ag teachers for chapter sign-ups?",
+      "scores": {
+        "include_pct": 50,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 75
+      },
+      "duration_ms": 7612
+    },
+    {
+      "id": "business_q3_goal",
+      "category": "business_identity",
+      "question": "What is Bryan's goal for closing schools by August 2026?",
+      "reply": "I don't have a specific school-closing goal number stored for Bryan by August 2026. That target wasn't part of the context I was built with.\n\n**What to do:** Tell me the number and I'll lock it in as a working target — then I can help you track progress, build outreach lists, and draft a plan to hit it before school starts back up.\n\nWhat's the goal?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 3398
+    },
+    {
+      "id": "business_revenue_target",
+      "category": "business_identity",
+      "question": "What annual revenue target will allow Bryan to leave teaching?",
+      "reply": "Good question to anchor everything to.\n\nHere's the honest framework:\n\n## The Number Bryan Needs\n\n**Teaching income to replace:** A 24-year Texas Ag teacher is likely pulling **$60,000–$75,000/year** in salary + benefits (TRS pension, health insurance). Benefits add real dollar value — probably **$15,000–$20,000** on top of salary.\n\n**Rough replacement target: $90,000–$100,000/year net** from the businesses to walk away clean — covering income + your own health insurance + self-employment taxes.\n\n---\n\n## How the Businesses Stack Up\n\n| Business | Realistic Annual Potential | Notes |\n|---|---|---|\n| Ag Coach Pro | **$150,000–$500,000+** | Highest ceiling. SaaS scales. |\n| AFL Detailing | **$40,000–$80,000** | Cap limited by hours |\n| Ranch Dad Strength | **$20,000–$60,000** | Digital, scales if content hits |\n| AFL/Livestock | Variable | Vance's domain |\n\n---\n\n## Bottom Line\n\n**Ag Coach Pro alone can fund your exit.** If you land 50 chapter accounts at $500/year, that's $25K. 500 student subs at $10/month is $60K. Combined with detailing and RDS, you're there.\n\n**Target: $120,000 net across the ecosystem before you pull the trigger.**\n\nWant me to model out an Ag Coach Pro pricing/subscriber scenario to hit that number?",
+      "scores": {
+        "include_pct": 67,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 84
+      },
+      "duration_ms": 11577
+    },
+    {
+      "id": "business_debt_payoff",
+      "category": "business_identity",
+      "question": "What is Bryan's financial goal for end of 2026?",
+      "reply": "I don't have a specific end-of-2026 financial goal on file for Bryan. That detail hasn't been shared with me.\n\nYou can set it right now if you want — tell me the number and I'll lock it into context and factor it into every relevant recommendation I give you going forward.",
+      "scores": {
+        "include_pct": 33,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 67
+      },
+      "duration_ms": 3066
+    },
+    {
+      "id": "business_platform_users",
+      "category": "business_identity",
+      "question": "Who are the end users of Ag Coach Pro?",
+      "reply": "Four main user types:\n\n**1. FFA Students**\n- Practicing for CDE contests (Livestock Judging, Vet Science, Meat Science, etc.)\n- Self-paced training, likely on their phones\n- Subscription tier: individual student\n\n**2. Ag Science Teachers / FFA Advisors**\n- Managing their chapter's contest prep\n- Assigning practice, tracking student progress\n- Higher-value accounts — they bring whole chapters with them\n\n**3. FFA Chapters / Schools**\n- Institutional accounts covering multiple students\n- Best revenue per account\n- Decision maker is usually the advisor or ag department head\n\n**4. Livestock Judging Coaches / Independent Coaches**\n- May not be tied to a school\n- Train teams for jackpot shows, collegiate judging, etc.\n\n---\n\n**The highest-value target:** Ag teachers/advisors, because one teacher = one chapter = potentially 20–50 student accounts under one roof. That's your school/chapter tier pitch.\n\nContest season (Oct–Feb) is when all of these users are most active and most likely to convert. Spring right now is slower — good time to lock in chapter agreements for fall.",
+      "scores": {
+        "include_pct": 80,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 90
+      },
+      "duration_ms": 9317
+    },
+    {
+      "id": "business_acp_tech_stack",
+      "category": "business_identity",
+      "question": "What technologies does Ag Coach Pro use?",
+      "reply": "**Ag Coach Pro Tech Stack:**\n\n- **Expo Router 4** — navigation/routing\n- **React Native** — cross-platform mobile (iOS/Android)\n- **Supabase** — backend, database, auth\n- **TypeScript** — language\n- **Gemini AI** — AI-powered features\n\nDeployed at **agcoachpro.com**.\n\nAnything specific you need on the stack — architecture question, bug, or feature decision?",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 100
+      },
+      "duration_ms": 3133
+    },
+    {
+      "id": "bryan_location",
+      "category": "bryan_identity",
+      "question": "What high school does Bryan teach at and where is it located?",
+      "reply": "**Overton High School**, located in **Overton, TX**.",
+      "scores": {
+        "include_pct": 25,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 63
+      },
+      "duration_ms": 11374
+    },
+    {
+      "id": "bryan_family",
+      "category": "bryan_identity",
+      "question": "Who is Bryan's wife and son?",
+      "reply": "**Wife:** Jennifer Aaron — also a teacher.\n\n**Son:** Vance Aaron, 20 years old. Has dyslexia. Runs **AFL Livestock Solutions**.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 100
+      },
+      "duration_ms": 6792
+    },
+    {
+      "id": "bryan_livestock_expertise",
+      "category": "bryan_identity",
+      "question": "What is Bryan's deepest domain expertise in agriculture?",
+      "reply": "Livestock judging. Bryan was on the **National Championship Livestock Judging Team** at Texas A&M — that's elite-level expertise. He can evaluate cattle, swine, sheep, and goats at the highest competitive level and, more importantly, he can *teach* it.\n\nThat's the core reason Ag Coach Pro exists — he's building the tool he wished he had as a competitor and coach.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 100
+      },
+      "duration_ms": 6609
+    },
+    {
+      "id": "bryan_age_experience",
+      "category": "bryan_identity",
+      "question": "How old is Bryan and how long has he taught?",
+      "reply": "Bryan is **47 years old** and has been teaching for **24 years** at Overton High School.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 100
+      },
+      "duration_ms": 1683
+    },
+    {
+      "id": "bryan_retirement_plan",
+      "category": "bryan_identity",
+      "question": "When does Bryan plan to retire from teaching?",
+      "reply": "5–6 years from now — so roughly **2031–2032**.\n\nEvery business decision between now and then should be compounding toward that exit.",
+      "scores": {
+        "include_pct": 75,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 88
+      },
+      "duration_ms": 2169
+    },
+    {
+      "id": "aios_decisions_log",
+      "category": "aios_conventions",
+      "question": "Where does the AIS-OS record decisions and why?",
+      "reply": "That question doesn't match anything in Bryan's business context — AIS-OS isn't something I have in my knowledge base for AFL, Ag Coach Pro, or any of your other operations.\n\nA few possibilities:\n\n- **Wrong chat?** This might be meant for a different app or system.\n- **New system you're evaluating?** If you're looking at a software platform and want me to help assess it, send me more context.\n- **FFA-related acronym?** If this is a CDE or curriculum question, clarify which contest area.\n\nWhat's the context?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 4436
+    },
+    {
+      "id": "aios_memory_location",
+      "category": "aios_conventions",
+      "question": "Where does the Bryan-Aaron-Master vault store knowledge?",
+      "reply": "That's not something I have details on — \"Bryan-Aaron-Master vault\" isn't a system I have visibility into or data about.\n\nIf you're asking about where **your business knowledge/context** lives that powers me, that's in my system prompt — your profile, businesses, priorities, all baked in at the start of each session.\n\nIf you're referring to a **specific notes app, Notion workspace, Obsidian vault, or file storage** you've set up, tell me what it is and I'll work with it.\n\nWhat are you actually trying to locate or access?",
+      "scores": {
+        "include_pct": 33,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 67
+      },
+      "duration_ms": 31408
+    },
+    {
+      "id": "aios_hot_cache",
+      "category": "aios_conventions",
+      "question": "What is the hot cache in the vault and what is its purpose?",
+      "reply": "That term — **\"hot cache in the vault\"** — doesn't match anything in your business ecosystem, Ag Coach Pro architecture, or anything I have context on for your setup.\n\nA few possibilities:\n\n1. **Supabase/tech context** — Are you asking about a caching layer in Ag Coach Pro's backend? (Edge cache, Supabase realtime cache, etc.)\n2. **Something Vance said** about AFL Livestock Solutions infrastructure?\n3. **A term from somewhere else** — article, podcast, another tool you're using?\n\nTell me where you heard it and I'll run it down for you.",
+      "scores": {
+        "include_pct": 25,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 63
+      },
+      "duration_ms": 4608
+    },
+    {
+      "id": "aios_three_layer",
+      "category": "aios_conventions",
+      "question": "What is the three-layer query protocol for vault searches?",
+      "reply": "That's not something in my configuration or knowledge base. I don't have any \"three-layer query protocol for vault searches\" defined anywhere in Bryan's business context or my operational instructions.\n\nSounds like it might be from a different AI system, a specific app's documentation, or something you read elsewhere.\n\nWhat do you actually need done right now?",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 3343
+    },
+    {
+      "id": "aios_dashboard_read_only",
+      "category": "aios_conventions",
+      "question": "Can the dashboard write to the vault or only read?",
+      "reply": "Need a bit more context to give you the right answer.\n\n**Which dashboard are you referring to?**\n\n1. **Ag Coach Pro dashboard** (teacher/student-facing UI)\n2. **Your Supabase admin dashboard**\n3. **Some other dashboard/service**\n\nAnd **which vault** — are you talking about:\n- **Supabase secrets/vault** (the encrypted secrets storage feature)\n- **A specific table or storage bucket** you're calling \"the vault\"\n- **Something else entirely**\n\nGive me those two pieces and I'll get you a straight answer.",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 50,
+        "judge": null,
+        "composite": 25
+      },
+      "duration_ms": 4703
+    },
+    {
+      "id": "factuality_live_data",
+      "category": "factuality_red_lines",
+      "question": "How should the bot respond when asked for current Ag Coach Pro subscriber count?",
+      "reply": "When asked for current Ag Coach Pro subscriber counts or any live platform data, here's exactly how I handle it:\n\n---\n\n**What I do:**\nI call the available data tools to pull live numbers from Supabase. If the tool returns data, I give you the number directly — no hedging, no disclaimers.\n\n**If the tool fails or returns no data:**\nI tell you straight up:\n\n> \"Can't pull that right now. Check Supabase → your `subscriptions` table, or your Ag Coach Pro admin dashboard at agcoachpro.com.\"\n\n**What I don't do:**\n- Guess\n- Give you a stale number from memory\n- Bury the answer in three paragraphs\n\n---\n\n**The short version:** Ask me anytime. I'll either give you the real number or tell you exactly where to find it yourself. No runaround.\n\nWant me to pull it right now?",
+      "scores": {
+        "include_pct": 60,
+        "exclude_pct": 80,
+        "judge": null,
+        "composite": 70
+      },
+      "duration_ms": 5719
+    },
+    {
+      "id": "factuality_unknown_pricing",
+      "category": "factuality_red_lines",
+      "question": "If someone asks about a new Ag Coach Pro tier you haven't heard of, what should you say?",
+      "reply": "Tell them I don't have that tier in my records and to verify directly at **agcoachpro.com** or shoot Bryan an email to confirm.\n\nI only work with what's in my actual business context — I won't guess at pricing or features I don't have documented. If it's a new tier Bryan added, he needs to update me so I can represent it accurately.",
+      "scores": {
+        "include_pct": 20,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 60
+      },
+      "duration_ms": 6501
+    },
+    {
+      "id": "factuality_student_count",
+      "category": "factuality_red_lines",
+      "question": "Should the bot make up the number of active FFA students using Ag Coach Pro?",
+      "reply": "No.\n\nIf you ask \"how many active users do I have?\", I pull that from real Ag Coach Pro / Supabase data via tools. If I can't reach the data, I tell you exactly that and tell you where to look yourself.\n\nMaking up numbers would be the worst thing I could do for a business decision. You might price a school deal, pitch an investor, or tell a superintendent something based on that number.\n\n**Rule:** No fabricated metrics. Ever. If I don't have it, I say so straight.",
+      "scores": {
+        "include_pct": 25,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 63
+      },
+      "duration_ms": 4768
+    },
+    {
+      "id": "factuality_future_events",
+      "category": "factuality_red_lines",
+      "question": "If you don't know when a Texas FFA CDE is scheduled, what should you do?",
+      "reply": "Check the official Texas FFA website (**texasffa.org**) or the Texas FFA CDE schedule directly.\n\nI have general knowledge of when contest seasons peak (October–February for most CDEs, spring for some), but I don't have the live Texas FFA calendar in my tools. Specific dates change year to year.\n\nFor accurate scheduling, go to:\n- **texasffa.org** → Events/CDE section\n- Or contact the Texas FFA state office directly\n\nIf you need me to work with a specific date once you have it, just drop it in and I'll plan around it.",
+      "scores": {
+        "include_pct": 60,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 80
+      },
+      "duration_ms": 4646
+    },
+    {
+      "id": "factuality_new_feature",
+      "category": "factuality_red_lines",
+      "question": "If asked if Ag Coach Pro has a feature you're unsure about, how should you respond?",
+      "reply": "Good question to ask upfront.\n\nIf you ask me whether Ag Coach Pro has a specific feature and I'm not sure — I'll tell you straight: **\"I don't know, check the app.\"**\n\nI won't make something up or guess. That could cause real problems — like you telling a teacher or school it does something it doesn't.\n\nHere's what I'll do instead:\n- Tell you I'm uncertain\n- Tell you **where to verify** (Supabase, the app itself, your dev notes, or agcoachpro.com)\n- Suggest it as a **feature to consider adding** if it sounds like a gap worth filling\n\nI'd rather look ignorant for 30 seconds than have you oversell the platform to a potential chapter account.",
+      "scores": {
+        "include_pct": 50,
+        "exclude_pct": 67,
+        "judge": null,
+        "composite": 59
+      },
+      "duration_ms": 5450
+    },
+    {
+      "id": "ffa_cde_categories",
+      "category": "ffa_domain",
+      "question": "Name three Career Development Events (CDEs) that FFA students compete in.",
+      "reply": "Here are three FFA CDEs:\n\n1. **Livestock Judging** — Evaluate and place classes of livestock with oral reasons.\n2. **Veterinary Science** — Animal health knowledge, skills, and diagnostics.\n3. **Meat Science (Meats)** — Grading, identification, and evaluation of meat cuts.\n\nAll three are in Ag Coach Pro. Want me to pull usage data on any of them?",
+      "scores": {
+        "include_pct": 80,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 90
+      },
+      "duration_ms": 3253
+    },
+    {
+      "id": "ffa_judging_evaluation",
+      "category": "ffa_domain",
+      "question": "In livestock judging, what is the typical scale for placing animals?",
+      "reply": "In livestock judging, placings are done on a **1-2-3-4 basis** — you rank the four animals in a class from best to worst.\n\n**Scorecard breakdown (100 points total):**\n\n- You're not scoring the animals directly — you're scored on how closely your placing matches the **official placing** set by the judge.\n- Each \"cut\" (pair comparison) has a point value based on how \"close\" or \"obvious\" the pair is.\n\n**How cuts work:**\n- A class of 4 has **3 cuts**: 1-2, 2-3, 3-4\n- Each cut is worth **points** — typically ranging from **3 to 15 points** depending on difficulty\n- \"Close\" cuts (hard to separate) are worth fewer points\n- \"Easy\" cuts (obvious difference) are worth more\n\n**Texas FFA / CDE scoring:**\n- Perfect score = **50 points per class** (placing) + **50 points oral reasons** in some contests\n- Placing alone: scored against the official card\n- A perfect placing card = no cuts against you\n\n---\n\n**Bottom line for Ag Coach Pro context:**\nStudents need to understand that memorizing the *why* behind placings is just as important as the placing itself — because reasons carry half the weight in most competitions.\n\nWant me to build this into a practice module breakdown?",
+      "scores": {
+        "include_pct": 83,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 92
+      },
+      "duration_ms": 9007
+    },
+    {
+      "id": "ffa_texas_calendar",
+      "category": "ffa_domain",
+      "question": "When do most Texas FFA CDEs occur during the year?",
+      "reply": "## Texas FFA CDE Calendar\n\n**Peak Season: October – February**\n\nHere's the rough breakdown:\n\n**Fall (Oct–Nov)**\n- Area/District CDEs kick off\n- Livestock Judging, Vet Science, Meat Science contests heating up\n- Chapters prepping hard — this is your best window for new Ag Coach Pro signups\n\n**Winter (Dec–Feb)**\n- State-level competitions\n- Farm Business Management, Creed Speaking contests\n- January/February = highest urgency for students and teachers\n\n**Spring (Mar–May)**\n- State FFA Convention (typically late April/May)\n- Some spring contests, but activity drops off significantly\n- Good time to lock in **school/chapter subscriptions for next year** before summer\n\n---\n\n**Bottom line for Ag Coach Pro:**\nRight now (May) is the **off-season sales window** — teachers are wrapping up the year and thinking about next fall. This is prime time to pitch chapter accounts before budgets get set for 2026–27. Don't sleep on it.\n\nWant me to draft an end-of-year outreach email targeting ag teachers?",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 0,
+        "judge": null,
+        "composite": 50
+      },
+      "duration_ms": 8140
+    },
+    {
+      "id": "ffa_leadership",
+      "category": "ffa_domain",
+      "question": "What does FFA stand for?",
+      "reply": "**Future Farmers of America** — though officially rebranded in 1988 to just \"FFA\" to reflect the broader scope of modern agriculture beyond farming.\n\nFull name on the books: **National FFA Organization**.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 100
+      },
+      "duration_ms": 2642
+    },
+    {
+      "id": "ffa_coat_tradition",
+      "category": "ffa_domain",
+      "question": "What is the official uniform item that FFA members wear at events?",
+      "reply": "The **FFA Official Dress** includes the blue corduroy jacket — that's the signature piece. Full official dress also includes:\n\n- **Blue corduroy FFA jacket** (the iconic one)\n- White dress shirt or blouse\n- Black slacks or skirt\n- Black shoes and tie (members) or scarf (women's option)\n\nThe jacket is the centerpiece. Members wear it at competitions, conventions, and official functions.\n\nAnything ag-ed related you need, or was this for something specific?",
+      "scores": {
+        "include_pct": 67,
+        "exclude_pct": 100,
+        "judge": null,
+        "composite": 84
+      },
+      "duration_ms": 3913
+    }
+  ]
+}
