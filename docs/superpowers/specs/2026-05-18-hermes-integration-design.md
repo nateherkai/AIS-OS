@@ -50,18 +50,108 @@ Both write to **the same `activity_log` table** keyed by a new `bot_id` column (
 Helper file shipped alongside this spec at:
 `docs/superpowers/artifacts/hermes_emit_event.py`
 
-**Hermes call sites (Bryan wires when stable):**
+**Hermes architectural constraint (v2 P7):** single isolated patch to upstream `toolsets.py` only. All instrumentation lives in `plugins/hermes_claw/` — no upstream Hermes patches. The plugin wraps `ctx.register_tool` and monkeypatches the LLM adapter; nothing else gets touched.
 
-| Hermes module | Hook | Event |
-|---|---|---|
-| gateway entry (request handler) | first line | `task_start` |
-| LLM call wrapper | streaming chunks | `thought` (batched) |
-| LLM call wrapper | response end | `task_end` + `cost` |
-| `tools/registry.py` | before tool exec | `tool_call` |
-| `tools/registry.py` | after tool exec | `tool_result` |
-| `tools/vault_query_tool.py` | after write | `memory_write` (store=vault) |
-| `tools/aios_query_tool.py` | after write | `memory_write` (store=supabase) |
-| Pinecone upsert (wherever) | after upsert | `memory_write` (store=pinecone) |
+**Hermes call sites — light-touch via plugin wrapper:**
+
+| Hermes module | Hook | Event | Phase |
+|---|---|---|---|
+| `plugins/hermes_claw/__init__.py:register(ctx)` | wrap `ctx.register_tool` (covers all 8 tools) | `tool_call` + `tool_result` (+ `tool_error`) | 2a |
+| `plugins/hermes_claw/__init__.py:register(ctx)` | monkeypatch `agent/anthropic_adapter.py:send_message` | `thought` (batched) + `task_end` + `cost` | 2b |
+| `plugins/hermes_claw/vault.py` handler tail | after Pinecone upsert | `memory_write` (store=pinecone or vault) | 2a |
+| `plugins/hermes_claw/gmail.py` handler tail | after draft created | `memory_write` (store=supabase, key=draft_id) | 2a |
+| Skill `session-summary-pusher` | after Pinecone push | `memory_write` (store=pinecone, summary=session) | 2a |
+
+`task_start` is implicit at first `tool_call` of a new task (or, if model-router skill is used, emit at top of `model-router/SKILL.md` invocation). Gateway-entry hook is **skipped** — would require upstream patch.
+
+**Phase 2a register-wrapper pattern (drop-in):**
+
+```python
+# plugins/hermes_claw/__init__.py
+from src.lib.emit_event import emit_event
+import asyncio, functools, time, uuid
+
+def register(ctx):
+    original = ctx.register_tool
+
+    def wrapped_register(*, name, handler, **kwargs):
+        @functools.wraps(handler)
+        def instrumented(args, **hkw):
+            call_id = str(uuid.uuid4())
+            t0 = time.time()
+            asyncio.create_task(emit_event(
+                type="tool_call",
+                action=f"tool: {name}",
+                payload={"call_id": call_id, "name": name, "args": args},
+            ))
+            try:
+                result = handler(args, **hkw)
+                asyncio.create_task(emit_event(
+                    type="tool_result",
+                    action=f"tool done: {name}",
+                    payload={"call_id": call_id, "duration_ms": int((time.time() - t0) * 1000),
+                             "output_preview": str(result)[:300], "error": False},
+                ))
+                return result
+            except Exception as e:
+                asyncio.create_task(emit_event(
+                    type="tool_result",
+                    action=f"tool error: {name}",
+                    payload={"call_id": call_id, "duration_ms": int((time.time() - t0) * 1000),
+                             "output_preview": str(e)[:300], "error": True},
+                ))
+                raise
+        original(name=name, handler=instrumented, **kwargs)
+
+    ctx.register_tool = wrapped_register
+    for name, schema, handler, check_fn, emoji in _TOOLS:
+        ctx.register_tool(name=name, toolset="hermes-claw", schema=schema,
+                          handler=handler, check_fn=check_fn, emoji=emoji)
+```
+
+One file change. Covers all 8 tools. No upstream patch.
+
+**Phase 2b LLM monkeypatch pattern (single line in register(ctx) after Phase 2a tool wrapping):**
+
+```python
+def register(ctx):
+    # ... Phase 2a tool wrapper above ...
+
+    # Phase 2b: instrument LLM calls via monkeypatch
+    try:
+        from agent import anthropic_adapter
+        from src.lib.emit_event import emit_event, make_thought_batcher
+        original_send = anthropic_adapter.send_message
+
+        async def instrumented_send(*args, **kwargs):
+            task_id = str(uuid.uuid4())
+            t0 = time.time()
+            await emit_event(type="task_start", action="llm send",
+                             payload={"task_id": task_id, "intent": str(kwargs.get('messages', [{}])[-1])[:200]})
+            try:
+                result = await original_send(*args, **kwargs)
+                # If result has usage info:
+                tokens = (getattr(result, 'usage', {}) or {}).get('total_tokens', 0)
+                cents = round(tokens / 1_000_000 * 1500)  # rough Sonnet output rate
+                await emit_event(type="thought", action="llm reply",
+                                 payload={"text": str(getattr(result, 'content', result))[:500]})
+                await emit_event(type="cost", action="llm cost",
+                                 payload={"cents": cents, "tokens": tokens, "model": os.environ.get('HERMES_MODEL_DEFAULT', 'unknown')})
+                await emit_event(type="task_end", action="llm done",
+                                 payload={"task_id": task_id, "tokens_in": 0, "tokens_out": tokens,
+                                          "duration_ms": int((time.time() - t0) * 1000)})
+                return result
+            except Exception as e:
+                await emit_event(type="task_end", action="llm failed",
+                                 payload={"task_id": task_id, "tokens_in": 0, "tokens_out": 0,
+                                          "duration_ms": int((time.time() - t0) * 1000)})
+                raise
+        anthropic_adapter.send_message = instrumented_send
+    except ImportError:
+        pass  # adapter not present, skip LLM instrumentation
+```
+
+If adapter signature/internals differ, adjust the args extraction. Adapter import path may need tweaking (`agent.anthropic_adapter` vs `src.agent.anthropic_adapter`) — verify against actual Hermes layout.
 
 **HUD reducer change (mission-control):** add optional `bot_id` field to `ActivityRow` type. Default visualization shows both bots; filter dropdown lets Bryan pick. Reducer change is small — `liveTypes.ts` adds `bot_id?: 'gravity_claw' | 'hermes_claw'`, reducer threads it into each panel item.
 
@@ -161,14 +251,40 @@ Phase 0: artifacts ready (no Hermes-side change yet)
 - ✅ `docs/superpowers/artifacts/hermes_emit_event.py` — Python helper
 - ✅ This spec
 
-Phase 1: Supabase schema change (one Bryan can run any time)
-- Apply migration adding `bot_id` column + index
-- Verify GravityClaw still works (default applies to its INSERTs)
+Phase 1: Supabase schema change (in MC project, not Ag Coach Pro)
 
-Phase 2: Hermes side (Bryan does in other session when stable)
-- Drop `emit_event.py` into Hermes' `src/lib/`
-- Wire it at the 8 call sites listed above
-- Set `HERMES_BOT_ID=hermes_claw` env var
+Target Supabase project: `beorbykrtoeocuqxlhrp.supabase.co` (this is where `activity_log` lives — same project mission-control + GravityClaw both write to).
+
+```sql
+ALTER TABLE activity_log
+  ADD COLUMN IF NOT EXISTS bot_id TEXT DEFAULT 'gravity_claw';
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_bot_ts
+  ON activity_log (bot_id, timestamp DESC);
+```
+
+Apply via Supabase Studio SQL editor or the MCP Supabase tool. GravityClaw keeps working (default applies to existing/new INSERTs).
+
+Phase 2: Hermes side (Bryan, when ready)
+
+Railway env vars to set on `hermes-claw` service:
+```bash
+railway variable set MC_SUPABASE_URL='https://beorbykrtoeocuqxlhrp.supabase.co'
+railway variable set MC_SUPABASE_KEY='<service-role-key from MC Supabase>'
+railway variable set HERMES_BOT_ID='hermes_claw'
+```
+
+Drop in helper:
+```bash
+cp /Volumes/Samsung\ PSSD\ T7/AIS-OS/docs/superpowers/artifacts/hermes_emit_event.py \
+   /Volumes/Samsung\ PSSD\ T7/hermes-claw/src/lib/emit_event.py
+```
+
+Phase 2a: tool-wrapper instrumentation in `plugins/hermes_claw/__init__.py` (see code block above). 8 tools covered by one wrapper. Ship + deploy + verify in HUD.
+
+Phase 2b (optional, after 2a stable): LLM monkeypatch in same `register(ctx)`. Adds thought/task_end/cost events. Verify adapter import path matches actual Hermes layout.
+
+Phase 2c (skip): gateway-entry hook would require upstream patch. Phase 2a + 2b cover enough for HUD value.
 
 Phase 3: Mission-control update (small)
 - Add `bot_id?` to `ActivityRow` and `LiveState` items

@@ -6,11 +6,21 @@ in real time. Mirrors the TS helper at
 gravity-claw/src/agent/emit-event.ts so both bots use the same schema.
 
 Setup (one-time):
-1. pip install supabase
-2. Set env vars: SUPABASE_URL, SUPABASE_KEY (service role for writes), HERMES_BOT_ID=hermes_claw
-3. Apply schema migration:
+1. supabase-py already in Hermes Dockerfile.railway — no install needed
+2. Set Railway env vars pointing at mission-control's Supabase project
+   (NOT Ag Coach Pro's — activity_log lives in the MC project):
+
+     railway variable set MC_SUPABASE_URL='https://beorbykrtoeocuqxlhrp.supabase.co'
+     railway variable set MC_SUPABASE_KEY='<service-role-key from MC Supabase>'
+     railway variable set HERMES_BOT_ID='hermes_claw'
+
+   The helper also falls back to plain SUPABASE_URL/SUPABASE_KEY if MC_* not set,
+   and final fallback to AGCOACH_SUPABASE_URL/AGCOACH_SERVICE_KEY for emergencies.
+3. Apply schema migration in the MC Supabase project:
      ALTER TABLE activity_log ADD COLUMN IF NOT EXISTS bot_id TEXT DEFAULT 'gravity_claw';
-4. Wire emit_event() at Hermes call sites (gateway entry, LLM wrapper, tool registry, memory writes)
+4. Wire emit_event() — for Hermes plugin architecture, wrap ctx.register_tool
+   in plugins/hermes_claw/__init__.py register(ctx) (covers all 8 tools at once).
+   See docs/superpowers/specs/2026-05-18-hermes-integration-design.md Phase 2a.
 
 Usage:
     from .emit_event import emit_event, make_thought_batcher
@@ -71,10 +81,23 @@ def _get_client() -> "Client | None":
     if create_client is None:
         print("[emit_event] supabase-py not installed; events will be no-op", file=sys.stderr)
         return None
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    # Try MC project first (where activity_log lives), then generic, then agcoach as last resort
+    url = (
+        os.environ.get("MC_SUPABASE_URL")
+        or os.environ.get("SUPABASE_URL")
+        or os.environ.get("AGCOACH_SUPABASE_URL")
+    )
+    key = (
+        os.environ.get("MC_SUPABASE_KEY")
+        or os.environ.get("SUPABASE_KEY")
+        or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+        or os.environ.get("AGCOACH_SERVICE_KEY")
+    )
     if not url or not key:
-        print("[emit_event] SUPABASE_URL/SUPABASE_KEY not set; events will be no-op", file=sys.stderr)
+        print(
+            "[emit_event] no Supabase creds (set MC_SUPABASE_URL + MC_SUPABASE_KEY); events will be no-op",
+            file=sys.stderr,
+        )
         return None
     _client = create_client(url, key)
     return _client
