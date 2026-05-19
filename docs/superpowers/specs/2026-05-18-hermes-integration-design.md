@@ -291,13 +291,27 @@ Phase 3: Mission-control update (small)
 - Optional: filter dropdown in IntentBanner
 - Optional: bot-id chip on each event item
 
-Phase 4: Eval extension
-- Add `--target {gravity,hermes,both}` flag to eval-run.ts
-- Add `runOneHermes` adapter calling gateway HTTP
-- Add `target` field to EvalRun JSON
-- `/eval` page renders two trend lines
+Phase 4: Eval extension — DEFERRED
 
-Each phase ships independently. Phase 1 unblocks Phase 2 but doesn't depend on it.
+Original assumption: Hermes exposes an HTTP gateway for one-shot Q/A. Reality: Hermes runs Telegram polling via `gateway/run.py` + Python `cli.py`. No clean programmatic invocation path for the eval harness.
+
+Options for a future cycle:
+1. Add a `scripts/eval_entrypoint.py` to hermes-claw that takes a question on stdin, returns reply on stdout (bypasses Telegram). Cleanest but requires Hermes-side addition.
+2. Use Hermes' `batch_runner.py` if it supports single-question batches.
+3. Send via real Telegram with a test-only chat id; scrape reply. Slow, real-world, brittle.
+
+Not blocking — GravityClaw eval already exists and provides the regression signal. Hermes accuracy can be monitored qualitatively via Live HUD until a programmatic path lands.
+
+---
+
+Phase progress:
+- Phase 0: ✅ artifacts shipped (spec, hermes_emit_event.py)
+- Phase 1: ⏳ Bryan applies SQL migration in MC Supabase
+- Phase 2: ⏳ Bryan wires emit_event in plugins/hermes_claw/__init__.py register(ctx)
+- Phase 3: ✅ mission-control bot_id + BotChip badge on panels (shipped on feat/eval-harness, commit e9745a0)
+- Phase 4: ⏸️ deferred — Hermes lacks one-shot Q/A invocation path
+
+Each shipped phase is independently useful. Phase 1 unblocks Phase 2.
 
 ---
 
