@@ -104,7 +104,9 @@ def _get_client() -> "Client | None":
 
 
 def _bot_id() -> str:
-    return os.environ.get("HERMES_BOT_ID", "hermes_claw")
+    # Default 'hermes_py' for the Python Hermes deployment.
+    # TypeScript Hermes uses 'hermes_ts'. Legacy rows default to 'gravity_claw'.
+    return os.environ.get("HERMES_BOT_ID", "hermes_py")
 
 
 # ---------------- Privacy filter ----------------
