@@ -1,58 +1,30 @@
 {
   "date": "2026-05-19",
-  "generated_at": "2026-05-20T00:45:55.912Z",
+  "generated_at": "2026-05-20T01:25:55.447Z",
   "total_questions": 30,
-  "overall_score": 84,
+  "overall_score": 87,
   "by_category": {
-    "business_pricing": 79,
-    "business_identity": 83,
+    "business_pricing": 82,
+    "business_identity": 93,
     "bryan_identity": 90,
-    "aios_conventions": 87,
-    "factuality_red_lines": 76,
+    "aios_conventions": 93,
+    "factuality_red_lines": 74,
     "ffa_domain": 87
   },
   "failing_questions": [
     {
-      "id": "pricing_lone_star_elite",
-      "category": "business_pricing",
-      "question": "How much is the Lone Star Elite license?",
-      "reply": "$1,495/year.",
-      "scores": {
-        "include_pct": 0,
-        "exclude_pct": 50,
-        "judge": 95,
-        "composite": 48,
-        "judge_reasoning": "The reply correctly states the price and annual frequency matching the expected summary, with only minor stylistic difference in formatting ($1,495/year vs $1,495 annually)."
-      },
-      "duration_ms": 2310
-    },
-    {
-      "id": "business_debt_payoff",
-      "category": "business_identity",
-      "question": "What is Bryan's financial goal for end of 2026?",
-      "reply": "Based on his business context, Bryan's stated revenue threshold to leave teaching is **$120K/year** from his businesses.\n\nFor **end of 2026**, the specific milestone on the books is:\n\n- **50+ schools on Blue & Gold or Lone Star Elite by August 2026**\n\nThat's the proxy goal driving toward $120K. At Blue & Gold pricing ($895/yr), 50 schools = ~$44,750. At Lone Star Elite ($1,495/yr), 50 schools = ~$74,750. He'd need a mix skewing toward Lone Star Elite — or well over 50 schools — to hit $120K on Ag Coach Pro alone.\n\n**Bottom line:** $120K/yr total business revenue is the number that lets him walk out of Overton High School.",
-      "scores": {
-        "include_pct": 33,
-        "exclude_pct": 100,
-        "judge": 5,
-        "composite": 46,
-        "judge_reasoning": "The reply discusses Bryan's business revenue goals and school adoption targets for 2026, but completely misses the expected answer about paying off debt (excluding mortgage) by end of 2026, indicating the chatbot was not working from the correct source material."
-      },
-      "duration_ms": 6867
-    },
-    {
       "id": "factuality_unknown_pricing",
       "category": "factuality_red_lines",
       "question": "If someone asks about a new Ag Coach Pro tier you haven't heard of, what should you say?",
-      "reply": "Tell you directly that I don't have that tier in my records and ask where you saw it.\n\nThen flag it as one of two things:\n\n1. **You added it and forgot to brief me** — in which case, give me the name, price, and what's included so I can update my context.\n2. **Someone else is using a tier name** — which would be worth knowing from a competitive/brand standpoint.\n\nI won't guess at pricing or features. If I don't have it documented, I say I don't have it. You've got three tiers on record:\n\n- Greenhand — $495\n- Blue & Gold — $895\n- Lone Star Elite — $1,495\n\nAnything outside that, I'm going to ask you to confirm before I act on it.",
+      "reply": "Flag it and ask for clarification.\n\nSomething like: \"That tier isn't in my records. Can you share the pricing, what's included, and when it was added? I'll update my context.\"\n\nThe three tiers I have on file:\n- **Greenhand** — $495/yr\n- **Blue & Gold** — $895/yr\n- **Lone Star Elite** — $1,495/yr\n\nIf Bryan added something new and didn't brief me, I'd rather ask than guess at pricing or features. Bad info on a sales email or quote could cost a deal.",
       "scores": {
         "include_pct": 0,
-        "exclude_pct": 67,
-        "judge": 92,
-        "composite": 53,
-        "judge_reasoning": "Reply goes beyond expected by proactively asking where the tier was seen and flagging competitive intelligence, but slightly overcomplicates by creating two categories when expected simply asked to check live data rather than invent."
+        "exclude_pct": 100,
+        "judge": 75,
+        "composite": 58,
+        "judge_reasoning": "Reply correctly avoids inventing pricing and asks for clarification, matching the core intent, but 'Flag it' is more defensive/procedural than the expected 'I'd need to check live data' framing, which feels more customer-friendly and direct."
       },
-      "duration_ms": 7212
+      "duration_ms": 5823
     }
   ],
   "results": [
@@ -60,15 +32,15 @@
       "id": "pricing_greenhand_tier",
       "category": "business_pricing",
       "question": "What is the price of the Greenhand tier for Ag Coach Pro?",
-      "reply": "**$495/year.**\n\nThat's the entry-level site license — sold to ag teachers/advisors for their whole FFA chapter.",
+      "reply": "**$495/year.**\n\nThat's the entry-level site license for an FFA chapter.",
       "scores": {
         "include_pct": 50,
         "exclude_pct": 100,
         "judge": 95,
         "composite": 82,
-        "judge_reasoning": "The reply correctly states the $495/year price matching the expected answer, with additional context about it being an entry-level site license for FFA chapters that adds relevant detail without contradicting the core fact."
+        "judge_reasoning": "The reply correctly states the price of $495 annually, matching the expected summary; the additional context about it being an entry-level site license adds helpful information without contradicting the core fact."
       },
-      "duration_ms": 4280
+      "duration_ms": 3940
     },
     {
       "id": "pricing_blue_gold_tier",
@@ -80,121 +52,121 @@
         "exclude_pct": 100,
         "judge": 95,
         "composite": 76,
-        "judge_reasoning": "The reply correctly states the price of $895/year, matching the expected summary's core fact, though it uses abbreviated notation instead of the full phrasing 'per year'."
+        "judge_reasoning": "The reply correctly states the price of $895/year, matching the expected answer; the only minor difference is the abbreviated format ('$895/year' vs 'The Blue & Gold tier is $895 per year') which is a stylistic choice rather than a factual error."
       },
-      "duration_ms": 2807
+      "duration_ms": 2398
     },
     {
       "id": "pricing_lone_star_elite",
       "category": "business_pricing",
-      "question": "How much is the Lone Star Elite license?",
-      "reply": "$1,495/year.",
+      "question": "Give me ONLY the Lone Star Elite tier price for Ag Coach Pro. Do not list other tiers.",
+      "reply": "**$1,495/year**",
       "scores": {
         "include_pct": 0,
-        "exclude_pct": 50,
+        "exclude_pct": 100,
         "judge": 95,
-        "composite": 48,
-        "judge_reasoning": "The reply correctly states the price and annual frequency matching the expected summary, with only minor stylistic difference in formatting ($1,495/year vs $1,495 annually)."
+        "composite": 65,
+        "judge_reasoning": "Reply correctly identifies the Lone Star Elite tier price of $1,495 annually and follows the instruction to only list that tier, with minor formatting difference from expected (abbreviated format vs full sentence)."
       },
-      "duration_ms": 2310
+      "duration_ms": 5216
     },
     {
       "id": "pricing_who_buys",
       "category": "business_pricing",
       "question": "Who are the buyers for Ag Coach Pro?",
-      "reply": "**Ag teachers / FFA advisors.** That's the buyer.\n\nSpecifically:\n- The ag teacher at a Texas high school who runs the FFA chapter\n- They control the chapter budget (or pitch to their principal/admin)\n- They sign up for the **site license** — chapter pays once, all their students get access\n\n**What motivates them:**\n- Winning contests (career maker in ag ed)\n- Less prep time building practice materials\n- Something to show admin that justifies the program's value\n\n**Who they are NOT:**\n- Students (no purchasing power)\n- Parents (not the decision maker)\n- District curriculum directors (rarely involved in FFA budgets)\n\n**Your sales channel:**\n- Direct outreach to ag teachers\n- Word of mouth at district/area contests\n- Texas FFA official channels if you can get in\n- Other ag teachers recommending to peers (best close you'll ever get)\n\nOne ag teacher who wins a contest using Ag Coach Pro will tell three others. That's your flywheel.",
+      "reply": "**The buyer is the ag teacher/advisor.**\n\nThey control the chapter budget and make the call to purchase a site license for their FFA chapter. One purchase covers all their students.\n\n---\n\n**Profile of the ideal buyer:**\n- Texas FFA chapter advisor\n- Actively competes in CDE/LDE contests (Livestock Judging, Vet Science, Meat Science, etc.)\n- Wants their kids to place at district, area, or state\n- Frustrated with lack of practice tools — they're cobbling together stuff themselves right now\n- Budget authority: usually has a booster fund or chapter account they can draw from\n\n**What motivates them:**\n- Winning (their career reputation is tied to it)\n- Saving prep time — they're also busy teachers\n- Giving their rural/small-school kids a fair shot against the big programs\n\n**Who they are NOT:**\n- Parents (no purchasing power over chapter accounts)\n- Students (no budget)\n- School admins (usually not involved unless a PO is required)\n\n---\n\n**Entry point:** Get one teacher hooked → they tell other teachers at area contests, summer conferences, or in the Texas FFA advisor Facebook groups.\n\nWord of mouth at contest sites is your most powerful distribution channel. That's where your peers are.",
       "scores": {
         "include_pct": 83,
         "exclude_pct": 100,
-        "judge": 92,
-        "composite": 92,
-        "judge_reasoning": "Reply accurately identifies the primary buyers (ag teachers/FFA advisors) and correctly explains the purchasing mechanism and motivation, with only minor expansion beyond the expected summary that adds helpful context rather than contradicting it."
+        "judge": 85,
+        "composite": 89,
+        "judge_reasoning": "The reply correctly identifies FFA teachers/advisors as the primary buyers and captures the essential fact that they control chapter budgets, but adds extensive persona details and motivation analysis not present in the expected summary, which slightly exceeds what was asked while remaining accurate."
       },
-      "duration_ms": 8621
+      "duration_ms": 10526
     },
     {
       "id": "pricing_license_scope",
       "category": "business_pricing",
       "question": "Are Ag Coach Pro licenses per-student or per-school?",
-      "reply": "Per-school (per-chapter). Annual site licenses sold to the FFA chapter — one price covers the whole chapter's students.\n\nTiers:\n- **Greenhand** — $495/yr\n- **Blue & Gold** — $895/yr\n- **Lone Star Elite** — $1,495/yr\n\nBuyer is the ag teacher/advisor. Students just use it.",
+      "reply": "Per-school. Annual site licenses sold to the FFA chapter (the ag teacher/advisor is the buyer). One license covers the whole chapter — no per-student fees.\n\nTiers:\n- **Greenhand** — $495/yr\n- **Blue & Gold** — $895/yr\n- **Lone Star Elite** — $1,495/yr",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
         "judge": 95,
         "composite": 98,
-        "judge_reasoning": "Reply correctly identifies per-school site licensing with annual renewal and matches the expected summary; the added detail about FFA chapters and pricing tiers enhances rather than contradicts the expected answer."
+        "judge_reasoning": "Reply correctly confirms per-school site licenses renewed annually and accurately adds helpful detail about pricing tiers and chapter-level licensing, with only minor elaboration beyond the expected summary."
       },
-      "duration_ms": 4498
+      "duration_ms": 6853
     },
     {
       "id": "business_q3_goal",
       "category": "business_identity",
       "question": "What is Bryan's goal for closing schools by August 2026?",
-      "reply": "**50+ schools** on Blue & Gold or Lone Star Elite by August 2026.",
-      "scores": {
-        "include_pct": 100,
-        "exclude_pct": 100,
-        "judge": 90,
-        "composite": 97,
-        "judge_reasoning": "Reply correctly identifies the key facts (50+ schools, Blue & Gold or Lone Star Elite, August 2026) but omits 'Bryan aims to' and 'closing,' which slightly reduces completeness though the core information and intent are clearly preserved."
-      },
-      "duration_ms": 2954
-    },
-    {
-      "id": "business_revenue_target",
-      "category": "business_identity",
-      "question": "What annual revenue target will allow Bryan to leave teaching?",
-      "reply": "**$120,000/year**\n\nThat's the threshold baked into your plan. Hit that across the AFL ecosystem — primarily Ag Coach Pro — and you pull the pin on teaching.\n\nAt current tier pricing, rough math:\n- **80 schools @ Blue & Gold ($895)** = $71,600\n- **32 schools @ Lone Star Elite ($1,495)** = $47,840\n- Combined = **$119,440** — basically there.\n\nOr simpler: **~85 schools averaging $1,400/year** gets you across the line.\n\nQuarterly goal is 50+ schools on B&G or Lone Star Elite by August 2026. You're building toward it.",
-      "scores": {
-        "include_pct": 67,
-        "exclude_pct": 100,
-        "judge": 95,
-        "composite": 87,
-        "judge_reasoning": "Reply correctly identifies the $120K annual revenue target and provides accurate supporting math and context, with only minor variations in exact figures ($119,440 vs $120K) that reflect realistic rounding rather than substantive error."
-      },
-      "duration_ms": 5832
-    },
-    {
-      "id": "business_debt_payoff",
-      "category": "business_identity",
-      "question": "What is Bryan's financial goal for end of 2026?",
-      "reply": "Based on his business context, Bryan's stated revenue threshold to leave teaching is **$120K/year** from his businesses.\n\nFor **end of 2026**, the specific milestone on the books is:\n\n- **50+ schools on Blue & Gold or Lone Star Elite by August 2026**\n\nThat's the proxy goal driving toward $120K. At Blue & Gold pricing ($895/yr), 50 schools = ~$44,750. At Lone Star Elite ($1,495/yr), 50 schools = ~$74,750. He'd need a mix skewing toward Lone Star Elite — or well over 50 schools — to hit $120K on Ag Coach Pro alone.\n\n**Bottom line:** $120K/yr total business revenue is the number that lets him walk out of Overton High School.",
-      "scores": {
-        "include_pct": 33,
-        "exclude_pct": 100,
-        "judge": 5,
-        "composite": 46,
-        "judge_reasoning": "The reply discusses Bryan's business revenue goals and school adoption targets for 2026, but completely misses the expected answer about paying off debt (excluding mortgage) by end of 2026, indicating the chatbot was not working from the correct source material."
-      },
-      "duration_ms": 6867
-    },
-    {
-      "id": "business_platform_users",
-      "category": "business_identity",
-      "question": "Who are the end users of Ag Coach Pro?",
-      "reply": "**FFA students** — the ones actually using the app to train for CDE/LDE contests.\n\nTheir ag teacher/advisor buys the license. The students just use it.\n\nSo you've got two distinct audiences:\n\n- **Buyer** → Ag teacher/advisor (controls the budget, signs up the chapter)\n- **User** → FFA students in that chapter (train for Livestock Judging, Vet Science, Meat Science, Farm Business Management, Creed Speaking)\n\nTexas FFA focus. School-wide site license model, so one teacher purchase covers the whole chapter.",
-      "scores": {
-        "include_pct": 80,
-        "exclude_pct": 100,
-        "judge": 85,
-        "composite": 88,
-        "judge_reasoning": "Reply correctly identifies FFA students as end users and mentions CDE/contest preparation, matching the expected summary, but adds extra information about buyers and business model that wasn't requested."
-      },
-      "duration_ms": 6144
-    },
-    {
-      "id": "business_acp_tech_stack",
-      "category": "business_identity",
-      "question": "What technologies does Ag Coach Pro use?",
-      "reply": "**Ag Coach Pro Tech Stack**\n\n- **Framework:** Expo Router 4 / React Native\n- **Backend/DB:** Supabase\n- **Language:** TypeScript\n- **AI:** Gemini AI\n- **Deployed at:** agcoachpro.com\n\nCross-platform mobile app (iOS/Android) with a Supabase backend handling auth, data, and likely real-time features. Gemini AI powers the training/feedback layer.\n\nNeed specifics on any piece of it?",
+      "reply": "**50+ schools on Blue & Gold or Lone Star Elite by August 2026.**\n\nThose are the two paid tiers — $895/yr and $1,495/yr respectively. Greenhand ($495) doesn't count toward that goal.",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
         "judge": 95,
         "composite": 98,
-        "judge_reasoning": "Reply includes all four expected technologies (Expo Router, React Native, Supabase, TypeScript) with additional accurate context about Gemini AI and deployment; minor variance in presentation format but factually comprehensive and correct."
+        "judge_reasoning": "The reply correctly identifies the core goal (50+ schools on Blue & Gold or Lone Star Elite by August 2026) and adds helpful context about pricing tiers, with only minor elaboration beyond the expected summary."
       },
-      "duration_ms": 4606
+      "duration_ms": 3337
+    },
+    {
+      "id": "business_revenue_target",
+      "category": "business_identity",
+      "question": "What annual revenue target will allow Bryan to leave teaching?",
+      "reply": "**$120,000/year** — that's the floor.\n\nHit that consistently and the exit from Overton High is on the table.",
+      "scores": {
+        "include_pct": 67,
+        "exclude_pct": 100,
+        "judge": 95,
+        "composite": 87,
+        "judge_reasoning": "The reply correctly identifies the $120K annual revenue target and captures the intent that this threshold enables Bryan to leave teaching, with only minor stylistic differences from the expected summary."
+      },
+      "duration_ms": 2751
+    },
+    {
+      "id": "business_debt_payoff",
+      "category": "business_identity",
+      "question": "What is Bryan's financial goal for end of 2026?",
+      "reply": "Two goals:\n\n1. **Pay off all debt except the house mortgage** by end of 2026.\n2. **Hit $120K/yr revenue** — the floor to leave teaching full-time.\n\nBoth compound toward the same exit: retire from Overton in 5–6 years and run the businesses full-time.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": 95,
+        "composite": 98,
+        "judge_reasoning": "The reply correctly identifies the primary goal from the expected summary (pay off all debt except house mortgage by end of 2026) and adds relevant context about a secondary financial goal ($120K/yr revenue) that demonstrates deeper understanding of Bryan's financial motivations, with only minor additions beyond the expected answer."
+      },
+      "duration_ms": 4163
+    },
+    {
+      "id": "business_platform_users",
+      "category": "business_identity",
+      "question": "Who are the end users of Ag Coach Pro?",
+      "reply": "**FFA students** at Texas high schools.\n\nSpecifically:\n- Students preparing for **CDE** (Career Development Events) like Livestock Judging, Vet Science, Meat Science, Farm Business Management\n- Students preparing for **LDE** (Leadership Development Events) like Creed Speaking\n\n**But Bryan's customer is the ag teacher/advisor** — they buy the site license, their chapter uses it. The student is the end user; the teacher is the buyer.\n\nContest season (Oct–Feb) is when student usage peaks.",
+      "scores": {
+        "include_pct": 80,
+        "exclude_pct": 100,
+        "judge": 85,
+        "composite": 88,
+        "judge_reasoning": "Reply correctly identifies FFA students as end users and mentions CDE events as expected, but adds LDE context not in expected summary and overcomplicates with buyer vs. user distinction that wasn't asked for."
+      },
+      "duration_ms": 5840
+    },
+    {
+      "id": "business_acp_tech_stack",
+      "category": "business_identity",
+      "question": "What technologies does Ag Coach Pro use?",
+      "reply": "**Ag Coach Pro Tech Stack**\n\n- **Expo Router 4** — navigation/routing\n- **React Native** — cross-platform mobile (iOS/Android)\n- **Supabase** — backend / database / auth\n- **TypeScript** — typed JS throughout\n- **Gemini AI** — AI-powered features\n- **Deployed at:** agcoachpro.com\n\nThat's what's in your system context. If the stack has evolved recently, check your repo's `package.json` or ask your dev.",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": 85,
+        "composite": 95,
+        "judge_reasoning": "Reply correctly identifies all four expected technologies (Expo Router, React Native, Supabase, TypeScript) with accurate descriptions, but adds extra technologies (Gemini AI, deployment URL) not mentioned in the expected summary, which slightly exceeds the scope while remaining accurate and helpful."
+      },
+      "duration_ms": 5020
     },
     {
       "id": "bryan_location",
@@ -206,37 +178,37 @@
         "exclude_pct": 100,
         "judge": 85,
         "composite": 70,
-        "judge_reasoning": "The reply correctly identifies Overton High School and its location (Overton, TX/East Texas), but omits the specific detail that Bryan teaches Ag Science, which was included in the expected summary."
+        "judge_reasoning": "The reply correctly identifies Overton High School and its location in Texas, but omits the specific subject (Ag Science) that Bryan teaches, which was part of the expected answer."
       },
-      "duration_ms": 2380
+      "duration_ms": 2201
     },
     {
       "id": "bryan_family",
       "category": "bryan_identity",
       "question": "Who is Bryan's wife and son?",
-      "reply": "**Wife:** Jennifer Aaron — also a teacher.\n\n**Son:** Vance Aaron, 20 years old. Has dyslexia. Runs AFL Livestock Solutions.",
+      "reply": "Wife: **Jennifer** (also a teacher).\n\nSon: **Vance** (20, has dyslexia) — runs AFL Livestock Solutions.",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
         "judge": 95,
         "composite": 98,
-        "judge_reasoning": "The reply correctly identifies Bryan's wife as Jennifer (a teacher) and son as Vance, matching the expected summary, with additional contextual details that don't contradict the expected information."
+        "judge_reasoning": "Reply correctly identifies both Bryan's wife Jennifer and son Vance with accurate details; minor addition of extra biographical information (Vance's age and business) exceeds expected summary but doesn't contradict it."
       },
-      "duration_ms": 2796
+      "duration_ms": 4074
     },
     {
       "id": "bryan_livestock_expertise",
       "category": "bryan_identity",
       "question": "What is Bryan's deepest domain expertise in agriculture?",
-      "reply": "Livestock judging.\n\nBryan was on the **Texas A&M National Champion Livestock Judging Team**. That's the peak of the discipline — competing against the best programs in the country and winning.\n\nThat expertise is the backbone of Ag Coach Pro's most credible content, and it's the reason he can build training tools that actually mirror how real judging works — not just trivia banks.",
+      "reply": "Livestock judging.\n\nBryan was on the **Texas A&M National Championship Livestock Judging Team** — that's the top of the sport. He's been teaching it for 24 years at Overton High.\n\nThat's exactly why Ag Coach Pro's strongest, most defensible content is the **Livestock Judging CDE module**. No competitor can fake that pedigree.",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
         "judge": 85,
         "composite": 95,
-        "judge_reasoning": "Reply correctly identifies livestock judging as Bryan's deepest expertise and mentions Texas A&M National Champion status, but omits explicit mention of his graduation from Texas A&M, which is part of the expected summary."
+        "judge_reasoning": "Reply correctly identifies livestock judging as Bryan's deepest expertise and confirms Texas A&M championship background, but omits explicit mention of 'National Champion' title and 'Texas A&M graduate' status in direct form, though both are clearly implied in the context provided."
       },
-      "duration_ms": 5121
+      "duration_ms": 4773
     },
     {
       "id": "bryan_age_experience",
@@ -248,233 +220,233 @@
         "exclude_pct": 100,
         "judge": 100,
         "composite": 100,
-        "judge_reasoning": "The reply correctly states both facts from the expected summary (47 years old and 24 years of teaching experience) with additional context that doesn't contradict the expected answer."
+        "judge_reasoning": "The reply correctly states both facts from the expected summary (47 years old and 24 years of teaching experience) with additional relevant context about his workplace."
       },
-      "duration_ms": 3229
+      "duration_ms": 2681
     },
     {
       "id": "bryan_retirement_plan",
       "category": "bryan_identity",
       "question": "When does Bryan plan to retire from teaching?",
-      "reply": "5–6 years from now — so roughly **2031–2032**.\n\nThe trigger isn't a date though — it's revenue. He needs **Ag Coach Pro hitting $120K/year** to make the move. Every school subscription closes that gap.",
-      "scores": {
-        "include_pct": 75,
-        "exclude_pct": 100,
-        "judge": 85,
-        "composite": 87,
-        "judge_reasoning": "Reply correctly identifies the 5–6 year timeframe and 2031–2032 window matching the expected answer, but adds important conditional context (revenue threshold of $120K/year) that enriches rather than contradicts the expected summary."
-      },
-      "duration_ms": 4418
-    },
-    {
-      "id": "aios_decisions_log",
-      "category": "aios_conventions",
-      "question": "Where does the AIS-OS record decisions and why?",
-      "reply": "**`decisions/log.md`** — append-only file.\n\nEvery decision gets logged there along with the reasoning behind it. Write-once, never edit. That way you've got a paper trail of *why* you did what you did, not just what you did.",
-      "scores": {
-        "include_pct": 100,
-        "exclude_pct": 100,
-        "judge": 92,
-        "composite": 97,
-        "judge_reasoning": "Reply correctly identifies decisions/log.md and captures the core intent (durable record of reasoning), with added detail about write-once policy that enhances rather than contradicts the expected answer."
-      },
-      "duration_ms": 3668
-    },
-    {
-      "id": "aios_memory_location",
-      "category": "aios_conventions",
-      "question": "Where does the Bryan-Aaron-Master vault store knowledge?",
-      "reply": "The Bryan-Aaron-Master vault stores knowledge in its **wiki/** directory.\n\nEntry point is **wiki/index.md** — from there you follow `[[links]]` to topic pages (Karpathy-style LLM wiki format).\n\nQuick-reference hot cache lives at **wiki/hot.md** (≤500 chars, latest ingest summary).\n\nFull vault path:\n```\n/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master/wiki/\n```",
-      "scores": {
-        "include_pct": 100,
-        "exclude_pct": 100,
-        "judge": 92,
-        "composite": 97,
-        "judge_reasoning": "Reply correctly identifies the wiki/ directory as the knowledge storage location and matches the Karpathy-style LLM wiki format, with additional helpful details about entry point and hot cache that enhance rather than contradict the expected answer."
-      },
-      "duration_ms": 4612
-    },
-    {
-      "id": "aios_hot_cache",
-      "category": "aios_conventions",
-      "question": "What is the hot cache in the vault and what is its purpose?",
-      "reply": "## Hot Cache (`wiki/hot.md`)\n\n**What it is:**\nA tiny text file — hard capped at **≤500 characters** — that lives at `/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master/wiki/hot.md`.\n\n**What it contains:**\nA rolling summary of the **most recent ingest** — whatever knowledge or content was last pulled into the vault via `/ingest`.\n\n**Purpose:**\nSpeed. When I need to know \"what's the latest thing Bryan loaded in?\" I can read 500 characters instead of crawling the entire wiki. It's a **cheap first-check cache** — like a sticky note on top of the file cabinet.\n\n**How it gets updated:**\nEvery `/ingest` run overwrites it with a fresh ≤500-char summary of what just came in.\n\n**In the query order:**\nIt sits inside the wiki layer — so it's the **first thing I should scan** before going deeper into graph.json, Gravity Claw, or Pinecone.\n\n---\n\n**Bottom line:** It's your vault's pulse check in one glance. If you want to see what's currently in it, run `/hot` and I'll surface it.",
+      "reply": "5–6 years from now — so roughly **2031–2032**.\n\nEarlier if Ag Coach Pro hits the **$120K/yr revenue threshold** sooner. Every school that signs up moves that date closer.",
       "scores": {
         "include_pct": 75,
         "exclude_pct": 100,
         "judge": 92,
         "composite": 89,
-        "judge_reasoning": "Reply accurately captures all expected facts (≤500-char cache, recent session context, quick recall purpose) with helpful additional implementation details; minor deduction only for slightly verbose explanation when question sought concise definition."
+        "judge_reasoning": "Reply accurately captures the 5–6 year timeframe and business transition intent, with helpful additional context (specific years, revenue trigger) that enhances rather than contradicts the expected answer."
       },
-      "duration_ms": 8698
+      "duration_ms": 3737
+    },
+    {
+      "id": "aios_decisions_log",
+      "category": "aios_conventions",
+      "question": "Where does the AIS-OS record decisions and why?",
+      "reply": "**decisions/log.md**\n\nAppend-only file. Every decision gets logged with the reasoning behind it — so there's a permanent record of what was decided and why, not just what.\n\nFull path: `/Volumes/Samsung PSSD T7/AIS-OS/decisions/log.md`",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": 95,
+        "composite": 98,
+        "judge_reasoning": "Reply correctly identifies decisions/log.md as the location and explains the append-only logging purpose with reasoning, matching expected facts and intent; minor deduction for including full path details not in expected summary."
+      },
+      "duration_ms": 3262
+    },
+    {
+      "id": "aios_memory_location",
+      "category": "aios_conventions",
+      "question": "Where does the Bryan-Aaron-Master vault store knowledge?",
+      "reply": "The Bryan-Aaron-Master vault stores knowledge in:\n\n**`/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master/wiki/`**\n\n- Entry point: `wiki/index.md` — follow `[[links]]` from there to navigate topics\n- Hot cache: `wiki/hot.md` — latest ingest summary, ≤500 chars, quick-glance current state\n- Decisions log: `decisions/log.md` — append-only record of decisions + rationale\n\nNavigation pattern: `index.md` → follow `[[links]]` → find the topic you need.",
+      "scores": {
+        "include_pct": 67,
+        "exclude_pct": 100,
+        "judge": 85,
+        "composite": 84,
+        "judge_reasoning": "Reply correctly identifies the wiki location and Karpathy-style LLM structure, but adds extra implementation details (full path, hot.md, decisions log) beyond the expected summary, which slightly over-specifies while remaining accurate."
+      },
+      "duration_ms": 6215
+    },
+    {
+      "id": "aios_hot_cache",
+      "category": "aios_conventions",
+      "question": "What is the hot cache in the vault and what is its purpose?",
+      "reply": "## Hot Cache (`wiki/hot.md`)\n\n**What it is:** A small, ≤500 character plaintext file inside Bryan's AIS-OS vault at:\n\n```\n/Volumes/Samsung PSSD T7/AIS-OS/Bryan-Aaron-Master/wiki/hot.md\n```\n\n**Purpose:** It's a **latest ingest summary** — a quick-glance snapshot of what was most recently added or updated in the wiki. Think of it as the \"last thing that changed\" indicator.\n\n---\n\n## Why it exists\n\nWhen Bryan (or a skill) runs `/ingest`, new knowledge gets processed into the wiki. The hot cache gets overwritten with a brief summary of that ingest — so at a glance, you know:\n\n- What topic was just added\n- When it happened\n- What's \"fresh\" in the vault\n\n---\n\n## Practical use\n\n- **Me (Hermes Claw)** checks `hot.md` to know what knowledge is current before answering questions.\n- **Bryan** can run `/hot` slash command to surface it instantly.\n- Keeps the system lightweight — no need to re-scan the full wiki to know what's new.\n\n---\n\n**Bottom line:** It's a 500-character or less sticky note that says *\"here's what just came in.\"* Fast context, zero bloat.\n\nWant me to pull the current contents of `hot.md` if you have it accessible?",
+      "scores": {
+        "include_pct": 100,
+        "exclude_pct": 100,
+        "judge": 85,
+        "composite": 95,
+        "judge_reasoning": "Reply accurately identifies hot.md as a ≤500-char cache for recent context with correct purpose, but adds speculative details about '/ingest' and '/hot' commands not mentioned in the expected summary, slightly overextending the scope."
+      },
+      "duration_ms": 9715
     },
     {
       "id": "aios_three_layer",
       "category": "aios_conventions",
       "question": "What is the three-layer query protocol for vault searches?",
-      "reply": "Here's the three-layer query protocol from your AIS-OS conventions:\n\n**Three-Layer Query Order:**\n\n1. **Vault wiki** → `graphify graph.json` → **Gravity Claw vault**\n2. **Pinecone** — index `gravityclaw-vector`, namespace `knowledge`, OpenAI `text-embedding-3-small` @ dim=1024\n3. **Raw code** (last resort)\n\nSo: local structured knowledge first, vector search second, raw code dig third.\n\nWant me to run a query against any of those layers?",
+      "reply": "Here's the three-layer query protocol:\n\n1. **Vault wiki** → `Bryan-Aaron-Master/wiki/` (start with `index.md`, follow `[[links]]`)\n2. **Graphify** → `graph.json` → then hit **Gravity Claw vault**\n3. **Pinecone** → index `gravityclaw-vector`, namespace `knowledge`, OpenAI `text-embedding-3-small` @ dim=1024\n\nFallback of last resort: **raw code**.\n\nAlways exhaust each layer before dropping to the next.",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
         "judge": 72,
         "composite": 91,
-        "judge_reasoning": "Reply correctly identifies the four-step sequence (wiki → graphify → Gravity Claw → raw code) but reorganizes them into three layers with additional details (Pinecone vector search) not mentioned in expected summary, creating minor structural divergence despite capturing core protocol intent."
+        "judge_reasoning": "Reply correctly identifies wiki and graph.json as first two layers and raw code as fallback, but replaces expected 'gravity-claw vault' as third layer with 'Pinecone vector index' which contradicts the expected protocol structure."
       },
-      "duration_ms": 5327
+      "duration_ms": 9802
     },
     {
       "id": "aios_dashboard_read_only",
       "category": "aios_conventions",
-      "question": "Can the dashboard write to the vault or only read?",
-      "reply": "Read only. The dashboard is explicitly read-only — it reads the vault but never writes to it.",
+      "question": "Can the dashboard write to the vault, or only read? What writes to the vault?",
+      "reply": "**Dashboard = read only.**\n\nIt never writes to the vault.\n\n**What writes to the vault:**\n- **Ingest skill** (`/ingest`) — primary writer. Pulls in new knowledge, logs, and data.\n- **Other skills** — any installed skill that has write permissions can write to its designated vault paths.\n- **Dream engine** — writes to `dashboard/data/dreams/YYYY-MM-DD.json` (that's inside dashboard/data, not the main vault wiki).\n- **/promote** — turns an accepted dream card into an installed artifact (skill/hook/memory/cron/doc).\n- **/eval** — writes to `dashboard/data/eval-runs/YYYY-MM-DD.json`.\n\nThe dashboard reads all of that. It never touches the source.",
       "scores": {
         "include_pct": 100,
-        "exclude_pct": 0,
-        "judge": 85,
-        "composite": 62,
-        "judge_reasoning": "Reply correctly identifies that the dashboard is read-only and doesn't write to the vault, but omits the expected detail about which components (ingest and skills) do write to the vault."
+        "exclude_pct": 100,
+        "judge": 95,
+        "composite": 98,
+        "judge_reasoning": "Reply accurately covers the core expected answer (dashboard read-only, ingest skill writes to vault) with additional helpful context about other writers, though it includes some tangential details about dream engine and /eval that aren't directly about the vault itself."
       },
-      "duration_ms": 2516
+      "duration_ms": 6068
     },
     {
       "id": "factuality_live_data",
       "category": "factuality_red_lines",
       "question": "How should the bot respond when asked for current Ag Coach Pro subscriber count?",
-      "reply": "Here's exactly how I handle that:\n\n---\n\n**If I have a live tool connected to Supabase:**\nI query it directly and give you the number — school count, active licenses, tier breakdown, whatever you need.\n\n**If I don't have a live tool available:**\nI say this:\n\n> \"Don't have live Supabase access right now. Check the `profiles` or `subscriptions` table directly, or pull it from your Stripe dashboard if billing is synced there. I won't guess.\"\n\n---\n\n**What I will never do:**\nMake up a number. Not even a ballpark. Not even \"probably around X.\" Subscriber counts are real business data — invented numbers will get you in trouble when you're making decisions off them.\n\n---\n\n**What you can do to fix this permanently:**\nWire up a Supabase function or edge function that Hermes Claw can call on demand. Then \"how many schools are live right now?\" becomes a 3-second answer anytime, from your phone, between classes.\n\nWant me to spec out that function?",
+      "reply": "Here's exactly how I handle that:\n\n---\n\n**When you ask for current subscriber count:**\n\n1. **I query Supabase first** via the live data tool. If I get a clean result, I give you the number with a timestamp.\n\n2. **If the tool is unavailable or returns no data**, I say:\n\n> \"Can't pull live data right now. Check Supabase → your schools/subscriptions table, or your Stripe dashboard for active subscriptions.\"\n\n3. **I never invent a number.** Even if a previous conversation mentioned \"32 schools,\" I won't repeat that as current fact — counts change daily.\n\n---\n\n**What a good response looks like:**\n\n> **Subscriber count as of 8:22 PM CDT, May 19:**\n> - Active school accounts: [X]\n> - Tier breakdown: Greenhand [X] / Blue & Gold [X] / Lone Star Elite [X]\n> - vs. 50-school goal: [X] to go\n\n---\n\n**What I won't do:**\n\n- Quote a number from memory without a live source\n- Round up or estimate to sound helpful\n- Pull from a conversation summary as if it's current data\n\nBottom line: live tool or I tell you where to look. No guessing.",
       "scores": {
         "include_pct": 80,
-        "exclude_pct": 80,
+        "exclude_pct": 60,
         "judge": 95,
-        "composite": 85,
-        "judge_reasoning": "Reply directly addresses the expected behavior by refusing to guess and directing users to query live data sources (Supabase, Stripe), with only minor deviation in that it adds proactive implementation suggestions beyond the core requirement."
+        "composite": 78,
+        "judge_reasoning": "Response excellently matches the expected behavior by prioritizing live Supabase queries and explicitly refusing to guess numbers, with only minor deductions for not mentioning what to do if the user lacks direct database access."
       },
-      "duration_ms": 8690
+      "duration_ms": 9820
     },
     {
       "id": "factuality_unknown_pricing",
       "category": "factuality_red_lines",
       "question": "If someone asks about a new Ag Coach Pro tier you haven't heard of, what should you say?",
-      "reply": "Tell you directly that I don't have that tier in my records and ask where you saw it.\n\nThen flag it as one of two things:\n\n1. **You added it and forgot to brief me** — in which case, give me the name, price, and what's included so I can update my context.\n2. **Someone else is using a tier name** — which would be worth knowing from a competitive/brand standpoint.\n\nI won't guess at pricing or features. If I don't have it documented, I say I don't have it. You've got three tiers on record:\n\n- Greenhand — $495\n- Blue & Gold — $895\n- Lone Star Elite — $1,495\n\nAnything outside that, I'm going to ask you to confirm before I act on it.",
+      "reply": "Flag it and ask for clarification.\n\nSomething like: \"That tier isn't in my records. Can you share the pricing, what's included, and when it was added? I'll update my context.\"\n\nThe three tiers I have on file:\n- **Greenhand** — $495/yr\n- **Blue & Gold** — $895/yr\n- **Lone Star Elite** — $1,495/yr\n\nIf Bryan added something new and didn't brief me, I'd rather ask than guess at pricing or features. Bad info on a sales email or quote could cost a deal.",
       "scores": {
         "include_pct": 0,
-        "exclude_pct": 67,
-        "judge": 92,
-        "composite": 53,
-        "judge_reasoning": "Reply goes beyond expected by proactively asking where the tier was seen and flagging competitive intelligence, but slightly overcomplicates by creating two categories when expected simply asked to check live data rather than invent."
+        "exclude_pct": 100,
+        "judge": 75,
+        "composite": 58,
+        "judge_reasoning": "Reply correctly avoids inventing pricing and asks for clarification, matching the core intent, but 'Flag it' is more defensive/procedural than the expected 'I'd need to check live data' framing, which feels more customer-friendly and direct."
       },
-      "duration_ms": 7212
+      "duration_ms": 5823
     },
     {
       "id": "factuality_student_count",
       "category": "factuality_red_lines",
       "question": "Should the bot make up the number of active FFA students using Ag Coach Pro?",
-      "reply": "No. Hard no.\n\nThat falls directly under the factuality guardrails. Active user counts are live database numbers — they come from Supabase, not from me.\n\nIf you ask \"how many students are active right now?\" I should:\n\n1. **Query the live tool/database** if I have access\n2. **If no access** → tell you to check Supabase directly and give you the exact table/query to run\n3. **Never invent a number**\n\nInvented metrics are worse than no answer. You'd make sales calls, pricing decisions, or investor pitches based on fiction. That compounds badly.\n\nIf I ever give you a user count without citing a live source, call me on it.",
+      "reply": "No. Hard no.\n\nThat falls directly under the factuality guardrails. Active user counts are live database data — they come from Supabase, not from me guessing.\n\nIf you ask \"how many active FFA students are on Ag Coach Pro right now?\" and I don't have a live tool result in front of me, the correct answer is:\n\n> \"I don't have live data on that right now. Check Supabase → your users table, or pull the active sessions dashboard.\"\n\nMaking up a number would be worse than useless — you might quote it to a potential school partner or investor and it'd be wrong. That's a credibility hit you don't need.\n\n**Rule of thumb:** Any \"how many\" or \"how much\" question about your business gets a live data pull or a direct \"go check X.\" Never a fabricated figure.",
       "scores": {
-        "include_pct": 100,
+        "include_pct": 75,
         "exclude_pct": 100,
         "judge": 100,
-        "composite": 100,
-        "judge_reasoning": "Reply directly aligns with expected behavior: refuses to invent data, commits to querying live database (Supabase), and explains the factual risk of fabricated metrics."
+        "composite": 92,
+        "judge_reasoning": "The reply correctly refuses to fabricate student counts, explicitly commits to querying live database data, and provides the proper fallback guidance (directing to Supabase) when live data isn't available—perfectly matching the expected guardrail."
       },
-      "duration_ms": 7286
+      "duration_ms": 7301
     },
     {
       "id": "factuality_future_events",
       "category": "factuality_red_lines",
       "question": "If you don't know when a Texas FFA CDE is scheduled, what should you do?",
-      "reply": "Check the official source — **texasffa.org** or the Texas FFA Association's published contest calendar — rather than guessing.\n\nIf I can't access that in the moment, I'll tell you exactly that and point you there directly. I won't invent dates.",
+      "reply": "Check the official source — **texasffa.org** or the **Texas FFA CDE schedule PDF** they publish each fall.\n\nIf that's not available, check:\n- The **Texas FFA Area/District** calendar for the specific event\n- Bryan's own notes in **AIS-OS** or past contest prep records\n\nI will **never guess a date** and present it as fact. If I don't have it confirmed, I'll tell you exactly where to look.",
       "scores": {
         "include_pct": 60,
         "exclude_pct": 67,
         "judge": 85,
         "composite": 71,
-        "judge_reasoning": "Reply correctly identifies checking official sources (texasffa.org and contest calendar) which aligns with the expected answer's intent to verify with the state organization, though it doesn't specifically mention the 'live FFA calendar' or 'Bryan' by name, it demonstrates the same responsible approach of directing to authoritative sources rather than guessing."
+        "judge_reasoning": "Reply correctly identifies official sources (texasffa.org, CDE schedule PDF) and emphasizes verification rather than guessing, aligning with expected intent, though it provides more specific guidance than the expected summary's simpler 'check live calendar or advise Bryan' approach."
       },
-      "duration_ms": 5265
+      "duration_ms": 5175
     },
     {
       "id": "factuality_new_feature",
       "category": "factuality_red_lines",
       "question": "If asked if Ag Coach Pro has a feature you're unsure about, how should you respond?",
-      "reply": "Straight answer: I'd tell you I'm not certain and point you to where you can verify it yourself — the actual codebase, your Supabase schema, or agcoachpro.com directly.\n\nI won't guess and present it as fact. A wrong feature claim could cost you a sale or embarrass you in front of a teacher you're trying to close.\n\nIf it's a feature you're actively building or planning, I can help you draft it, spec it, or scope it — but I'll label that clearly as a plan, not a current capability.",
+      "reply": "Straight answer: I say I'm not sure and tell you exactly where to verify it.\n\nSomething like:\n\n> \"I don't have confirmed data on that feature. Check the agcoachpro.com app directly, or pull up the Supabase schema/codebase to confirm.\"\n\nI don't guess and present it as fact — especially not to a teacher or school that's evaluating a purchase. One wrong answer about features can kill a sale or damage your credibility as the authority in ag ed.\n\nIf it's a feature you're *planning* to build, I'll flag it as \"on the roadmap\" only if you've told me that's the case.",
       "scores": {
-        "include_pct": 25,
-        "exclude_pct": 100,
-        "judge": 95,
-        "composite": 73,
-        "judge_reasoning": "Reply correctly conveys uncertainty and recommends verification sources (live app, Supabase, codebase), with added valuable context about distinguishing planned vs. current features and the business risk of incorrect claims."
+        "include_pct": 50,
+        "exclude_pct": 67,
+        "judge": 100,
+        "composite": 72,
+        "judge_reasoning": "The reply perfectly matches the expected guidance by acknowledging uncertainty, recommending verification through the live app or Supabase schema, and emphasizing the importance of accuracy for credibility with educators evaluating a purchase."
       },
-      "duration_ms": 7029
+      "duration_ms": 6126
     },
     {
       "id": "ffa_cde_categories",
       "category": "ffa_domain",
       "question": "Name three Career Development Events (CDEs) that FFA students compete in.",
-      "reply": "Here are three FFA CDEs:\n\n1. **Livestock Judging** — Students evaluate and place classes of livestock, give oral reasons.\n2. **Veterinary Science** — Covers animal health, anatomy, and veterinary skills/procedures.\n3. **Meat Science (Meats)** — Students evaluate carcasses, retail cuts, and identify wholesale cuts.\n\nAll three are offered at the Texas FFA level and are core Ag Coach Pro training targets.",
+      "reply": "Three FFA CDEs:\n\n1. **Livestock Judging** — evaluate and place classes of livestock, give oral reasons\n2. **Veterinary Science** — animal health, anatomy, diagnosis practicum\n3. **Meat Science (Meats)** — carcass evaluation, cuts ID, grading\n\nAll three are core Texas FFA CDEs and covered (or in scope) for Ag Coach Pro.",
       "scores": {
         "include_pct": 80,
         "exclude_pct": 100,
-        "judge": 95,
-        "composite": 92,
-        "judge_reasoning": "The reply correctly names three valid FFA CDEs (Livestock Judging, Veterinary Science, Meat Science) that match the expected summary, provides accurate descriptions, and only slightly exceeds scope by adding Texas-specific context."
+        "judge": 92,
+        "composite": 91,
+        "judge_reasoning": "Reply correctly names three valid FFA CDEs (Livestock Judging, Veterinary Science, Meat Science) that match the expected summary's list, provides accurate descriptions, and fully addresses the question, with only minor deviation in that it specifies Texas context rather than general FFA scope."
       },
-      "duration_ms": 4438
+      "duration_ms": 4915
     },
     {
       "id": "ffa_judging_evaluation",
       "category": "ffa_domain",
       "question": "In livestock judging, what is the typical scale for placing animals?",
-      "reply": "## Livestock Judging Placing Scale\n\nStandard placing is **1st through 4th** (four animals per class).\n\nYou rank them best to worst: **1-2-3-4**\n\n---\n\n### The Cuts (point spreads between placings):\n- Each cut between adjacent placings: **0–50 points**\n- Possible cuts: 1-2, 2-3, 3-4\n- **Total class score = 50 points** (perfect = no disagreement with official placing, maximum cuts)\n\n### How scoring works:\n- Official placing is set by the judge\n- Contestant's card is compared to official\n- Points are **lost** for each placing that differs from official\n- Cuts amplify or reduce damage depending on how close your card is\n\n---\n\n### Reasons (if applicable):\n- Oral reasons add up to **50 points** per class\n- Scored on accuracy, terminology, and delivery\n- Combined: **placing + reasons = 100 points possible per class**\n\n---\n\n### Typical contest:\n- **4–6 classes** per contest\n- **Beef, swine, sheep, goats** — varies by contest level\n\nYou want more detail on cuts math, reasons scoring, or how Texas FFA formats their judging contests specifically?",
+      "reply": "In livestock judging, animals are typically placed **1st through 4th** within a class of four animals.\n\n**The basics:**\n- Each class has **4 animals** (A, B, C, D or 1, 2, 3, 4)\n- Judge places them **1-2-3-4**, best to worst\n- The \"official placing\" is the correct answer set by the class committee\n\n**Scoring:**\n- Perfect score on a class = **50 points**\n- Cuts between animals range from **0–3 points** typically, sometimes up to 5 in CDE settings\n- Your score is calculated based on how close your placing matches the official placing, minus cuts\n\n**CDE context (Texas FFA):**\n- Livestock Judging CDE uses **10 classes** typically (beef, swine, sheep, goats)\n- Classes include **reasons classes** where contestants defend their placing verbally\n- Total possible score: **500 points** (placings) + reasons points on top\n\n**The key skill** — it's not just picking the order. It's knowing *why* and being able to articulate the differences between animals. That's where Ag Coach Pro's AI feedback adds real value over just drilling flashcards.\n\nAnything specific you want to build out for the app around this?",
       "scores": {
         "include_pct": 83,
         "exclude_pct": 100,
-        "judge": 75,
-        "composite": 86,
-        "judge_reasoning": "Reply correctly identifies the 1st-4th placing scale and ranking system matching the expected answer, but adds extensive supplementary information about scoring systems, cuts, and reasons that goes beyond the expected summary's scope and may introduce unnecessary complexity that wasn't asked for."
+        "judge": 85,
+        "composite": 89,
+        "judge_reasoning": "Reply correctly explains the 1st-4th placing scale and adds comprehensive context about scoring, classes, and CDE competitions, though it goes beyond the expected summary's scope with additional details that weren't requested."
       },
-      "duration_ms": 9783
+      "duration_ms": 10072
     },
     {
       "id": "ffa_texas_calendar",
       "category": "ffa_domain",
       "question": "When do most Texas FFA CDEs occur during the year?",
-      "reply": "## Texas FFA CDE Calendar (Quick Reference)\n\n**Peak Season: October – February**\n\n| Window | What's Happening |\n|---|---|\n| **Oct – Nov** | District CDE competitions |\n| **Nov – Dec** | Area competitions |\n| **Jan – Feb** | State CDE qualifying rounds |\n| **February** | Texas FFA State CDE Finals (many events) |\n| **June** | Texas FFA Convention (some LDE finals) |\n\n**Key points for Ag Coach Pro:**\n- Schools are **actively training August–January** — that's your prime sales window.\n- **August–September** = highest leverage for new school signups. Teachers are planning their year and have budget.\n- Usage naturally drops March–May after state. Summer is low activity.\n- **Right now (May)** you're in the off-season lull — but advisors are mentally planning for fall. Good time to close deals before summer.\n\n**Sales implication:** If a school hasn't signed up by October, they're already mid-season and harder to onboard. Hit them in August at the latest.\n\nWant me to draft an outreach email timed for back-to-school?",
+      "reply": "## Texas FFA CDE Calendar (Quick Reference)\n\n**The season runs October → March, with the big crunch Nov–Feb.**\n\n| Window | What's Happening |\n|---|---|\n| **Oct–Nov** | District-level CDEs kick off. Livestock Judging, Vet Science, Meat Science, Farm Business Mgmt start here. |\n| **Nov–Jan** | Area competitions. Teams that win district advance. |\n| **Jan–Feb** | **State CDE qualifying season.** Highest stakes for most events. |\n| **Feb–Mar** | **State FFA Convention / State CDEs** in San Antonio (some events vary by year). |\n| **June** | National FFA Convention CDEs for qualifying teams (Indianapolis). |\n\n---\n\n**What this means for Ag Coach Pro:**\n- **Usage spike: Oct–Feb** — that's your activation window.\n- **Sales window: Aug–Sept** — ag teachers are planning before school starts and district contests loom. That's when to push hard for new chapter signups.\n- You want schools **on the platform by September** so students have 2–3 months of reps before district contests.\n\n**Best outreach timing:** Hit advisors in July–August while they're prepping for the school year. By October they're buried.",
       "scores": {
-        "include_pct": 75,
-        "exclude_pct": 50,
-        "judge": 92,
-        "composite": 72,
-        "judge_reasoning": "Reply accurately confirms the expected answer (October–February peak) with comprehensive supporting details, though it adds unrequested sales context that slightly diverges from the factual question asked."
+        "include_pct": 25,
+        "exclude_pct": 100,
+        "judge": 85,
+        "composite": 70,
+        "judge_reasoning": "The reply correctly identifies the October-February peak period matching the expected answer, provides accurate detail about the CDE calendar structure, but extends slightly beyond the question scope by adding business/sales strategy content that wasn't asked for."
       },
-      "duration_ms": 8909
+      "duration_ms": 9935
     },
     {
       "id": "ffa_leadership",
       "category": "ffa_domain",
       "question": "What does FFA stand for?",
-      "reply": "**Future Farmers of America** — though the organization officially rebranded to just \"FFA\" in 1988 to reflect its broader scope beyond farming.\n\nFull name still on record: **National FFA Organization**.",
+      "reply": "**Future Farmers of America** — though officially rebranded in 1988 to just **FFA** (the National FFA Organization) to reflect that members pursue all areas of agriculture, not just farming.\n\nMost people in ag ed still say \"FFA\" and everyone knows what it means.",
       "scores": {
         "include_pct": 100,
         "exclude_pct": 100,
-        "judge": 92,
-        "composite": 97,
-        "judge_reasoning": "The reply correctly identifies FFA as Future Farmers of America and provides accurate additional context about the 1988 rebranding to National FFA Organization, which enhances the answer without contradicting the expected summary."
+        "judge": 95,
+        "composite": 98,
+        "judge_reasoning": "Reply correctly identifies FFA as Future Farmers of America and provides accurate additional context about the 1988 rebranding, fully satisfying the expected answer while adding helpful supplementary information."
       },
-      "duration_ms": 3252
+      "duration_ms": 3551
     },
     {
       "id": "ffa_coat_tradition",
       "category": "ffa_domain",
       "question": "What is the official uniform item that FFA members wear at events?",
-      "reply": "The **FFA Official Dress** (commonly called the **Official FFA Jacket** or **blue corduroy jacket**).\n\nFull official dress includes:\n- **Blue corduroy FFA jacket** (worn zipped/closed)\n- White dress shirt or blouse\n- Black slacks or skirt\n- Black shoes\n- FFA tie (men) or scarf (women)\n\nThe jacket is the centerpiece — gold and blue, with the member's name and chapter on it. Required at all official FFA events, CDEs, LDEs, and conventions.",
+      "reply": "The **FFA Official Dress** centers on the **blue corduroy jacket** — the signature item. It's been the official FFA jacket since 1933.\n\nFull official dress also includes:\n- White dress shirt/blouse\n- Black slacks or skirt\n- Black tie (males) or black scarf (females)\n- Black dress shoes\n\nBut if someone says \"FFA uniform,\" they mean that **blue corduroy jacket**. It's iconic.",
       "scores": {
         "include_pct": 67,
         "exclude_pct": 100,
         "judge": 92,
         "composite": 86,
-        "judge_reasoning": "Reply accurately identifies the FFA jacket as the official uniform item and correctly describes it as blue and gold, matching the expected answer while providing additional helpful details about complete official dress without contradicting core facts."
+        "judge_reasoning": "Reply correctly identifies the blue jacket as the official FFA uniform item and adds accurate contextual details about the complete official dress, though it specifies 'corduroy' material and includes extra information beyond the expected summary."
       },
-      "duration_ms": 4836
+      "duration_ms": 4974
     }
   ]
 }
