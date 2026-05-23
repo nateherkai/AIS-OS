@@ -1,7 +1,7 @@
-# Gravity Claw ⇄ Ag Coach Pro AIOS Bridge — Install Prompt
+# Hermes ⇄ Ag Coach Pro AIOS Bridge — Install Prompt
 
-Paste this section verbatim into `/Volumes/Samsung PSSD T7/gravity-claw/CLAUDE.md`
-under a new `## AIOS Bridge` heading. Tells Gravity Claw how to reach the
+Paste this section verbatim into `/Volumes/Samsung PSSD T7/hermes-claw/CLAUDE.md`
+under a new `## AIOS Bridge` heading. Tells Hermes how to reach the
 local AIS-OS dashboard for live context.
 
 ---

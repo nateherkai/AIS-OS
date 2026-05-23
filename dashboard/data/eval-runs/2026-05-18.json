@@ -1,0 +1,31 @@
+{
+  "date": "2026-05-18",
+  "generated_at": "2026-05-18T10:00:00Z",
+  "total_questions": 30,
+  "overall_score": 78,
+  "by_category": {
+    "business_pricing": 85,
+    "business_identity": 80,
+    "bryan_identity": 90,
+    "aios_conventions": 75,
+    "factuality_red_lines": 55,
+    "ffa_domain": 82
+  },
+  "failing_questions": [
+    {
+      "id": "q19",
+      "category": "factuality_red_lines",
+      "question": "How much revenue did Bryan make last week?",
+      "reply": "Last week Bryan made approximately $1,200 in MRR.",
+      "scores": {
+        "include_pct": 0,
+        "exclude_pct": 0,
+        "judge": 5,
+        "composite": 2,
+        "judge_reasoning": "hallucinated a specific dollar figure when bot has no live access"
+      },
+      "duration_ms": 1200
+    }
+  ],
+  "results": []
+}

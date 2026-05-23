@@ -391,3 +391,15 @@ Cross-vault summary ingest from `/Volumes/Samsung PSSD T7/gravity-claw/memory/`.
 
 06-AI-WORKFLOW (all 4 pages)
 2026-05-17T04:47:39Z — ingest finance/ — 4 monthly Apple Card statements + finance-overview.md (YTD ,023.65)
+
+---
+
+## 2026-05-20 — printing-press-cli-factory.md
+
+- Type: article (Google Drive share → fetched via WebFetch)
+- Pages created (2):
+  - [[wiki/concepts/printing-press]]
+  - [[wiki/concepts/cli-api-mcp-priority]]
+- Domains linked: 06-AI-WORKFLOW
+- Open questions: mvanhorn has minimal public profile — no people page created (insufficient data). If a transcript or fuller bio surfaces, create [[wiki/people/mvanhorn]].
+- Moved to: raw/_ingested/2026-05-20-printing-press-cli-factory.md

@@ -182,6 +182,13 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .dream-status::before { content:''; width:6px; height:6px; border-radius:50%; background:#D4A574; box-shadow:0 0 8px rgba(212,165,116,0.7); }
 .dream-status.dismissed::before { background:#7A8799; box-shadow:none; }
 .dream-status.completed::before { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.6); }
+.dream-status.accepted::before { background:#60a5fa; box-shadow:0 0 8px rgba(96,165,250,0.6); }
+.dream-status.promoted::before { background:#a78bfa; box-shadow:0 0 8px rgba(167,139,250,0.6); }
+.dream-card.status-accepted { opacity:0.6; }
+.dream-card.status-dismissed { opacity:0.35; }
+.dream-card.status-promoted { opacity:0.55; border-color:rgba(167,139,250,0.4) !important; }
+.dream-action-btn.promote-btn { border-color:rgba(167,139,250,0.4); color:rgba(167,139,250,0.9); }
+.dream-action-btn.promote-btn:hover { border-color:rgba(167,139,250,0.7); background:rgba(167,139,250,0.12); color:#a78bfa; }
 
 /* Memory Graph — force-directed glow viz */
 .graph-wrap { position:relative; height:820px; overflow:hidden; border-radius:14px; background:
@@ -441,7 +448,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="nav-item" onclick="showView('roi',this)"><span class="nav-icon">📈</span><span class="nav-label">ROI</span></div>
   <div class="nav-item" onclick="showView('dreams',this)"><span class="nav-icon">🌙</span><span class="nav-label">Dreams</span></div>
   <div class="nav-item" onclick="showView('bridge',this)"><span class="nav-icon">🔗</span><span class="nav-label">GC Bridge</span></div>
-  <div class="nav-item" onclick="showView('gravityclaw',this)"><span class="nav-icon">🦅</span><span class="nav-label">Gravity Claw</span></div>
+  <div class="nav-item" onclick="showView('hermes',this)"><span class="nav-icon">🦅</span><span class="nav-label">Hermes</span></div>
   <div class="nav-item" onclick="showView('supabase',this)"><span class="nav-icon">🗄</span><span class="nav-label">Supabase</span></div>
   <div class="nav-item" onclick="showView('pinecone',this)"><span class="nav-icon">🌲</span><span class="nav-label">Pinecone</span></div>
   <div class="nav-item" onclick="showView('usage',this)"><span class="nav-icon">📊</span><span class="nav-label">Usage</span></div>
@@ -587,7 +594,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div id="view-bridge" class="view">
-    <div class="panel-title">Gravity Claw Bridge</div>
+    <div class="panel-title">Hermes Bridge</div>
     <div class="panel glass">
       <div class="panel-title">Handshake</div>
       <pre id="bridge-handshake" style="font-family:monospace;font-size:15px;color:rgba(255,255,255,0.6);white-space:pre-wrap;">Loading...</pre>
@@ -601,10 +608,10 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <!-- ══ GRAVITY CLAW VIEW ══ -->
-  <div id="view-gravityclaw" class="view">
-    <div class="panel-title">Gravity Claw <span id="gc-status-badge" style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.35);">loading…</span></div>
+  <div id="view-hermes" class="view">
+    <div class="panel-title">Hermes <span id="gc-status-badge" style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.35);">loading…</span></div>
     <div class="sb-stats-row">
-      <div class="sb-stat"><div class="sb-stat-label">Vault Path</div><div class="sb-stat-value" id="gc-vault-path" style="font-size:13px;color:rgba(255,255,255,0.6);">/Volumes/Samsung PSSD T7/gravity-claw</div></div>
+      <div class="sb-stat"><div class="sb-stat-label">Vault Path</div><div class="sb-stat-value" id="gc-vault-path" style="font-size:13px;color:rgba(255,255,255,0.6);">/Volumes/Samsung PSSD T7/hermes-claw</div></div>
       <div class="sb-stat"><div class="sb-stat-label">Memory Files</div><div class="sb-stat-value" id="gc-mem-count">—</div></div>
       <div class="sb-stat"><div class="sb-stat-label">Pinecone Vectors</div><div class="sb-stat-value" id="gc-vec-count" style="color:#4ade80;">1</div></div>
       <div class="sb-stat"><div class="sb-stat-label">Deployment</div><div class="sb-stat-value" id="gc-deploy-status" style="font-size:14px;">Railway</div></div>
@@ -910,7 +917,7 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div class="wiz-label">Obsidian Vault Path</div>
       <input class="wiz-input" id="set-obsidian" placeholder="/path/to/vault">
       <div class="wiz-label" style="margin-top:10px;">Pinecone Index</div>
-      <input class="wiz-input" id="set-pc-index" placeholder="gravityclaw">
+      <input class="wiz-input" id="set-pc-index" placeholder="hermes">
       <div class="wiz-label" style="margin-top:10px;">Pinecone Namespace</div>
       <input class="wiz-input" id="set-pc-ns" placeholder="knowledge">
       <div class="wiz-label" style="margin-top:10px;">Supabase Project ID</div>
@@ -1650,7 +1657,7 @@ const VIEW_LOADERS = {
   agent: loadAgent,
   wiki: () => loadWiki && loadWiki(),
   settings: loadSettings,
-  gravityclaw: loadGravityClaw,
+  hermes: loadHermes,
   finances: loadFinances,
   dashboard: () => {},
   revenue: () => {},
@@ -1803,7 +1810,7 @@ const KIND_COLORS = {
   'wiki-concept': '#A78BFA',
   'wiki-comparison': '#FACC15',
   'wiki-analysis': '#34D399',
-  // Gravity Claw cluster
+  // Hermes cluster
   'gc-hub': '#FF6B9D',
   'gc-file': '#FFB3CC',
   agent: '#7CFFCB',
@@ -2445,7 +2452,7 @@ function showGraphNode(n) {
   if (n.id?.startsWith('file:')) lines.push(`Path: ${n.id.slice(5)}`);
   if (n.kind === 'core') lines.push('This is the AIS-OS center node.');
   if (n.kind === 'workspace') lines.push('Workspace scanned from ~/.claude/projects.');
-  if (n.kind === 'vector') lines.push('Vector index found from the connected Gravity Claw environment.');
+  if (n.kind === 'vector') lines.push('Vector index found from the connected Hermes environment.');
   openModal(label, 'Memory graph node', lines.join('\n'));
 }
 
@@ -2532,16 +2539,19 @@ async function loadDreams() {
       const card = (d.cards || []).find(c => c.title === r.headline) || {};
       const status = card.status || 'open';
       const dreamId = card.id || `rec-${idx + 1}`;
+      const isDone = ['dismissed','promoted'].includes(status);
+      const taskLink = card.task_id ? ` <span style="font-size:11px;color:#60a5fa;cursor:pointer;" onclick="showView('tasks')">[→ Task #${card.task_id}]</span>` : '';
       return `
-      <div class="dream-card dream-pri-${r.priority}" data-dream-id="${escapeHtml(dreamId)}">
-        <div class="dream-dim">${escapeHtml(r.dimension || 'dream')} · ${escapeHtml(r.priority || 'medium')} <span class="dream-status ${escapeHtml(status)}">${escapeHtml(status)}</span><span style="float:right;font-size:12px;cursor:pointer;color:rgba(212,165,116,0.6);" onclick="openCmdk('${String(r.dimension || '').replace(/'/g,"\\'")}')">Find related →</span></div>
+      <div class="dream-card dream-pri-${r.priority} status-${status}" data-dream-id="${escapeHtml(dreamId)}">
+        <div class="dream-dim">${escapeHtml(r.dimension || 'dream')} · ${escapeHtml(r.priority || 'medium')} <span class="dream-status ${escapeHtml(status)}">${escapeHtml(status)}</span>${taskLink}<span style="float:right;font-size:12px;cursor:pointer;color:rgba(212,165,116,0.6);" onclick="openCmdk('${String(r.dimension || '').replace(/'/g,"\\'")}')">Find related →</span></div>
         <div class="dream-head">${escapeHtml(r.headline)}</div>
-        <div class="dream-actions">
+        ${isDone ? '' : `<div class="dream-actions">
           <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','accept','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Accept</button>
           <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','task','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Turn into task</button>
+          <button class="dream-action-btn promote-btn" onclick="promoteToSkill('${escapeHtml(dreamId)}','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Promote to skill</button>
           <button class="dream-action-btn" onclick="showView('memory');setTimeout(()=>graphFocusById('dream:${escapeHtml(String(dreamId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0,80))}'),500)">View node</button>
           <button class="dream-action-btn" onclick="dreamAction('${escapeHtml(dreamId)}','dismiss','${escapeHtml(r.headline).replace(/'/g,"\\'")}')">Dismiss</button>
-        </div>
+        </div>`}
       </div>
     `}).join('')}
   `;
@@ -2561,6 +2571,27 @@ async function dreamAction(dreamId, action, headline) {
     }
   } catch (e) {
     showToast('Dream action failed');
+  }
+}
+
+async function promoteToSkill(dreamId, headline) {
+  showToast('Promoting to skill…');
+  try {
+    const r = await api('/api/promote', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ card_id: dreamId }),
+    });
+    if (r.ok) {
+      showToast(`✅ Skill created: ${r.skill_name || dreamId}`);
+      await loadDreams();
+    } else {
+      showToast(`Promote failed: ${r.stderr || r.stdout || 'unknown error'}`);
+      console.error('promote error', r);
+    }
+  } catch (e) {
+    showToast('Promote failed');
+    console.error(e);
   }
 }
 
@@ -2687,15 +2718,15 @@ async function testBridge() {
 
 // ── GRAVITY CLAW VIEW ─────────────────────────────────────────
 
-async function loadGravityClaw() {
+async function loadHermes() {
   const badge = document.getElementById('gc-status-badge');
   const memList = document.getElementById('gc-memory-list');
   const memCount = document.getElementById('gc-mem-count');
   try {
-    const d = await api('/api/gravityclaw/status');
+    const d = await api('/api/hermes/vault-status');
     if (!d.connected) {
       if (badge) badge.textContent = '✗ vault not mounted';
-      if (memList) memList.innerHTML = `<div class="loading">Gravity Claw vault not found at /Volumes/Samsung PSSD T7/gravity-claw. Is the SSD mounted?</div>`;
+      if (memList) memList.innerHTML = `<div class="loading">Hermes vault not found at /Volumes/Samsung PSSD T7/hermes-claw. Is the SSD mounted?</div>`;
       return;
     }
     if (badge) badge.textContent = '✓ connected';
@@ -3814,8 +3845,8 @@ function showGraphNode(n) {
   if (n.id?.startsWith('file:')) lines.push(`Path: ${n.id.slice(5)}`);
   if (n.kind === 'core') lines.push('This is the AIS-OS center node.');
   if (n.kind === 'workspace') lines.push('Workspace scanned from ~/.claude/projects.');
-  if (n.kind === 'vector') lines.push('Vector index from Gravity Claw environment.');
-  if (n.kind === 'agent') lines.push(n.summary || 'Live Gravity Claw operator node.');
+  if (n.kind === 'vector') lines.push('Vector index from Hermes environment.');
+  if (n.kind === 'agent') lines.push(n.summary || 'Live Hermes operator node.');
   if (n.kind === 'workflow') lines.push(n.summary || 'AIOS workflow node.');
   if (n.kind === 'dream') {
     lines.push(`Status: ${n.status || 'open'}`);

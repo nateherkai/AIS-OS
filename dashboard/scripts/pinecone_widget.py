@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv("/Volumes/Samsung PSSD T7/gravity-claw/.env")
+load_dotenv("/Volumes/Samsung PSSD T7/hermes-claw/.env")
 load_dotenv("/Volumes/Samsung PSSD T7/AIS-OS/.env")
 load_dotenv()
 

@@ -26,6 +26,22 @@ See `EXPANSIONS.md` for what to add as you grow.
 
 ## Knowledge base
 
+### Businesses (multi-avenue routing)
+
+Bryan runs multiple business avenues. Each has its own context file under `context/businesses/`:
+
+| Avenue | File | Status |
+|---|---|---|
+| Ag Coach Pro (primary) | `context/businesses/ag-coach-pro.md` | filled |
+| Aaron Family Livestock | `context/businesses/afl.md` | STUB |
+| AFL Livestock Solutions | `context/businesses/afl-livestock-solutions.md` | STUB |
+| AFL Detailing | `context/businesses/afl-detailing.md` | STUB |
+| Ranch Dad Strength | `context/businesses/ranch-dad-strength.md` | STUB |
+
+**Routing rule:** when a request mentions a business by name OR by a known signal (customer name, product, channel), load that business's context file before answering. If ambiguous, ask which business. Use `business-router` skill once it ships.
+
+### Primary identity
+
 **Who:** Bryan — FFA teacher + founder of Ag Coach Pro. Builds the platform, sells it, supports customers directly. Day job is teaching; real work is the business.
 
 **What:** Ag Coach Pro — AI-powered FFA CDE/LDE training platform (agcoachpro.com). Annual site licenses to Texas FFA chapters. Tiers: Greenhand $495, Blue & Gold $895, Lone Star Elite $1,495.

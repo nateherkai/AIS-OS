@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Nightly eval harness — invoked by launchd at 02:30 local
-cd "/Volumes/Samsung PSSD T7/gravity-claw"
+cd "/Volumes/Samsung PSSD T7/hermes-claw"
 
 # Load .env so ANTHROPIC_API_KEY is set
 if [ -f .env ]; then set -a; . .env; set +a; fi

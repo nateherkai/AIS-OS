@@ -19,8 +19,9 @@ HOME = Path.home()
 BASE = Path(__file__).parent.parent
 DATA = BASE / "data"
 DREAMS = DATA / "dreams"
-GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
-GC_ENV = GC / ".env"
+GC = Path("/Volumes/Samsung PSSD T7/hermes-claw")
+GRAVITY_CLAW = Path("/Volumes/Samsung PSSD T7/gravity-claw")
+HERMES_ENV = GC / ".env"
 
 
 def _attach_mtime(node, path):
@@ -33,10 +34,10 @@ def _attach_mtime(node, path):
 
 
 def _gc_env_keys():
-    if not GC_ENV.exists():
+    if not HERMES_ENV.exists():
         return {}
     out = {}
-    for line in GC_ENV.read_text().splitlines():
+    for line in HERMES_ENV.read_text().splitlines():
         if "=" in line and not line.startswith("#"):
             k, v = line.split("=", 1)
             out[k.strip()] = v.strip().strip('"').strip("'")
@@ -113,7 +114,7 @@ def build():
             nodes.append(s_node)
             edges.append({"source": "aios", "target": sid})
 
-    # Obsidian decisions — Gravity Claw vault under memory/06_Decisions or memory/02_Decisions or anywhere
+    # Obsidian decisions — Hermes vault under memory/06_Decisions or memory/02_Decisions or anywhere
     obsidian = GC / "memory"
     if obsidian.exists():
         decision_files = []
@@ -269,11 +270,11 @@ def build():
             if tgt in wiki_ids and tgt != src:
                 edges.append({"source": src, "target": tgt})
 
-    # ── Gravity Claw cluster ─────────────────────────────────────
+    # ── Hermes cluster ─────────────────────────────────────
     # Hub node connecting GC vault memory files to AIOS
-    gc_hub_id = "gc:gravity-claw"
+    gc_hub_id = "gc:hermes-claw"
     if GC.exists():
-        gc_hub_node = {"id": gc_hub_id, "label": "Gravity Claw", "kind": "gc-hub", "size": 12}
+        gc_hub_node = {"id": gc_hub_id, "label": "Hermes", "kind": "gc-hub", "size": 12}
         _attach_mtime(gc_hub_node, GC)
         nodes.append(gc_hub_node)
         edges.append({"source": "aios", "target": gc_hub_id})
@@ -298,8 +299,14 @@ def build():
                 existing_ids.add(gfid)
 
         # Walk all GC memory sub-folders for additional files (cap 20)
+        # Memory lives in gravity-claw, not hermes-claw
+        gc_memory_dir = GRAVITY_CLAW / "memory"
         gc_extra_count = 0
-        for sub in sorted((GC / "memory").iterdir()):
+        if not gc_memory_dir.exists():
+            gc_memory_dir = GC / "memory"  # fallback
+        if not gc_memory_dir.exists():
+            gc_memory_dir = None
+        for sub in sorted(gc_memory_dir.iterdir()) if gc_memory_dir else []:
             if not sub.is_dir() or gc_extra_count >= 20:
                 break
             for gf in sorted(sub.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)[:3]:
@@ -317,7 +324,7 @@ def build():
 
     # ── Living AIOS overlay: GC operator, dreams, approvals, workflows ──
     # These nodes make the graph the operating surface, not just a memory map.
-    operator_id = "agent:gravity-claw-operator"
+    operator_id = "agent:hermes-claw-operator"
     if operator_id not in existing_ids:
         nodes.append({
             "id": operator_id,
@@ -325,7 +332,7 @@ def build():
             "kind": "agent",
             "size": 18,
             "status": "connected" if GC.exists() else "offline",
-            "summary": "Gravity Claw's live operator node: reads memory, acts on dreams, and waits on approval gates.",
+            "summary": "Hermes's live operator node: reads memory, acts on dreams, and waits on approval gates.",
         })
         edges.append({"source": "aios", "target": operator_id})
         if gc_hub_id in existing_ids:

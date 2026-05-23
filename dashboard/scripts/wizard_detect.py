@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────
-GRAVITY_CLAW_ENV = Path("/Volumes/Samsung PSSD T7/gravity-claw/.env")
+HERMES_ENV = Path("/Volumes/Samsung PSSD T7/hermes-claw/.env")
 AIOS_ENV = Path("/Volumes/Samsung PSSD T7/AIS-OS/.env")
 ZSHRC = Path.home() / ".zshrc"
 ZSHENV = Path.home() / ".zshenv"
@@ -54,15 +54,25 @@ def _read_env_value(path: Path, key: str) -> str | None:
 
 
 def _which(cmd: str) -> tuple[bool, str]:
-    """Return (found, path) for a command."""
+    """Return (found, path) for a command. Also checks ~/.local/bin which shutil.which misses."""
     path = shutil.which(cmd)
-    return (True, path) if path else (False, "")
+    if path:
+        return (True, path)
+    # Check common user-local install paths not always in PATH
+    for extra in [
+        Path.home() / ".local/bin" / cmd,
+        Path.home() / ".npm-global/bin" / cmd,
+        Path("/usr/local/bin") / cmd,
+    ]:
+        if extra.exists():
+            return (True, str(extra))
+    return (False, "")
 
 
 def _all_env_keys() -> dict:
     """Merge key presence from all env sources."""
     keys = {}
-    for f in [GRAVITY_CLAW_ENV, AIOS_ENV, ZSHRC, ZSHENV]:
+    for f in [HERMES_ENV, AIOS_ENV, ZSHRC, ZSHENV]:
         keys.update(_read_env_file(f))
     # Also check os.environ (already-loaded vars)
     for k in os.environ:
@@ -134,7 +144,7 @@ def _detect_storage() -> list:
     paths = [
         (bryan_master, "Bryan-Aaron-Master vault"),
         (str(Path.home() / ".claude"), "Claude config"),
-        ("/Volumes/Samsung PSSD T7/gravity-claw", "Gravity Claw"),
+        ("/Volumes/Samsung PSSD T7/hermes-claw", "Hermes"),
         ("/Volumes/Samsung PSSD T7/ag-coach-app", "Ag Coach App"),
     ]
     result = []
@@ -147,10 +157,10 @@ def _detect_storage() -> list:
 def _detect_memory(env_keys: dict) -> dict:
     # Pinecone index name (not secret)
     index_name = (
-        _read_env_value(GRAVITY_CLAW_ENV, "PINECONE_INDEX_NAME")
+        _read_env_value(HERMES_ENV, "PINECONE_INDEX_NAME")
         or _read_env_value(AIOS_ENV, "PINECONE_INDEX_NAME")
         or os.environ.get("PINECONE_INDEX_NAME")
-        or "gravityclaw"
+        or "hermes"
     )
 
     # Supabase project_id — parse from URL (not the key itself)

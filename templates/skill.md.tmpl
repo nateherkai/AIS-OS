@@ -1,0 +1,39 @@
+---
+name: {{name}}
+description: {{description}} Triggers on /{{name}}, "{{trigger_phrase}}".
+---
+
+# {{title}}
+
+**Auto-generated from dream card `{{card_id}}` ({{dim}}) on {{generated_at}}.**
+
+## Why this exists
+
+{{insight}}
+
+## Action
+
+{{action}}
+
+## Implementation
+
+> This skill was scaffolded by `scripts/promote.py` from a dream-engine recommendation. The body below is a starting point — edit to match the actual workflow before relying on it.
+
+1. **Trigger phrase:** `/{{name}}` or "{{trigger_phrase}}".
+2. **Inputs:** [TODO — what does this skill need? File paths, user args, env vars?]
+3. **Steps:** [TODO — list the ordered actions the skill performs.]
+4. **Output:** [TODO — what artifact does this produce? Where does it write?]
+5. **Kill switch:** [TODO — how does Bryan stop it cleanly?]
+
+## Verification
+
+- [ ] Run `/{{name}}` in a fresh Claude Code session
+- [ ] Confirm trigger phrase resolves
+- [ ] Output matches expected artifact
+
+## Provenance
+
+- Dream date: {{dream_date}}
+- Card id: {{card_id}}
+- Dimension: {{dim}}
+- Estimated value: {{estimated_value_minutes}} min

@@ -44,13 +44,25 @@ def _build_cards(top_recs: list) -> list:
     """Project top recommendations into the dashboard's expected `cards` schema."""
     cards = []
     for i, r in enumerate(top_recs):
+        dim = r.get("dimension", "unknown")
+        headline = r.get("headline", "")
+        skill_trigger = r.get("skill_trigger", "")
+        # For repeated-task cards, use the trigger phrase as the title so promote.py
+        # generates a meaningful skill name instead of a hash slug.
+        if dim == "repeated-task" and skill_trigger:
+            title = skill_trigger[:80]
+            action = f'Create skill for: "{skill_trigger[:50]}"'
+        else:
+            title = headline[:80]
+            action = ("Promote to skill or memory" if r.get("priority") == "high"
+                      else "Review and decide")
         cards.append({
             "id": f"d{i+1}",
-            "dim": r.get("dimension", "unknown"),
-            "title": (r.get("headline") or "")[:80],
-            "insight": r.get("headline", ""),
-            "action": ("Promote to skill or memory" if r.get("priority") == "high"
-                       else "Review and decide"),
+            "dim": dim,
+            "title": title,
+            "insight": headline,
+            "skill_trigger": skill_trigger,
+            "action": action,
             "estimated_value_minutes": _redact_priority_minutes(r.get("priority", "low")),
             "status": "open",
         })
@@ -74,11 +86,11 @@ def _generate_card_images(cards: list, date: str) -> list:
         return cards
     api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
-        # Try loading from gravity-claw .env
-        env_path = Path.home() / "Volumes" / "Samsung PSSD T7" / "gravity-claw" / ".env"
+        # Try loading from hermes-claw .env
+        env_path = Path.home() / "Volumes" / "Samsung PSSD T7" / "hermes-claw" / ".env"
         # Also try the mounted path directly
         for candidate in [
-            Path("/Volumes/Samsung PSSD T7/gravity-claw/.env"),
+            Path("/Volumes/Samsung PSSD T7/hermes-claw/.env"),
             Path.home() / ".env",
         ]:
             if candidate.exists():
@@ -269,10 +281,9 @@ def analyze() -> dict:
     # Dimension 1: Repeated manual tasks — user typed similar request 3+ times
     norm = lambda s: re.sub(r"\s+", " ", s.lower().strip())[:120]
     user_counter = Counter(norm(t) for t in user_texts if len(t) > 20)
-    # Store hashes only — never raw user text. Keep a short non-identifying snippet
-    # of 30 chars (truncated and lowercased) for headlines.
+    # Keep 60-char snippet for readable headlines. Hash for dedup key only.
     repeated = [
-        {"prompt_hash": _redact_prompt(k), "snippet": k[:30], "count": v}
+        {"prompt_hash": _redact_prompt(k), "snippet": k[:60], "count": v}
         for k, v in user_counter.most_common(5) if v >= 3
     ]
 
@@ -313,7 +324,7 @@ def analyze() -> dict:
     friction = friction[:3]
 
     # Dimension 8: Knowledge silos — queries about Pinecone/Supabase data without using the tools
-    silo_terms = ("pinecone", "supabase", "gravity claw", "obsidian")
+    silo_terms = ("pinecone", "supabase", "Hermes", "obsidian")
     silos = []
     for t in user_texts:
         tl = t.lower()
@@ -327,8 +338,10 @@ def analyze() -> dict:
     # Rank recommendations
     recs = []
     for r in repeated:
+        snippet = r["snippet"].rstrip(".,; ")
         recs.append({"dimension": "repeated-task", "priority": "high",
-                     "headline": f'Saw similar prompt {r["count"]}x ({r["prompt_hash"]}) — promote to skill',
+                     "headline": f'You said "{snippet}…" {r["count"]}x — create a skill',
+                     "skill_trigger": snippet,
                      "detail": _sanitize_detail(r)})
     for s in slow_sessions:
         recs.append({"dimension": "slow-workflow", "priority": "medium",

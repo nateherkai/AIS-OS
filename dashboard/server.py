@@ -31,7 +31,7 @@ from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
 from pricing import tier_monthly_usd, TIER_MONTHLY_DEFAULT, is_recognized_tier
 import bridge as bridge_mod
-import notify_gc
+import notify_hermes
 try:
     import gmail_client
 except ImportError:
@@ -527,7 +527,7 @@ def api_dreams_schedule_apply(body: CronApply):
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
-# ── Bridge (Gravity Claw two-way) ─────────────────────────────
+# ── Bridge (Hermes two-way) ─────────────────────────────
 
 class BridgeQuery(BaseModel):
     q: str | None = None
@@ -536,6 +536,9 @@ class BridgeQuery(BaseModel):
 class BridgePush(BaseModel):
     message: str
     event_id: str | None = None
+
+class NotebookLMRun(BaseModel):
+    args: list[str]
 
 @app.get("/api/bridge/handshake")
 def api_bridge_handshake():
@@ -555,14 +558,43 @@ async def api_bridge_push(req: Request, body: BridgePush):
     token = req.headers.get("x-bridge-token", "")
     if not expected or token != expected:
         raise HTTPException(401, "invalid X-Bridge-Token")
-    return notify_gc.post(body.message, body.event_id)
+    return notify_hermes.post(body.message, body.event_id)
 
 @app.post("/api/bridge/local-test")
 async def api_bridge_local_test(req: Request):
     """Loopback-only smoke test — sends a Telegram message via GC bot."""
     if req.client.host not in ("127.0.0.1", "localhost", "::1"):
         raise HTTPException(403, "loopback only")
-    return notify_gc.post(f"✅ AIOS bridge online — UI test {datetime.now().strftime('%H:%M:%S')}")
+    return notify_hermes.post(f"✅ AIOS bridge online — UI test {datetime.now().strftime('%H:%M:%S')}")
+
+# ── NotebookLM Bridge ─────────────────────────────────────────
+
+_NLM_BLOCKED = {"delete"}
+_NLM_BIN = Path.home() / "bin" / "notebooklm"
+
+@app.post("/api/bridge/notebooklm/run")
+async def api_bridge_notebooklm_run(req: Request, body: NotebookLMRun):
+    expected = os.environ.get("BRIDGE_TOKEN", "")
+    token = req.headers.get("x-bridge-token", "")
+    if not expected or token != expected:
+        raise HTTPException(401, "invalid X-Bridge-Token")
+    if not body.args:
+        raise HTTPException(400, "args required")
+    subcommand = body.args[0]
+    if subcommand in _NLM_BLOCKED:
+        raise HTTPException(403, f"'{subcommand}' blocked — run locally")
+    nlm = str(_NLM_BIN) if _NLM_BIN.exists() else "notebooklm"
+    result = subprocess.run(
+        [nlm, *body.args],
+        capture_output=True, text=True, timeout=120,
+        env={**os.environ, "HOME": str(Path.home())},
+    )
+    return {
+        "ok": result.returncode == 0,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "returncode": result.returncode,
+    }
 
 # ── Gmail Inbox ──────────────────────────────────────────────
 
@@ -664,14 +696,14 @@ def api_supabase_table(name: str, limit: int = 20):
 def api_supabase_advisors():
     return {"advisors": sb_advisors()}
 
-# ── Gravity Claw ─────────────────────────────────────────────
+# ── Hermes ─────────────────────────────────────────────
 
-@app.get("/api/gravityclaw/status")
+@app.get("/api/hermes/vault-status")
 def api_gc_status():
-    """Return GravityClaw vault connection status and recent memory files."""
+    """Return Hermes vault connection status and recent memory files."""
     from pathlib import Path
     import os
-    GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
+    GC = Path("/Volumes/Samsung PSSD T7/hermes-claw")
     if not GC.exists():
         return {"connected": False, "error": "Vault not mounted"}
     mem = GC / "memory"
@@ -817,7 +849,7 @@ def api_search_index():
             ("wiki", "Wiki Browser", "Browse and search vault wiki pages"),
             ("roi", "ROI", "AI return on investment"),
             ("dreams", "Dreams", "Dream machine recommendations"),
-            ("bridge", "GC Bridge", "Gravity Claw bridge"),
+            ("bridge", "GC Bridge", "Hermes bridge"),
             ("wizard", "Setup Wizard", "AIOS configuration wizard"),
             ("supabase", "Supabase", "Database tables and status"),
             ("pinecone", "Pinecone", "Vector memory search"),
@@ -904,6 +936,134 @@ def api_vault_embed_state():
     files = s.get("files", {})
     total_chunks = sum(f.get("chunks", 0) for f in files.values())
     return {"files_embedded": len(files), "total_chunks": total_chunks, "last_files": list(files.keys())[-10:]}
+
+
+# ── AIS-OS L7 extensions: Hermes + revenue + promote + businesses ─────
+
+@app.get("/api/revenue")
+def api_revenue():
+    """Latest revenue snapshot written by scripts/revenue_snapshot.py."""
+    path = DATA / "revenue.json"
+    if not path.exists():
+        return {"stale": True, "error": "no snapshot yet — run scripts/revenue_snapshot.py"}
+    return json.loads(path.read_text())
+
+@app.get("/api/hermes/status")
+def api_hermes_status():
+    """Latest Hermes status snapshot written by the agent-control skill."""
+    path = DATA / "hermes_status.json"
+    if not path.exists():
+        return {"state": "UNKNOWN", "error": "no snapshot yet — run /agent status"}
+    return json.loads(path.read_text())
+
+@app.get("/api/hermes/pantheon")
+def api_hermes_pantheon():
+    """Read Pantheon persona files from hermes-claw and return agent list."""
+    import re
+    hermes_root = Path("/Volumes/Samsung PSSD T7/hermes-claw")
+    personas_dir = hermes_root / "hermes" / "personas"
+    agents = []
+    if not personas_dir.exists():
+        return {"agents": [], "error": f"personas dir not found: {personas_dir}"}
+    for p in sorted(personas_dir.glob("*.md")):
+        if p.name.startswith("_"):
+            continue
+        text = p.read_text()
+        # Parse YAML frontmatter
+        meta = {"name": p.stem.title(), "model": "unknown", "role": "agent", "color": "#8E8E93"}
+        fm_match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+        if fm_match:
+            for line in fm_match.group(1).splitlines():
+                if ":" in line:
+                    k, _, v = line.partition(":")
+                    meta[k.strip()] = v.strip().strip('"').strip("'")
+        agents.append({
+            "id": p.stem,
+            "name": meta.get("name", p.stem.title()),
+            "model": meta.get("model", "unknown"),
+            "role": meta.get("role", "agent"),
+            "color": meta.get("color", "#8E8E93"),
+            "state": "standing by",
+        })
+    return {"agents": agents, "count": len(agents)}
+
+class PromoteRequest(BaseModel):
+    card_id: str
+    skill_name: str | None = None
+    kind: str | None = None
+    force: bool = False
+    date: str | None = None
+
+@app.post("/api/promote")
+def api_promote(body: PromoteRequest):
+    """Run the dream→skill promote pipeline for a card id."""
+    import subprocess, json as _json
+    cmd = ["python3", "-m", "scripts.promote", body.card_id]
+    if body.skill_name:
+        cmd += ["--skill-name", body.skill_name]
+    if body.date:
+        cmd += ["--date", body.date]
+    res = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=120)
+    result_json = {}
+    try:
+        result_json = _json.loads(res.stdout)
+    except Exception:
+        pass
+    return {"ok": res.returncode == 0, "exit_code": res.returncode,
+            "stdout": res.stdout, "stderr": res.stderr[-1000:], **result_json}
+
+@app.get("/api/promote/log")
+def api_promote_log(limit: int = 20):
+    """Tail of the promote log. Supports both JSON-array format (promote.py) and JSONL."""
+    path = DATA / "promote.log"
+    if not path.exists():
+        return {"entries": []}
+    raw = path.read_text().strip()
+    if not raw:
+        return {"entries": []}
+    # Try JSON array first (promote.py writes this format)
+    try:
+        entries = json.loads(raw)
+        if isinstance(entries, list):
+            return {"entries": entries[-limit:]}
+    except json.JSONDecodeError:
+        pass
+    # Fallback: JSONL (one JSON object per line)
+    entries = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return {"entries": entries[-limit:]}
+
+@app.get("/api/businesses")
+def api_businesses():
+    """List business avenues with status (filled vs stub)."""
+    biz_dir = ROOT / "context" / "businesses"
+    if not biz_dir.exists():
+        return {"items": []}
+    items = []
+    for path in sorted(biz_dir.glob("*.md")):
+        text = path.read_text()
+        is_stub = "STUB" in text[:200]
+        items.append({
+            "slug": path.stem,
+            "filled": not is_stub,
+            "path": str(path.relative_to(ROOT)),
+        })
+    return {"items": items}
+
+@app.get("/hermes", response_class=HTMLResponse)
+def hermes_panel():
+    """Standalone Hermes + dream-promote control panel."""
+    html_path = BASE / "hermes-panel.html"
+    if html_path.exists():
+        return html_path.read_text()
+    return "<h1>hermes-panel.html missing</h1>"
 
 
 # ── Entry point ───────────────────────────────────────────────

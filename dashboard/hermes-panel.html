@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bryan OS — Hermes Control</title>
+<style>
+:root {
+  --bg:       #000000;
+  --bg2:      #0a0a0f;
+  --glass:    rgba(255,255,255,0.055);
+  --glass-b:  rgba(255,255,255,0.10);
+  --border:   rgba(255,255,255,0.09);
+  --border-b: rgba(255,255,255,0.18);
+  --text:     #ffffff;
+  --text2:    rgba(255,255,255,0.65);
+  --text3:    rgba(255,255,255,0.32);
+  --blue:     #0A84FF;
+  --green:    #30D158;
+  --yellow:   #FFD60A;
+  --red:      #FF453A;
+  --purple:   #BF5AF2;
+  --cyan:     #32ADE6;
+  --maroon:   #A00000;
+  --gold:     #D4A574;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  min-height: 100vh;
+}
+/* ── Glass panels ─────────────────────────────────────────── */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border-radius: 14px;
+}
+.glass:hover { border-color: var(--border-b); }
+/* ── Layout ───────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px; border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 50;
+}
+.header-left { display:flex; align-items:center; gap:12px; }
+.logo { width:28px; height:28px; background:linear-gradient(135deg,var(--maroon),#cc0000); border-radius:7px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; color:#fff; }
+.header-title { font-size:15px; font-weight:600; color:var(--text); letter-spacing:-0.2px; }
+.header-sub { font-size:12px; color:var(--text3); }
+.ws-indicator { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text3); }
+.ws-dot { width:7px; height:7px; border-radius:50%; background:var(--red); transition:background 0.3s; }
+.ws-dot.live { background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.5); }
+.ws-dot.connecting { background:var(--yellow); }
+.header-actions { display:flex; gap:8px; }
+.btn { padding:6px 12px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--glass); color:var(--text2); transition:all 0.15s; }
+.btn:hover { background:var(--glass-b); color:var(--text); }
+.btn.primary { background:rgba(10,132,255,0.2); border-color:rgba(10,132,255,0.4); color:var(--blue); }
+.btn.primary:hover { background:rgba(10,132,255,0.3); }
+.btn.danger { background:rgba(255,69,58,0.15); border-color:rgba(255,69,58,0.35); color:var(--red); }
+.btn.success { background:rgba(48,209,88,0.15); border-color:rgba(48,209,88,0.35); color:var(--green); }
+/* ── Tabs ─────────────────────────────────────────────────── */
+.tabs { display:flex; gap:2px; padding:0 24px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.4); }
+.tab { padding:11px 16px; font-size:13px; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; user-select:none; }
+.tab:hover { color:var(--text2); }
+.tab.active { color:var(--text); border-bottom-color:var(--blue); }
+/* ── Main grid ────────────────────────────────────────────── */
+.content { padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+.page { display:none; }
+.page.active { display:flex; flex-direction:column; gap:16px; }
+.row { display:grid; gap:14px; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-2-1 { grid-template-columns: 2fr 1fr; }
+.panel { padding:18px; }
+.panel-title {
+  font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--text3); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title .accent { color:var(--blue); font-size:11px; font-weight:500; text-transform:none; letter-spacing:0; }
+/* ── Orb ──────────────────────────────────────────────────── */
+.orb-wrap { text-align:center; padding:8px 0 14px; }
+.orb {
+  width:72px; height:72px; border-radius:50%; margin:0 auto 10px;
+  background: radial-gradient(circle at 32% 32%, #0A84FF, #003f7f);
+  box-shadow: 0 0 28px rgba(10,132,255,0.35);
+  animation: pulse-orb 3s ease-in-out infinite;
+}
+.orb.thinking { background:radial-gradient(circle at 32% 32%,#FFD60A,#7a6000); box-shadow:0 0 28px rgba(255,214,10,0.35); animation-duration:1.2s; }
+.orb.acting   { background:radial-gradient(circle at 32% 32%,#30D158,#0f6028); box-shadow:0 0 28px rgba(48,209,88,0.45); animation-duration:0.7s; }
+.orb.down     { background:radial-gradient(circle at 32% 32%,#FF453A,#7a1a16); box-shadow:none; animation:none; opacity:0.55; }
+@keyframes pulse-orb { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+.orb-state { font-size:12px; color:var(--text3); }
+.orb-persona { font-size:13px; font-weight:600; color:var(--blue); margin-top:3px; }
+/* ── KPI chips ────────────────────────────────────────────── */
+.kpi-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.kpi { text-align:center; padding:14px 10px; }
+.kpi-val { font-size:28px; font-weight:700; line-height:1; }
+.kpi-lbl { font-size:11px; color:var(--text3); margin-top:4px; text-transform:uppercase; letter-spacing:0.06em; }
+.progress { height:4px; border-radius:2px; background:rgba(255,255,255,0.06); margin:10px 0 4px; }
+.progress-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--maroon),#cc0000); transition:width 0.7s; }
+.progress-fill.good { background:linear-gradient(90deg,var(--green),#1a7a30); }
+/* ── Pipeline list ────────────────────────────────────────── */
+.list-item { display:flex; align-items:center; gap:9px; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+.list-item:last-child { border:none; }
+.dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.dot-green { background:var(--green); box-shadow:0 0 5px rgba(48,209,88,0.4); }
+.dot-yellow { background:var(--yellow); }
+.dot-red { background:var(--red); }
+.list-name { flex:1; color:var(--text2); }
+.badge { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:500; }
+.badge-blue { background:rgba(10,132,255,0.15); color:var(--blue); }
+.badge-yellow { background:rgba(255,214,10,0.12); color:var(--yellow); }
+.badge-red { background:rgba(255,69,58,0.12); color:var(--red); }
+.badge-green { background:rgba(48,209,88,0.12); color:var(--green); }
+/* ── Event feed ───────────────────────────────────────────── */
+.feed { max-height:200px; overflow-y:auto; }
+.feed::-webkit-scrollbar { width:3px; }
+.feed::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.feed-item { display:flex; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:11px; }
+.feed-ts { color:var(--text3); flex-shrink:0; font-variant-numeric:tabular-nums; }
+.feed-type { color:var(--blue); flex-shrink:0; min-width:70px; }
+.feed-msg { color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* ── Dream cards ──────────────────────────────────────────── */
+.dream-card { padding:14px; border-radius:10px; margin-bottom:10px; border:1px solid var(--border); background:rgba(255,255,255,0.03); transition:all 0.15s; }
+.dream-card:hover { border-color:rgba(10,132,255,0.3); background:rgba(10,132,255,0.04); }
+.dream-card.promoted { border-color:rgba(48,209,88,0.25); background:rgba(48,209,88,0.04); }
+.dream-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.dream-title { font-size:13px; font-weight:600; color:var(--text); line-height:1.4; }
+.dream-dim { font-size:10px; padding:2px 7px; border-radius:6px; background:rgba(191,90,242,0.15); color:var(--purple); font-weight:500; flex-shrink:0; }
+.dream-action { font-size:12px; color:var(--text3); margin-top:4px; }
+.dream-meta { display:flex; align-items:center; gap:8px; margin-top:10px; }
+.dream-status { font-size:11px; }
+/* ── Mind map canvas ──────────────────────────────────────── */
+#mindmap-canvas { width:100%; height:360px; border-radius:10px; background:rgba(0,0,0,0.3); cursor:grab; display:block; }
+#mindmap-canvas:active { cursor:grabbing; }
+.mindmap-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:11px; color:var(--text3); }
+.legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; }
+/* ── Vault ────────────────────────────────────────────────── */
+.vault-layout { display:grid; grid-template-columns:180px 1fr; gap:0; height:340px; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.vault-tree { border-right:1px solid var(--border); overflow-y:auto; padding:8px 0; background:rgba(0,0,0,0.2); }
+.vault-tree::-webkit-scrollbar { width:3px; }
+.vault-node { padding:5px 14px; font-size:12px; color:var(--text3); cursor:pointer; user-select:none; transition:all 0.1s; }
+.vault-node:hover { background:rgba(255,255,255,0.04); color:var(--text2); }
+.vault-node.active { background:rgba(10,132,255,0.12); color:var(--blue); }
+.vault-node.dir { color:var(--text2); font-weight:500; }
+.vault-content { padding:16px; overflow-y:auto; font-size:12px; line-height:1.7; color:var(--text2); }
+.vault-content::-webkit-scrollbar { width:3px; }
+.vault-content h1,.vault-content h2,.vault-content h3 { color:var(--text); margin:12px 0 6px; }
+.vault-content h1 { font-size:15px; }
+.vault-content h2 { font-size:13px; }
+.vault-content p { margin-bottom:8px; }
+.vault-content code { background:rgba(255,255,255,0.07); padding:1px 5px; border-radius:3px; font-size:11px; }
+.vault-content a { color:var(--blue); text-decoration:none; }
+.vault-search { padding:8px 10px; border-bottom:1px solid var(--border); display:flex; gap:6px; }
+.vault-search input { flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; padding:5px 9px; outline:none; }
+.vault-search input:focus { border-color:rgba(10,132,255,0.4); }
+/* ── Promote modal ────────────────────────────────────────── */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(10px); z-index:100; align-items:center; justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:#0d0d18; border:1px solid var(--border-b); border-radius:18px; padding:28px; width:460px; max-width:90vw; }
+.modal h2 { font-size:16px; font-weight:600; margin-bottom:4px; }
+.modal-sub { font-size:12px; color:var(--text3); margin-bottom:20px; }
+.modal label { font-size:12px; color:var(--text3); display:block; margin-bottom:5px; }
+.modal input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:8px 12px; outline:none; margin-bottom:14px; }
+.modal input:focus { border-color:rgba(10,132,255,0.45); }
+.modal-preview { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:12px; font-size:11px; color:var(--text3); font-family:monospace; max-height:100px; overflow-y:auto; margin-bottom:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+.modal-result { margin-top:14px; padding:12px; border-radius:8px; font-size:12px; display:none; }
+.modal-result.ok { background:rgba(48,209,88,0.1); border:1px solid rgba(48,209,88,0.25); color:var(--green); display:block; }
+.modal-result.err { background:rgba(255,69,58,0.1); border:1px solid rgba(255,69,58,0.25); color:var(--red); display:block; }
+/* ── Toast ────────────────────────────────────────────────── */
+.toast { position:fixed; bottom:24px; right:24px; background:rgba(10,132,255,0.18); border:1px solid rgba(10,132,255,0.35); color:var(--blue); border-radius:10px; padding:10px 16px; font-size:12px; z-index:200; opacity:0; transform:translateY(8px); transition:all 0.2s; pointer-events:none; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.ok { background:rgba(48,209,88,0.15); border-color:rgba(48,209,88,0.3); color:var(--green); }
+.toast.err { background:rgba(255,69,58,0.15); border-color:rgba(255,69,58,0.3); color:var(--red); }
+pre { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:12px; font-size:11px; overflow:auto; max-height:180px; color:var(--text2); }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+td,th { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); text-align:left; }
+th { color:var(--text3); font-weight:500; }
+.muted { color:var(--text3); }
+.text-green { color:var(--green); }
+.text-red { color:var(--red); }
+.text-yellow { color:var(--yellow); }
+.text-blue { color:var(--blue); }
+.mono { font-family:monospace; font-size:11px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">B</div>
+    <div>
+      <div class="header-title">Bryan OS — Hermes Control</div>
+      <div class="header-sub">ACP AIOS v2 · <a href="/" style="color:var(--blue);text-decoration:none">← dashboard</a></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="ws-indicator">
+      <div class="ws-dot connecting" id="ws-dot"></div>
+      <span id="ws-label">Connecting…</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="loadAll()">↻ Refresh</button>
+      <button class="btn primary" onclick="sendTelegramTest()">✈ Telegram Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview',this)">Overview</div>
+  <div class="tab" onclick="switchTab('dreams',this)">Dreams</div>
+  <div class="tab" onclick="switchTab('mindmap',this)">Mind Map</div>
+  <div class="tab" onclick="switchTab('vault',this)">Vault</div>
+  <div class="tab" onclick="switchTab('bridge',this)">Bridge</div>
+</div>
+
+<div class="content">
+
+  <!-- ══ TAB: OVERVIEW ══════════════════════════════════════ -->
+  <div class="page active" id="tab-overview">
+    <div class="row cols-3">
+
+      <!-- Hermes Agent -->
+      <div class="glass panel">
+        <div class="panel-title">Hermes Agent <span class="accent" id="hermes-uptime"></span></div>
+        <div class="orb-wrap">
+          <div class="orb" id="orb"></div>
+          <div class="orb-state" id="orb-state">Checking…</div>
+          <div class="orb-persona" id="orb-persona"></div>
+        </div>
+        <div id="hermes-details" class="muted" style="font-size:12px;text-align:center"></div>
+      </div>
+
+      <!-- ACP Pipeline -->
+      <div class="glass panel">
+        <div class="panel-title">ACP Pipeline <span class="accent">Aug 2026</span></div>
+        <div class="kpi-row">
+          <div class="kpi glass">
+            <div class="kpi-val text-green" id="kpi-paid">—</div>
+            <div class="kpi-lbl">Paid</div>
+          </div>
+          <div class="kpi glass">
+            <div class="kpi-val text-yellow" id="kpi-trial">—</div>
+            <div class="kpi-lbl">Trial</div>
+          </div>
+          <div class="kpi glass">
+            <div class="kpi-val text-red" id="kpi-cold">—</div>
+            <div class="kpi-lbl">Cold</div>
+          </div>
+        </div>
+        <div class="progress" style="margin-top:14px">
+          <div class="progress-fill" id="pipeline-bar" style="width:0%"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="pipeline-pct">—</div>
+      </div>
+
+      <!-- Revenue -->
+      <div class="glass panel">
+        <div class="panel-title">Revenue</div>
+        <div id="revenue-panel" class="muted" style="font-size:12px">loading…</div>
+      </div>
+
+    </div>
+
+    <div class="row cols-2">
+
+      <!-- Cold leads -->
+      <div class="glass panel">
+        <div class="panel-title">Cold Trials <span class="accent">≥14 days</span></div>
+        <div id="cold-list">loading…</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3)">
+          Say <code style="color:var(--blue);background:rgba(10,132,255,0.1);padding:1px 5px;border-radius:4px">draft follow-up</code> in Telegram to generate outreach.
+        </div>
+      </div>
+
+      <!-- Live event feed -->
+      <div class="glass panel">
+        <div class="panel-title">Live Events <span class="accent" id="event-count">0</span></div>
+        <div class="feed" id="event-feed">
+          <div class="feed-item"><span class="feed-ts">—</span><span class="feed-type">system</span><span class="feed-msg">Waiting for Hermes WebSocket…</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row cols-2">
+
+      <!-- Pantheon Agents -->
+      <div class="glass panel">
+        <div class="panel-title">Pantheon <span class="accent" id="pantheon-count"></span></div>
+        <div id="pantheon-list" style="display:flex;flex-direction:column;gap:8px">loading…</div>
+      </div>
+
+      <!-- Businesses (ACP + AFL only — no RDS, no Detailing) -->
+      <div class="glass panel">
+        <div class="panel-title">Business Context</div>
+        <div id="businesses-panel">loading…</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ══ TAB: DREAMS ════════════════════════════════════════ -->
+  <div class="page" id="tab-dreams">
+    <div class="row cols-2-1">
+
+      <div class="glass panel">
+        <div class="panel-title">
+          Dream Cards
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="runDreamMachine()">↻ Regenerate</button>
+          </div>
+        </div>
+        <div id="dream-cards">loading…</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="glass panel">
+          <div class="panel-title">Promote Log</div>
+          <div id="promote-log">loading…</div>
+        </div>
+        <div class="glass panel">
+          <div class="panel-title">How to Use Dreams</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8">
+            <p>Each card = a pattern the Dream Engine spotted in recent Claude Code sessions.</p>
+            <p style="margin-top:8px"><strong style="color:var(--text)">Promote</strong> → Creates a real <code style="color:var(--blue)">SKILL.md</code> in <code style="color:var(--blue)">hermes-claw/skills/</code> that Hermes can run.</p>
+            <p style="margin-top:8px"><strong style="color:var(--text)">Dismiss</strong> → Marks card as skipped.</p>
+            <p style="margin-top:8px">After promoting, open the skill file and fill in the <strong>Procedure</strong> section with real steps.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB: MIND MAP ══════════════════════════════════════ -->
+  <div class="page" id="tab-mindmap">
+    <div class="glass panel">
+      <div class="panel-title">
+        Memory Graph
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="muted mono" id="graph-stats"></span>
+          <button class="btn" onclick="loadMindMap()">↻</button>
+        </div>
+      </div>
+      <canvas id="mindmap-canvas"></canvas>
+      <div class="mindmap-legend">
+        <span><span class="legend-dot" style="background:#0A84FF"></span>core</span>
+        <span><span class="legend-dot" style="background:#30D158"></span>workspace</span>
+        <span><span class="legend-dot" style="background:#FFD60A"></span>file</span>
+        <span><span class="legend-dot" style="background:#BF5AF2"></span>skill</span>
+        <span><span class="legend-dot" style="background:#32ADE6"></span>session</span>
+        <span><span class="legend-dot" style="background:#FF453A"></span>stale</span>
+        <span><span class="legend-dot" style="background:#FF9F0A"></span>decision</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: VAULT ══════════════════════════════════════════ -->
+  <div class="page" id="tab-vault">
+    <div class="glass panel" style="padding:0;overflow:hidden">
+      <div class="panel-title" style="padding:14px 18px 0;margin-bottom:0">
+        Obsidian Vault — Bryan-Aaron-Master
+        <button class="btn" onclick="loadVault()">↻</button>
+      </div>
+      <div class="vault-search">
+        <input type="text" id="vault-search-input" placeholder="Search wiki…" oninput="vaultSearch(this.value)" />
+        <button class="btn" onclick="vaultSearch(document.getElementById('vault-search-input').value)">Search</button>
+      </div>
+      <div class="vault-layout">
+        <div class="vault-tree" id="vault-tree">loading…</div>
+        <div class="vault-content" id="vault-content">
+          <p class="muted">Select a file from the tree to read it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: BRIDGE ════════════════════════════════════════ -->
+  <div class="page" id="tab-bridge">
+    <div class="row cols-2">
+
+      <div class="glass panel">
+        <div class="panel-title">Handshake</div>
+        <pre id="bridge-handshake">loading…</pre>
+        <button class="btn primary" style="margin-top:10px" onclick="loadBridge()">↻ Ping Bridge</button>
+      </div>
+
+      <div class="glass panel">
+        <div class="panel-title">Telegram</div>
+        <div id="tg-status" style="font-size:12px;color:var(--text3);margin-bottom:12px">Checking token…</div>
+        <button class="btn success" onclick="sendTelegramTest()">✈ Send Test Message</button>
+        <div id="tg-result" style="margin-top:12px;font-size:12px"></div>
+      </div>
+
+      <div class="glass panel">
+        <div class="panel-title">Bridge Endpoints</div>
+        <table>
+          <tr><th>Endpoint</th><th>Scope</th></tr>
+          <tr><td class="mono">/api/bridge/handshake</td><td>health check</td></tr>
+          <tr><td class="mono">/api/bridge/query</td><td>pipeline,dreams,memory,roi</td></tr>
+          <tr><td class="mono">/api/bridge/push</td><td>POST event</td></tr>
+          <tr><td class="mono">/api/notify</td><td>POST Telegram</td></tr>
+          <tr><td class="mono">/api/memory-graph</td><td>nodes+edges JSON</td></tr>
+          <tr><td class="mono">/api/wiki/tree</td><td>vault file tree</td></tr>
+          <tr><td class="mono">/api/wiki/page</td><td>?path= markdown</td></tr>
+        </table>
+      </div>
+
+      <div class="glass panel">
+        <div class="panel-title">Install Snippet — paste into hermes-claw/CLAUDE.md</div>
+        <pre style="font-size:10px;line-height:1.6">## AIOS Bridge
+
+Bryan runs AIOS dashboard at http://localhost:8080.
+
+Call /api/bridge/query?scope=pipeline,dreams
+at session start for live business context.
+
+Call /api/notify to send Telegram messages.
+
+Endpoints: handshake · query · push · notify
+Vault: /api/wiki/tree · /api/wiki/page
+Graph: /api/memory-graph</pre>
+        <div style="font-size:11px;color:var(--green);margin-top:8px">✓ CLAUDE.md created in hermes-claw/</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- Promote Modal -->
+<div class="modal-bg" id="promote-modal">
+  <div class="modal">
+    <h2>Promote to Hermes Skill</h2>
+    <div class="modal-sub" id="promote-modal-sub"></div>
+    <label>Skill name (folder name in hermes-claw/skills/)</label>
+    <input type="text" id="promote-skill-name" placeholder="e.g. pipeline-check-weekly" />
+    <label>Preview path</label>
+    <div class="modal-preview mono" id="promote-preview">/Volumes/Samsung PSSD T7/hermes-claw/skills/<span id="preview-name">…</span>/SKILL.md</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closePromoteModal()">Cancel</button>
+      <button class="btn primary" onclick="confirmPromote()">Create Skill File →</button>
+    </div>
+    <div class="modal-result" id="promote-result"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────
+const HERMES_PORT = new URLSearchParams(location.search).get('hermes_port') || '8765';
+const WS_URL = `ws://localhost:${HERMES_PORT}/ws/events`;
+let ws = null, wsRetries = 0, eventCount = 0;
+let graphData = null, graphAnim = null;
+let pendingPromote = null;
+
+// ── Utils ───────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => n != null ? n.toLocaleString() : '—';
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function jget(url) {
+  try{ const r=await fetch(url); return r.json(); }
+  catch(e){ return {error:String(e)}; }
+}
+async function jpost(url,body) {
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return r.json();
+  }catch(e){ return {error:String(e)}; }
+}
+
+function toast(msg, type='') {
+  const t=$('toast'); t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── Tabs ────────────────────────────────────────────────────────────────
+function switchTab(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  $('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='mindmap') setTimeout(loadMindMap,50);
+  if(id==='vault') loadVault();
+  if(id==='bridge') loadBridge();
+  if(id==='dreams') loadDreams();
+}
+
+// ── WebSocket ───────────────────────────────────────────────────────────
+function wsConnect() {
+  $('ws-dot').className='ws-dot connecting';
+  $('ws-label').textContent='Connecting…';
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => {
+    $('ws-dot').className='ws-dot live';
+    $('ws-label').textContent=`Hermes live`;
+    wsRetries=0; addEvent('system','WebSocket connected');
+  };
+  ws.onclose = () => {
+    $('ws-dot').className='ws-dot';
+    const d=Math.min(30000,2000*Math.pow(1.5,wsRetries++));
+    $('ws-label').textContent=`Offline — retry ${Math.round(d/1000)}s`;
+    setOrb('down','Offline');
+    setTimeout(wsConnect,d);
+  };
+  ws.onerror = () => {
+    $('ws-dot').className='ws-dot';
+    $('ws-label').textContent=`Port ${HERMES_PORT} unreachable`;
+  };
+  ws.onmessage = e => {
+    try{ handleEvent(JSON.parse(e.data)); } catch(_){ addEvent('raw',e.data.slice(0,80)); }
+  };
+}
+
+function handleEvent(ev) {
+  const orbMap={thinking:'thinking',tool_call:'acting',tool_result:'acting',response:'',idle:'',error:'down',start:'thinking'};
+  const s=orbMap[ev.type];
+  if(s!==undefined) setOrb(s,ev.type.toUpperCase());
+  if(ev.persona) $('orb-persona').textContent='@'+ev.persona;
+  const msg=ev.content?ev.content.slice(0,90):(ev.tool||ev.type||'');
+  addEvent(ev.tool?`${ev.type}:${ev.tool}`:ev.type, msg);
+}
+
+function addEvent(type,msg) {
+  const feed=$('event-feed');
+  const ts=new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const div=document.createElement('div'); div.className='feed-item';
+  div.innerHTML=`<span class="feed-ts">${ts}</span><span class="feed-type">${esc(type)}</span><span class="feed-msg">${esc(msg)}</span>`;
+  feed.insertBefore(div,feed.firstChild);
+  while(feed.children.length>80) feed.removeChild(feed.lastChild);
+  $('event-count').textContent=++eventCount;
+}
+
+function setOrb(state, label) {
+  const orb=$('orb');
+  orb.className='orb'+(state?' '+state:'');
+  if(label) $('orb-state').textContent=label;
+}
+
+// ── Pipeline ─────────────────────────────────────────────────────────────
+async function loadPipeline() {
+  const d=await jget('/api/pipeline');
+  const p=d;
+  if(p.error||p.detail){ $('kpi-paid').textContent='!'; return; }
+  const paid=p.paid_count??0, trial=p.trial_count??0;
+  const cold=(p.trials||[]).filter(s=>(s.days_in_trial||0)>=14);
+  const goal=p.school_goal??50;
+  const gap=goal-paid, pct=Math.min(100,Math.round(paid/goal*100));
+  $('kpi-paid').textContent=paid;
+  $('kpi-trial').textContent=trial;
+  $('kpi-cold').textContent=cold.length;
+  const bar=$('pipeline-bar');
+  bar.style.width=pct+'%'; bar.className='progress-fill'+(pct>=80?' good':'');
+  $('pipeline-pct').textContent=`${pct}% to goal · ${gap} schools remaining`;
+  // Cold list
+  const cl=$('cold-list');
+  if(!cold.length){ cl.innerHTML='<p style="color:var(--green);font-size:12px">No cold leads ✓</p>'; return; }
+  cl.innerHTML=cold.map(c=>{
+    const d=c.days??0; const cls=d>=21?'badge-red':'badge-yellow';
+    return `<div class="list-item"><div class="dot ${d>=21?'dot-red':'dot-yellow'}"></div><div class="list-name">${esc(c.name||'—')}</div><span class="badge ${cls}">${d}d</span></div>`;
+  }).join('');
+}
+
+// ── Revenue ───────────────────────────────────────────────────────────────
+async function loadRevenue() {
+  const d=await jget('/api/revenue');
+  if(d.error||d.stale){ $('revenue-panel').innerHTML=`<span class="text-yellow">${d.error||'stale'}</span>`; return; }
+  $('revenue-panel').innerHTML=`
+    <table>
+      <tr><td class="muted">MRR</td><td><strong>$${fmt(d.mrr)}</strong></td></tr>
+      <tr><td class="muted">ARR</td><td>$${fmt(d.arr)}</td></tr>
+      <tr><td class="muted">Schools</td><td>${d.total_schools??'—'} / ${d.school_goal??50}</td></tr>
+      <tr><td class="muted">Trials</td><td>${Array.isArray(d.trials)?d.trials.length:(d.trials??'—')}</td></tr>
+      <tr><td class="muted">Snapshot</td><td class="muted mono">${(d.ts||'').slice(0,16).replace('T',' ')}</td></tr>
+    </table>`;
+}
+
+// ── Hermes status (polling fallback) ────────────────────────────────────
+async function loadHermes() {
+  const d=await jget('/api/hermes/status');
+  if(d.error){ $('hermes-details').textContent=d.error; return; }
+  const state=(d.state||'IDLE').toUpperCase();
+  if(!ws||ws.readyState!==1) setOrb(state==='ACTIVE'?'acting':state==='DOWN'?'down':'',state);
+  if(d.persona) $('orb-persona').textContent='@'+(d.persona||'Bryan');
+  $('hermes-details').textContent=d.last_deploy_ts?`Deployed ${d.last_deploy_ts}`:'';
+  if(d.uptime) $('hermes-uptime').textContent=d.uptime;
+}
+
+// ── Pantheon ──────────────────────────────────────────────────────────────
+async function loadPantheon() {
+  const d=await jget('/api/hermes/pantheon');
+  const agents=d.agents||[];
+  if(d.error&&!agents.length){ $('pantheon-list').innerHTML=`<span class="muted" style="font-size:12px">${esc(d.error)}</span>`; return; }
+  $('pantheon-count').textContent=agents.length;
+  // Hermes (orchestrator) always first
+  const rows=[{id:'hermes',name:'Hermes',model:'orchestrator',role:'orchestrator',color:'#0A84FF',state:'standing by'},...agents];
+  $('pantheon-list').innerHTML=rows.map(a=>{
+    const dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${a.color||'#8E8E93'};margin-right:8px;flex-shrink:0"></span>`;
+    return `<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      ${dot}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${esc(a.name)}</div>
+        <div style="font-size:10px;color:var(--text3)">${esc(a.model)} · ${esc(a.role)}</div>
+      </div>
+      <span style="font-size:10px;color:var(--text3);flex-shrink:0">${esc(a.state||'standing by')}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Businesses ────────────────────────────────────────────────────────────
+// ACP + AFL only — RDS and Detailing removed per Bryan
+const SHOWN_BUSINESSES = ['ag-coach-pro','aaron-family-livestock','afl','afl-livestock-solutions'];
+async function loadBusinesses() {
+  const d=await jget('/api/businesses');
+  const items=(d.items||d.businesses||[]).filter(b=>{
+    const slug=(b.slug||b.name||'').toLowerCase().replace(/\s+/g,'-');
+    // Exclude Ranch Dad Strength and AFL Detailing
+    if(slug.includes('ranch')||slug.includes('strength')) return false;
+    if(slug.includes('detailing')) return false;
+    return true;
+  });
+  if(!items.length){ $('businesses-panel').innerHTML='<span class="muted">no data</span>'; return; }
+  $('businesses-panel').innerHTML=`<table>
+    <tr><th>Business</th><th>Status</th></tr>
+    ${items.map(b=>`<tr><td>${b.slug||b.name}</td><td class="${b.filled?'text-green':'text-yellow'}">${b.filled?'✓ filled':'STUB'}</td></tr>`).join('')}
+  </table>`;
+}
+
+// ── Dreams ────────────────────────────────────────────────────────────────
+const DIM_LABELS = {
+  'repeated-task':'Repeated Task', 'skill-gap':'Skill Gap', 'context-switch':'Context Switch',
+  'decision':'Decision Pattern', 'automation':'Automation Candidate', 'knowledge':'Knowledge Gap',
+  'pipeline':'Pipeline Pattern', 'memory':'Memory Pattern', 'unknown':'Pattern Detected',
+};
+
+function dreamTitle(card) {
+  const t = card.title||'';
+  // Try to get count from "Saw similar prompt Nx"
+  const m = t.match(/(\d+)x/);
+  const count = m ? ` (seen ${m[1]}×)` : '';
+  const dim = DIM_LABELS[card.dim] || card.dim || 'Pattern';
+  // Clean hash artifacts
+  const clean = t.replace(/\(hash:[a-f0-9]+\)/g,'').replace(/Saw similar prompt \d+x —/,'').trim();
+  return clean.length > 4 ? `${clean}${count}` : `${dim}${count}`;
+}
+
+function dreamAction(card) {
+  const acts = {
+    'repeated-task': 'This prompt type is repeating — promote it to a Hermes skill so it runs automatically.',
+    'skill-gap': 'Bryan hit a skill boundary here. Create a skill to bridge this gap.',
+    'automation': 'This workflow is a strong automation candidate. Build a Hermes skill or cron job.',
+    'decision': 'A recurring decision point. Codify the reasoning into soul.md or a decision skill.',
+    'knowledge': 'Knowledge gap detected. Add context to the vault wiki.',
+    'context-switch': 'Frequent context switching detected. Consider batching these with a skill.',
+    'memory': 'Memory pattern — update hot.md or add a Pinecone entry.',
+    'pipeline': 'Business pipeline pattern. Check acp-pipeline skill.',
+  };
+  return acts[card.dim] || card.action || 'Review and decide whether to promote to a skill.';
+}
+
+async function loadDreams() {
+  const d=await jget('/api/dreams');
+  const cards=d.cards||[];
+  if(!cards.length){ $('dream-cards').innerHTML='<p class="muted">No dream cards — run dream_machine.py overnight.</p>'; return; }
+  $('dream-cards').innerHTML=cards.map(c=>{
+    const promoted=c.status==='promoted';
+    const title=esc(dreamTitle(c));
+    const action=esc(dreamAction(c));
+    const artifact=promoted&&c.promoted_artifact?`<div style="font-size:11px;color:var(--green);margin-top:6px">✓ Skill created: ${esc(c.promoted_artifact.split('/').pop())}</div>`:'';
+    return `<div class="dream-card ${promoted?'promoted':''}">
+      <div class="dream-card-header">
+        <div class="dream-title">${title}</div>
+        <span class="dream-dim">${esc(c.dim||'?')}</span>
+      </div>
+      <div class="dream-action">${action}</div>
+      ${artifact}
+      <div class="dream-meta">
+        ${promoted
+          ? `<span class="badge badge-green">✓ Promoted</span>`
+          : `<button class="btn primary" onclick="openPromoteModal('${c.id}','${c.dim||''}','${title}')">Promote to Skill →</button>
+             <button class="btn" onclick="dismissCard('${c.id}')">Dismiss</button>`
+        }
+        <span style="font-size:11px;color:var(--text3);margin-left:auto">${c.estimated_value_minutes||'?'}min value</span>
+      </div>
+    </div>`;
+  }).join('');
+  loadPromoteLog();
+}
+
+async function loadPromoteLog() {
+  const d=await jget('/api/promote/log?limit=8');
+  const entries=d.entries||[];
+  if(!entries.length){ $('promote-log').innerHTML='<p class="muted" style="font-size:12px">No promotions yet.</p>'; return; }
+  $('promote-log').innerHTML=`<table>
+    <tr><th>Time</th><th>Skill</th><th></th></tr>
+    ${[...entries].reverse().map(e=>`<tr>
+      <td class="muted mono">${(e.ts||'').slice(11,16)}</td>
+      <td style="font-size:11px">${esc(e.skill_name||e.card_id)}</td>
+      <td class="${e.verdict==='shipped'?'text-green':'text-red'}">${e.verdict==='shipped'?'✓':'✗'}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function dismissCard(cardId) {
+  const d=await jpost('/api/dreams/action',{dream_id:cardId,action:'dismiss'});
+  if(d.ok!==false) toast('Card dismissed','ok');
+  loadDreams();
+}
+
+async function runDreamMachine() {
+  toast('Running Dream Machine…');
+  const d=await jpost('/api/dreams/run',{});
+  toast(d.ok||d.exit_code===0?'Dream regenerated ✓':'Dream error','ok');
+  loadDreams();
+}
+
+// ── Promote Modal ─────────────────────────────────────────────────────────
+function openPromoteModal(cardId,dim,title) {
+  pendingPromote={cardId,dim,title};
+  $('promote-modal-sub').textContent=`Card: "${title}" (${dim})`;
+  // Auto-generate name suggestion
+  const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||dim+'-'+cardId;
+  $('promote-skill-name').value=slug;
+  $('preview-name').textContent=slug;
+  $('promote-result').className='modal-result';
+  $('promote-result').textContent='';
+  $('promote-modal').classList.add('open');
+  $('promote-skill-name').oninput=e=>$('preview-name').textContent=e.target.value||'…';
+  $('promote-skill-name').focus();
+}
+
+function closePromoteModal() {
+  $('promote-modal').classList.remove('open');
+  pendingPromote=null;
+}
+
+async function confirmPromote() {
+  if(!pendingPromote) return;
+  const skillName=$('promote-skill-name').value.trim().replace(/\s+/g,'-').toLowerCase();
+  if(!skillName){ toast('Enter a skill name','err'); return; }
+  const btn=document.querySelector('#promote-modal .btn.primary');
+  btn.textContent='Creating…'; btn.disabled=true;
+  const d=await jpost('/api/promote',{card_id:pendingPromote.cardId, skill_name:skillName});
+  btn.textContent='Create Skill File →'; btn.disabled=false;
+  const res=$('promote-result');
+  if(d.ok||d.exit_code===0) {
+    res.className='modal-result ok';
+    res.textContent=`✓ Skill created: hermes-claw/skills/${skillName}/SKILL.md\n\nNext: open the file and fill in the Procedure section.`;
+    toast('Skill created! ✓','ok');
+    setTimeout(()=>{ closePromoteModal(); loadDreams(); },2000);
+  } else {
+    res.className='modal-result err';
+    res.textContent=`Error: ${d.stderr||d.error||d.stdout||'unknown'}`;
+    toast('Promote failed','err');
+  }
+}
+
+// ── Mind Map ──────────────────────────────────────────────────────────────
+const NODE_COLORS = {
+  core:'#0A84FF', workspace:'#30D158', file:'#FFD60A', skill:'#BF5AF2',
+  session:'#32ADE6', stale:'#FF453A', decision:'#FF9F0A', default:'#8E8E93',
+};
+
+async function loadMindMap() {
+  if(graphData) { renderGraph(graphData); return; }
+  const d=await jget('/api/memory-graph');
+  if(d.error||!d.nodes){ $('graph-stats').textContent='Error loading graph'; return; }
+  graphData=d;
+  $('graph-stats').textContent=`${d.nodes.length} nodes · ${d.edges.length} edges`;
+  renderGraph(d);
+}
+
+function renderGraph(data) {
+  const canvas=$('mindmap-canvas');
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // Build adjacency
+  const nodeMap={};
+  data.nodes.forEach(n=>{ nodeMap[n.id]=n; });
+
+  // Init positions (radial layout seeded by kind)
+  const kindAngle={core:0,workspace:60,file:120,skill:180,session:240,decision:300,stale:30};
+  data.nodes.forEach((n,i)=>{
+    const base=(kindAngle[n.kind]||0)*(Math.PI/180);
+    const r=n.kind==='core'?0:80+Math.random()*120;
+    const a=base+Math.random()*1.5-0.75;
+    n._x=(n._x!=null)?n._x: W/2+Math.cos(a)*r;
+    n._y=(n._y!=null)?n._y: H/2+Math.sin(a)*r;
+    n._vx=0; n._vy=0;
+  });
+
+  // Force simulation (simple)
+  let frame=0;
+  if(graphAnim) cancelAnimationFrame(graphAnim);
+
+  function tick() {
+    // Repulsion
+    data.nodes.forEach(a=>{ data.nodes.forEach(b=>{ if(a===b)return;
+      const dx=a._x-b._x, dy=a._y-b._y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      const f=Math.min(800,1200/(d*d));
+      a._vx+=dx/d*f; a._vy+=dy/d*f;
+    }); });
+    // Attraction (edges)
+    data.edges.forEach(e=>{ const s=nodeMap[e.source],t=nodeMap[e.target];
+      if(!s||!t)return;
+      const dx=t._x-s._x, dy=t._y-s._y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      const f=(d-80)*0.025;
+      s._vx+=dx/d*f; s._vy+=dy/d*f;
+      t._vx-=dx/d*f; t._vy-=dy/d*f;
+    });
+    // Center pull
+    data.nodes.forEach(n=>{
+      n._vx+=(W/2-n._x)*0.005; n._vy+=(H/2-n._y)*0.005;
+    });
+    // Integrate + dampen
+    data.nodes.forEach(n=>{
+      n._vx*=0.85; n._vy*=0.85;
+      n._x=Math.max(20,Math.min(W-20,n._x+n._vx));
+      n._y=Math.max(20,Math.min(H-20,n._y+n._vy));
+    });
+
+    // Draw
+    ctx.clearRect(0,0,W,H);
+    // Edges
+    ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+    data.edges.forEach(e=>{ const s=nodeMap[e.source],t=nodeMap[e.target];
+      if(!s||!t)return;
+      ctx.beginPath(); ctx.moveTo(s._x,s._y); ctx.lineTo(t._x,t._y); ctx.stroke();
+    });
+    // Nodes
+    data.nodes.forEach(n=>{
+      const r=(n.size||8)/2+3;
+      const col=NODE_COLORS[n.kind]||NODE_COLORS.default;
+      // Glow
+      const grd=ctx.createRadialGradient(n._x,n._y,0,n._x,n._y,r*2.5);
+      grd.addColorStop(0,col+'55'); grd.addColorStop(1,'transparent');
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(n._x,n._y,r*2.5,0,Math.PI*2); ctx.fill();
+      // Node
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(n._x,n._y,r,0,Math.PI*2); ctx.fill();
+      // Label (only if not too many nodes or node is core/skill)
+      if(data.nodes.length<60||n.kind==='core'||n.kind==='skill') {
+        ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font=`${n.kind==='core'?12:10}px -apple-system`;
+        ctx.textAlign='center'; ctx.fillText(n.label||n.id,n._x,n._y+r+12);
+      }
+    });
+
+    if(++frame<180) graphAnim=requestAnimationFrame(tick);
+  }
+  tick();
+
+  // Drag support
+  let dragging=null;
+  canvas.onmousedown=e=>{ const r=canvas.getBoundingClientRect();
+    const mx=e.clientX-r.left, my=e.clientY-r.top;
+    dragging=data.nodes.find(n=>Math.hypot(n._x-mx,n._y-my)<14)||null;
+  };
+  canvas.onmousemove=e=>{ if(!dragging)return;
+    const r=canvas.getBoundingClientRect();
+    dragging._x=e.clientX-r.left; dragging._y=e.clientY-r.top;
+    dragging._vx=0; dragging._vy=0;
+    if(frame>=180){ frame=0; tick(); }
+  };
+  canvas.onmouseup=()=>dragging=null;
+}
+
+// ── Vault ──────────────────────────────────────────────────────────────────
+let vaultTree=null;
+async function loadVault() {
+  if(vaultTree) return;
+  const d=await jget('/api/wiki/tree');
+  if(d.error){ $('vault-tree').innerHTML=`<div class="muted" style="padding:12px;font-size:12px">${d.error}</div>`; return; }
+  vaultTree=d;
+  renderVaultTree(d);
+  // Auto-load hot.md
+  loadVaultPage('hot.md');
+}
+
+function renderVaultTree(data) {
+  const tree=$('vault-tree');
+  const wiki=data.wiki||[];
+  tree.innerHTML=renderNodes(wiki);
+}
+
+function renderNodes(nodes, depth=0) {
+  return nodes.map(n=>{
+    if(n.type==='dir') {
+      return `<div class="vault-node dir" style="padding-left:${14+depth*10}px">📁 ${esc(n.name)}</div>
+              ${renderNodes(n.children||[],depth+1)}`;
+    }
+    return `<div class="vault-node" style="padding-left:${14+depth*10}px" onclick="loadVaultPage('${esc(n.path)}')">
+              📄 ${esc(n.name)}
+            </div>`;
+  }).join('');
+}
+
+async function loadVaultPage(path) {
+  $('vault-content').innerHTML='<p class="muted">Loading…</p>';
+  // Mark active
+  document.querySelectorAll('.vault-node').forEach(n=>{
+    n.classList.toggle('active', n.onclick&&n.getAttribute('onclick')&&n.getAttribute('onclick').includes(path));
+  });
+  const d=await jget('/api/wiki/page?path='+encodeURIComponent(path));
+  if(d.error){ $('vault-content').innerHTML=`<p class="text-red">${d.error}</p>`; return; }
+  // Simple markdown → HTML (basic)
+  const md=d.content||d.raw||JSON.stringify(d,null,2);
+  $('vault-content').innerHTML=basicMd(md);
+}
+
+async function vaultSearch(q) {
+  if(!q||q.length<2) { if(vaultTree) renderVaultTree(vaultTree); return; }
+  const d=await jget('/api/wiki/search?q='+encodeURIComponent(q));
+  const results=d.results||d.hits||[];
+  if(!results.length){ $('vault-tree').innerHTML='<div class="muted" style="padding:12px;font-size:12px">No results for "'+esc(q)+'"</div>'; return; }
+  $('vault-tree').innerHTML=results.map(r=>`
+    <div class="vault-node" onclick="loadVaultPage('${esc(r.path||r.file)}')">
+      📄 ${esc(r.name||r.title||r.path)}<br>
+      <span style="font-size:10px;color:var(--text3)">${esc((r.excerpt||'').slice(0,60))}</span>
+    </div>`).join('');
+}
+
+function basicMd(text) {
+  return text
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\[\[([^\]]+)\]\]/g,'<a href="#" onclick="loadVaultPage(\'$1.md\');return false">$1</a>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^(?!<[h|l])/gm,'')
+    .split('\n').map(l=>l.startsWith('<')?l:`<p>${l}</p>`).join('\n');
+}
+
+// ── Bridge ─────────────────────────────────────────────────────────────────
+async function loadBridge() {
+  const d=await jget('/api/bridge/handshake');
+  $('bridge-handshake').textContent=JSON.stringify(d,null,2);
+}
+
+async function sendTelegramTest() {
+  const ts=new Date().toLocaleTimeString();
+  $('tg-status').textContent='Sending…';
+  const d=await jpost('/api/notify',{message:`🤖 Bryan OS test — ${ts}`});
+  const ok=d.ok||d.result;
+  $('tg-result').innerHTML=ok
+    ? `<span class="text-green">✓ Sent at ${ts}</span>`
+    : `<span class="text-red">✗ ${esc(d.error||JSON.stringify(d))}</span>`;
+  $('tg-status').textContent=ok?'Token valid ✓':'Token error';
+  toast(ok?'Telegram sent ✓':'Telegram failed',ok?'ok':'err');
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadHermes(), loadPipeline(), loadRevenue(), loadBusinesses(), loadPantheon()]);
+}
+wsConnect();
+loadAll();
+setInterval(()=>{ loadPipeline(); loadRevenue(); }, 60000);
+setInterval(loadHermes, 30000);
+setInterval(loadPantheon, 120000);
+</script>
+</body>
+</html>

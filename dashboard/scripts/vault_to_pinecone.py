@@ -1,4 +1,4 @@
-"""Vectorize Bryan-Aaron-Master vault → Pinecone for Gravity Claw access.
+"""Vectorize Bryan-Aaron-Master vault → Pinecone for Hermes access.
 
 Walks all .md files, chunks ~600-1000 chars w/ 100-char overlap, embeds via
 OpenAI text-embedding-3-small (1536 dim) — but gravityclaw-vector is 1024 dim
@@ -67,7 +67,7 @@ def load_env() -> dict:
     """Load OpenAI + Pinecone keys from known .env files."""
     env = {}
     env_files = [
-        Path("/Volumes/Samsung PSSD T7/gravity-claw/.env"),
+        Path("/Volumes/Samsung PSSD T7/hermes-claw/.env"),
         Path("/Volumes/Samsung PSSD T7/ag-coach-app/.env"),
         Path("/Volumes/Samsung PSSD T7/AIS-OS/.env"),
     ]

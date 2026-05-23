@@ -7,7 +7,7 @@ from pathlib import Path
 import urllib.request
 
 ROOT = Path(__file__).parent.parent.parent
-GC = Path("/Volumes/Samsung PSSD T7/gravity-claw")
+GC = Path("/Volumes/Samsung PSSD T7/hermes-claw")
 HOME = Path.home()
 
 

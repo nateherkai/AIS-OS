@@ -26,7 +26,7 @@ from typing import Iterator
 from dotenv import load_dotenv
 
 for _env in [
-    "/Volumes/Samsung PSSD T7/gravity-claw/.env",
+    "/Volumes/Samsung PSSD T7/hermes-claw/.env",
     "/Volumes/Samsung PSSD T7/ag-coach-app/.env",
     "/Volumes/Samsung PSSD T7/AIS-OS/.env",
 ]:

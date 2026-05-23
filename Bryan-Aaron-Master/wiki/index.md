@@ -1,10 +1,11 @@
 # Wiki Index
 
-Updated: 2026-05-16 (Pass 5 — Gravity Claw memory cross-vault ingest)
+Updated: 2026-05-20 (Pass 6 — Printing Press CLI factory ingest)
 
 ## Tools
 
 - [[concepts/obsidian-web-clipper|Obsidian Web Clipper]] — Chrome extension to clip web articles into vault `raw/`
+- [[concepts/printing-press|Printing Press]] — CLI factory + 50-CLI library; turns any service into agent-native CLI in ~10 min; 35× token savings vs MCP
 
 ## Techniques
 
@@ -12,6 +13,7 @@ Updated: 2026-05-16 (Pass 5 — Gravity Claw memory cross-vault ingest)
 
 ## Concepts
 
+- [[concepts/cli-api-mcp-priority|CLI > API > MCP Priority Framework]] — decision order for connecting Claude Code to services; CLI first, MCP last resort
 - [[concepts/llm-wiki-pattern|LLM Wiki Pattern]] — Karpathy's raw/ → wiki/ architecture; no vector DB needed
 - [[concepts/hot-cache|Hot Cache]] — ≤500-char `hot.md` for stateful agents; reduces token overhead
 - [[concepts/claude-code-os|Claude Code OS]] — visual intelligence dashboard unifying models, memory, skills, knowledge, connections

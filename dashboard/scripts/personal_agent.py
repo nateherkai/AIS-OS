@@ -11,10 +11,10 @@ from pathlib import Path
 BASE = Path(__file__).parent.parent
 HOME = Path.home()
 
-# Env — loaded by server.py via dotenv, but also check gravity-claw .env
+# Env — loaded by server.py via dotenv, but also check hermes-claw .env
 _ENV_PATHS = [
     BASE.parent / ".env",
-    Path("/Volumes/Samsung PSSD T7/gravity-claw/.env"),
+    Path("/Volumes/Samsung PSSD T7/hermes-claw/.env"),
     HOME / ".env",
 ]
 

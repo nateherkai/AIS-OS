@@ -32,7 +32,7 @@
       "members": [
         {"name": "Pinecone gravityclaw/knowledge", "kind": "vector", "status": "active", "probe": "pinecone"},
         {"name": "Supabase Ag Coach Pro", "kind": "sql", "status": "active", "probe": "supabase"},
-        {"name": "Obsidian (gravity-claw/memory)", "kind": "markdown", "status": "active", "probe": "obsidian"},
+        {"name": "Obsidian (hermes-claw/memory)", "kind": "markdown", "status": "active", "probe": "obsidian"},
         {"name": "~/.claude/projects MEMORY.md", "kind": "markdown", "status": "active", "probe": "local-memory"}
       ]
     },
@@ -59,7 +59,7 @@
       "name": "Knowledge Systems",
       "icon": "📚",
       "members": [
-        {"name": "Gravity Claw vault", "path": "/Volumes/Samsung PSSD T7/gravity-claw/memory"},
+        {"name": "Hermes vault", "path": "/Volumes/Samsung PSSD T7/hermes-claw/memory"},
         {"name": "AIS-OS context/", "path": "context/"},
         {"name": "AIS-OS references/", "path": "references/"},
         {"name": "NotebookLM AI Brain", "path": "external"}

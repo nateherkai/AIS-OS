@@ -1,4 +1,4 @@
-"""Claude OS Bridge — two-way handshake between AIOS dashboard and Gravity Claw."""
+"""Claude OS Bridge — two-way handshake between AIOS dashboard and Hermes."""
 import argparse
 import json
 import os
@@ -16,7 +16,7 @@ from memory_feed import build_feed as build_memory_feed
 from memory_graph import build as build_memory_graph
 from roi import compute as compute_roi
 from supabase_client import get_schools, get_pipeline_summary
-import notify_gc
+import notify_hermes
 
 VERSION = "0.1.0"
 NAME = "Ag Coach Pro AIOS"
@@ -120,7 +120,7 @@ def _test():
     print("\n=== SNAPSHOT (pipeline+dreams only) ===")
     print(json.dumps(snapshot(["pipeline", "dreams"]), indent=2)[:1500])
     print("\n=== TELEGRAM TEST ===")
-    res = notify_gc.post("✅ AIOS bridge online — smoke test " + datetime.now().strftime("%H:%M"))
+    res = notify_hermes.post("✅ AIOS bridge online — smoke test " + datetime.now().strftime("%H:%M"))
     print(json.dumps(res, indent=2))
     return 0 if res.get("ok") else 1
 

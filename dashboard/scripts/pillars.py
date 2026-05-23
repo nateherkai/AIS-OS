@@ -55,14 +55,14 @@ def _probe_supabase() -> str:
 
 def _probe_pinecone() -> str:
     # Use GC env file since AIOS may not have key
-    gc_env = Path("/Volumes/Samsung PSSD T7/gravity-claw/.env")
+    gc_env = Path("/Volumes/Samsung PSSD T7/hermes-claw/.env")
     if not gc_env.exists():
         return "unknown"
     return "active"  # presence of key implies connection
 
 
 def _probe_obsidian() -> str:
-    return "active" if Path("/Volumes/Samsung PSSD T7/gravity-claw/memory").exists() else "inactive"
+    return "active" if Path("/Volumes/Samsung PSSD T7/hermes-claw/memory").exists() else "inactive"
 
 
 def _probe_local_memory() -> str:
