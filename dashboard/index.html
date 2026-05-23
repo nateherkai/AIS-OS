@@ -720,6 +720,17 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
       <div id="usage-savings-detail" style="font-size:15px;color:rgba(255,255,255,0.65);line-height:2;"></div>
     </div>
 
+    <div class="grid-2">
+      <div class="panel glass" style="padding:18px 22px;">
+        <div class="panel-title" style="margin-bottom:12px;">Source Coverage</div>
+        <div id="usage-source-breakdown" style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.8;"></div>
+      </div>
+      <div class="panel glass" style="padding:18px 22px;">
+        <div class="panel-title" style="margin-bottom:12px;">Budget Limits</div>
+        <div id="usage-budget-status" style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.8;"></div>
+      </div>
+    </div>
+
     <!-- Daily burn line chart (14d) -->
     <div class="panel glass">
       <div class="panel-title" style="margin-bottom:12px;">Daily Token Burn — Last 14 Days</div>
@@ -3133,6 +3144,44 @@ async function loadUsage() {
     Sessions (30d): <strong style="color:#D4A574;">${d.total_sessions_30d}</strong> ·
     Tokens (30d): <strong style="color:#D4A574;">${(d.total_tokens_30d||0).toLocaleString()}</strong>
   `;
+
+  const sourceEl = document.getElementById('usage-source-breakdown');
+  const sources = d.source_breakdown || {};
+  const sourceRows = Object.entries(sources).map(([name, s]) => {
+    const label = name === 'claude_code' ? 'Claude Code' : name === 'hermes' ? 'Hermes' : name;
+    const cost = (s.actual_cost_usd || s.estimated_cost_usd || 0);
+    const dbPath = s.db_path ? `<div style="font-size:11px;color:rgba(255,255,255,0.28);font-family:monospace;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.db_path)}</div>` : '';
+    return `<div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:7px 0;">
+      <div style="display:flex;justify-content:space-between;gap:12px;">
+        <strong style="color:#fff;">${escapeHtml(label)}</strong>
+        <span>${(s.billable_tokens||0).toLocaleString()} tokens · $${cost.toFixed(4)}</span>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.38);">sessions ${(s.sessions||0).toLocaleString()} · calls ${(s.api_calls||0).toLocaleString()} · in ${(s.input_tokens||0).toLocaleString()} / out ${(s.output_tokens||0).toLocaleString()}</div>
+      ${dbPath}
+    </div>`;
+  }).join('');
+  const dq = (d.data_quality || []).map(x =>
+    `<div style="font-size:12px;color:#facc15;margin-top:6px;">${escapeHtml(x.source)}: ${escapeHtml(x.message || x.status || '')}</div>`
+  ).join('');
+  if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + dq;
+
+  const budgetEl = document.getElementById('usage-budget-status');
+  const budgets = d.budget_status || {};
+  const budgetRows = ['daily_tokens','monthly_tokens','daily_cost','monthly_cost'].map(k => {
+    const b = budgets[k] || {};
+    const color = b.status === 'over' ? '#f87171' : b.status === 'warn' ? '#facc15' : b.status === 'ok' ? '#4ade80' : 'rgba(255,255,255,0.35)';
+    const used = b.unit === 'usd' ? `$${Number(b.used||0).toFixed(2)}` : Number(b.used||0).toLocaleString();
+    const limit = b.limit == null ? 'not set' : (b.unit === 'usd' ? `$${Number(b.limit).toFixed(2)}` : Number(b.limit).toLocaleString());
+    const pct = b.pct == null ? '' : ` · ${b.pct}%`;
+    return `<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);padding:7px 0;">
+      <span>${escapeHtml(b.label || k)}</span>
+      <strong style="color:${color};">${used} / ${limit}${pct}</strong>
+    </div>`;
+  }).join('');
+  const guidance = (d.limit_guidance || []).map(x =>
+    `<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:6px;">${escapeHtml(x)}</div>`
+  ).join('');
+  if (budgetEl) budgetEl.innerHTML = budgetRows + guidance;
 
   // Savings badge on mini-card
   const badge = document.getElementById('usage-savings-badge');

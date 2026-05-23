@@ -17,6 +17,8 @@ ChatGPT/Gemini: Bryan uses subscriptions (not API), so no raw token events exist
 Budget: ~5s typical. Safe to call on every /api/usage hit.
 """
 import json
+import os
+import sqlite3
 import sys
 import time
 from collections import defaultdict
@@ -32,6 +34,11 @@ from pricing import compute_api_cost
 
 HOME = Path.home()
 PROJECTS_ROOT = HOME / ".claude" / "projects"
+HERMES_STATE_DB = Path(
+    os.environ.get("HERMES_STATE_DB")
+    or os.environ.get("AIOS_HERMES_STATE_DB")
+    or str(HOME / ".hermes" / "state.db")
+).expanduser()
 
 # ── Subscriptions ───────────────────────────────────────────────
 # plan_tokens = None means "no hard ceiling, rate-limited"
@@ -61,7 +68,7 @@ SUBSCRIPTIONS = [
 
 # ── API pricing per 1M tokens (in/out) ────────────────────────
 API_RATES = {
-    "claude-opus":   {"input_per_1m": 15.0,  "output_per_1m": 75.0},
+    "claude-opus":   {"input_per_1m": 5.0,   "output_per_1m": 25.0},
     "claude-sonnet": {"input_per_1m": 3.0,   "output_per_1m": 15.0},
     "claude-haiku":  {"input_per_1m": 1.0,   "output_per_1m": 5.0},
     "gpt-5":         {"input_per_1m": 5.0,   "output_per_1m": 15.0},
@@ -96,6 +103,18 @@ def _classify_model(model_str: str) -> str:
     if "gemini" in m:
         return "gemini"
     return "claude"  # default — Claude Code is the main tool
+
+
+def _classify_provider_model(provider: str, model: str) -> str:
+    """Classify by explicit provider first, then model slug."""
+    p = (provider or "").lower()
+    if p in {"anthropic", "claude"}:
+        return "claude"
+    if p in {"openai", "openai-codex", "chatgpt"}:
+        return "openai"
+    if "gemini" in p or p == "google":
+        return "gemini"
+    return _classify_model(model)
 
 
 def _days_left_in_cycle() -> int:
@@ -165,7 +184,91 @@ def _build_daily_burn(daily_tokens: dict, days: int = 14) -> list:
 
 def _per_session_top(session_tokens: dict, top_n: int = 10) -> list:
     sorted_sessions = sorted(session_tokens.items(), key=lambda x: x[1], reverse=True)
-    return [{"session_id": sid[:12], "tokens": tok} for sid, tok in sorted_sessions[:top_n]]
+    return [{"session_id": sid[:24], "tokens": tok} for sid, tok in sorted_sessions[:top_n]]
+
+
+def _session_key(source: str, session_id: str) -> str:
+    return f"{source}:{session_id}"
+
+
+def _budget_float(name: str) -> float | None:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return None
+    try:
+        val = float(raw)
+        return val if val > 0 else None
+    except ValueError:
+        return None
+
+
+def _budget_int(name: str) -> int | None:
+    val = _budget_float(name)
+    return int(val) if val is not None else None
+
+
+def _build_budget_status(total_tokens_30d: int, total_cost_30d: float, daily_tokens: dict, daily_cost: dict) -> dict:
+    today = datetime.now().strftime("%Y-%m-%d")
+    daily_token_limit = _budget_int("AIOS_DAILY_TOKEN_LIMIT")
+    monthly_token_limit = _budget_int("AIOS_MONTHLY_TOKEN_LIMIT")
+    daily_cost_limit = _budget_float("AIOS_DAILY_COST_LIMIT_USD")
+    monthly_cost_limit = _budget_float("AIOS_MONTHLY_COST_LIMIT_USD")
+
+    def entry(label, used, limit, unit):
+        if limit is None:
+            return {"label": label, "used": used, "limit": None, "unit": unit, "pct": None, "status": "unset"}
+        pct = round((used / limit) * 100, 1) if limit else 0
+        status = "over" if used > limit else "warn" if pct >= 80 else "ok"
+        return {"label": label, "used": round(used, 2), "limit": limit, "unit": unit, "pct": pct, "status": status}
+
+    return {
+        "daily_tokens": entry("Daily tokens", daily_tokens.get(today, 0), daily_token_limit, "tokens"),
+        "monthly_tokens": entry("30d tokens", total_tokens_30d, monthly_token_limit, "tokens"),
+        "daily_cost": entry("Daily AI cost", daily_cost.get(today, 0.0), daily_cost_limit, "usd"),
+        "monthly_cost": entry("30d AI cost", total_cost_30d, monthly_cost_limit, "usd"),
+        "env_knobs": {
+            "AIOS_DAILY_TOKEN_LIMIT": daily_token_limit,
+            "AIOS_MONTHLY_TOKEN_LIMIT": monthly_token_limit,
+            "AIOS_DAILY_COST_LIMIT_USD": daily_cost_limit,
+            "AIOS_MONTHLY_COST_LIMIT_USD": monthly_cost_limit,
+        },
+    }
+
+
+def _iter_hermes_sessions(days: int = 30):
+    """Yield normalized token/cost rows from Hermes state.db.
+
+    Hermes already records provider-normalized token counters in its sessions
+    table. AIS-OS reads those totals directly so Hermes is included in the same
+    dashboard as local Claude Code usage.
+    """
+    if not HERMES_STATE_DB.exists():
+        return
+    cutoff = time.time() - days * 86400
+    conn = None
+    try:
+        uri = f"file:{HERMES_STATE_DB}?mode=ro"
+        conn = sqlite3.connect(uri, uri=True, timeout=1.0)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            """
+            SELECT id, source, model, billing_provider, billing_base_url,
+                   started_at, ended_at,
+                   input_tokens, output_tokens, cache_read_tokens,
+                   cache_write_tokens, reasoning_tokens, api_call_count,
+                   estimated_cost_usd, actual_cost_usd, cost_status, cost_source
+            FROM sessions
+            WHERE COALESCE(ended_at, started_at, 0) >= ?
+            """,
+            (cutoff,),
+        ).fetchall()
+        for row in rows:
+            yield dict(row)
+    except Exception:
+        return
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 def _five_hour_window_stats() -> dict:
@@ -230,8 +333,22 @@ def usage_stats() -> dict:
     family_models = defaultdict(set)        # family -> set of model strings seen
     model_tokens = defaultdict(lambda: {"input": 0, "output": 0, "cache_read": 0, "cache_create": 0})
     daily_tokens = defaultdict(int)         # "YYYY-MM-DD" -> tokens (input+output+cache_create)
+    daily_cost = defaultdict(float)         # "YYYY-MM-DD" -> actual/estimated cost
     session_tokens = defaultdict(int)
     sessions_seen = set()
+    source_breakdown = defaultdict(lambda: {
+        "sessions": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cache_creation_tokens": 0,
+        "reasoning_tokens": 0,
+        "billable_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "api_calls": 0,
+    })
+    data_quality = []
 
     for fpath, ev in _iter_recent_events(days=30):
         msg = ev.get("message") or {}
@@ -252,7 +369,7 @@ def usage_stats() -> dict:
             family_output[family] += out
             family_cache_read[family] += cr
             family_cache_create[family] += cc
-            if model:
+            if model and (inp or out or cr or cc):
                 family_models[family].add(model)
                 # Per-model breakdown key
                 mk = model.split("-")[0:2]
@@ -265,15 +382,102 @@ def usage_stats() -> dict:
             # Billable tokens for burn tracking: input + output + cache_creation
             # (cache_read is served from cache at reduced cost, not a new ingest)
             billable = inp + out + cc
+            call_cost = compute_api_cost(
+                input_tokens=inp,
+                output_tokens=out,
+                cache_creation_tokens=cc,
+                cache_read_tokens=cr,
+                model_str=model,
+            )
+            source_breakdown["claude_code"]["sessions"] = len(sessions_seen)
+            source_breakdown["claude_code"]["input_tokens"] += inp
+            source_breakdown["claude_code"]["output_tokens"] += out
+            source_breakdown["claude_code"]["cache_read_tokens"] += cr
+            source_breakdown["claude_code"]["cache_creation_tokens"] += cc
+            source_breakdown["claude_code"]["billable_tokens"] += billable
+            source_breakdown["claude_code"]["estimated_cost_usd"] += call_cost
             if billable > 0:
                 ts_str = ev.get("timestamp") or ""
                 if ts_str:
                     try:
                         day = ts_str[:10]
                         daily_tokens[day] += billable
+                        daily_cost[day] += call_cost
                     except Exception:
                         pass
                 session_tokens[sid] += billable
+
+    hermes_rows = list(_iter_hermes_sessions(days=30) or [])
+    if HERMES_STATE_DB.exists():
+        source_breakdown["hermes"]["db_path"] = str(HERMES_STATE_DB)
+        source_breakdown["hermes"]["sessions"] = len(hermes_rows)
+    else:
+        data_quality.append({
+            "source": "hermes",
+            "status": "missing",
+            "message": f"Hermes state DB not found at {HERMES_STATE_DB}",
+        })
+
+    for row in hermes_rows:
+        sid = row.get("id") or "unknown"
+        model = row.get("model") or ""
+        provider = row.get("billing_provider") or ""
+        family = _classify_provider_model(provider, model)
+        inp = int(row.get("input_tokens") or 0)
+        out = int(row.get("output_tokens") or 0)
+        cr = int(row.get("cache_read_tokens") or 0)
+        cc = int(row.get("cache_write_tokens") or 0)
+        reasoning = int(row.get("reasoning_tokens") or 0)
+        billable = inp + out + cc
+        actual_cost = float(row.get("actual_cost_usd") or 0.0)
+        estimated_cost = float(row.get("estimated_cost_usd") or 0.0)
+        cost_for_rollup = actual_cost or estimated_cost
+
+        sessions_seen.add(_session_key("hermes", sid))
+        family_input[family] += inp
+        family_output[family] += out
+        family_cache_read[family] += cr
+        family_cache_create[family] += cc
+        if model and (inp or out or cr or cc):
+            family_models[family].add(model)
+        if inp or out or cr or cc:
+            model_key = model or provider or "hermes-unknown"
+            if provider and provider not in model_key:
+                model_key = f"{provider}/{model_key}"
+            model_key = model_key[:48]
+            model_tokens[model_key]["input"] += inp
+            model_tokens[model_key]["output"] += out
+            model_tokens[model_key]["cache_read"] += cr
+            model_tokens[model_key]["cache_create"] += cc
+
+        source_breakdown["hermes"]["input_tokens"] += inp
+        source_breakdown["hermes"]["output_tokens"] += out
+        source_breakdown["hermes"]["cache_read_tokens"] += cr
+        source_breakdown["hermes"]["cache_creation_tokens"] += cc
+        source_breakdown["hermes"]["reasoning_tokens"] += reasoning
+        source_breakdown["hermes"]["billable_tokens"] += billable
+        source_breakdown["hermes"]["actual_cost_usd"] += actual_cost
+        source_breakdown["hermes"]["estimated_cost_usd"] += estimated_cost
+        source_breakdown["hermes"]["api_calls"] += int(row.get("api_call_count") or 0)
+
+        if billable > 0:
+            started = float(row.get("started_at") or row.get("ended_at") or 0)
+            if started:
+                day = datetime.fromtimestamp(started).strftime("%Y-%m-%d")
+                daily_tokens[day] += billable
+                daily_cost[day] += cost_for_rollup
+            session_tokens[_session_key("hermes", sid)] += billable
+
+    if hermes_rows and source_breakdown["hermes"]["billable_tokens"] == 0:
+        data_quality.append({
+            "source": "hermes",
+            "status": "zero_tokens",
+            "message": (
+                "Hermes state DB is readable, but all local Hermes sessions have 0 token counts. "
+                "If live Hermes is only on Railway, mirror/export Railway /root/.hermes/state.db "
+                "or expose /api/hermes-os/spend/series to make AIS-OS fully authoritative."
+            ),
+        })
 
     days_left = _days_left_in_cycle()
     days_elapsed = max(1, 30 - days_left)
@@ -335,6 +539,11 @@ def usage_stats() -> dict:
                 (cr / 1_000_000) * rate["input_per_1m"] * 0.1
             )
         api_cost = round(api_cost, 2)
+        if family == "claude" and source_breakdown["hermes"]["estimated_cost_usd"]:
+            # Hermes has its own provider-aware estimator. Prefer it where
+            # available so its non-Claude providers do not get forced through
+            # AIS-OS's Claude-biased fallback table.
+            api_cost = round(max(api_cost, source_breakdown["hermes"]["estimated_cost_usd"]), 2)
         total_api_equiv += api_cost
 
         sub_usd = sub["monthly_usd"]
@@ -383,6 +592,10 @@ def usage_stats() -> dict:
     )
     total_api_equiv = round(total_api_equiv, 2)
     total_sub_usd = round(total_sub_usd, 2)
+    total_actual_or_estimated_cost = round(
+        total_api_equiv + max(0.0, source_breakdown["hermes"]["actual_cost_usd"] - source_breakdown["hermes"]["estimated_cost_usd"]),
+        2,
+    )
 
     # Per-model breakdown (top 10 by output)
     model_summary = sorted(
@@ -401,6 +614,21 @@ def usage_stats() -> dict:
         "daily_burn_14d": _build_daily_burn(daily_tokens, days=14),
         "top_sessions": _per_session_top(session_tokens, top_n=10),
         "per_model_breakdown": model_summary,
+        "source_breakdown": {
+            key: {
+                **value,
+                "estimated_cost_usd": round(value.get("estimated_cost_usd", 0.0), 4),
+                "actual_cost_usd": round(value.get("actual_cost_usd", 0.0), 4),
+            }
+            for key, value in source_breakdown.items()
+        },
+        "budget_status": _build_budget_status(total_tokens, total_actual_or_estimated_cost, daily_tokens, daily_cost),
+        "data_quality": data_quality,
+        "limit_guidance": [
+            "Set AIOS_DAILY_TOKEN_LIMIT / AIOS_MONTHLY_TOKEN_LIMIT for dashboard alerts.",
+            "Set AIOS_DAILY_COST_LIMIT_USD / AIOS_MONTHLY_COST_LIMIT_USD for spend alerts.",
+            "For Hermes hard caps, lower model.max_tokens and agent.max_turns in Hermes config.yaml; provider-side account limits are the true spend stop.",
+        ],
         "generated_at": datetime.now().isoformat(),
     }
 

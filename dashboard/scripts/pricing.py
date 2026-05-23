@@ -8,10 +8,15 @@ All cost calculations in the dashboard should import from here.
 # cache_read is ~10% of input rate; cache_creation is 125% of input rate
 
 PRICES = {
-    "claude-opus-4-7":    {"input": 15.0, "output": 75.0, "cache_creation": 18.75, "cache_read": 1.50},
-    "claude-opus-4-6":    {"input": 15.0, "output": 75.0, "cache_creation": 18.75, "cache_read": 1.50},
+    "claude-opus-4-7":    {"input": 5.0,  "output": 25.0, "cache_creation": 6.25,  "cache_read": 0.50},
+    "claude-opus-4-6":    {"input": 5.0,  "output": 25.0, "cache_creation": 6.25,  "cache_read": 0.50},
+    "claude-opus-4-5":    {"input": 5.0,  "output": 25.0, "cache_creation": 6.25,  "cache_read": 0.50},
+    "claude-opus-4-1":    {"input": 15.0, "output": 75.0, "cache_creation": 18.75, "cache_read": 1.50},
+    "claude-opus-4":      {"input": 15.0, "output": 75.0, "cache_creation": 18.75, "cache_read": 1.50},
     "claude-sonnet-4-7":  {"input": 3.0,  "output": 15.0, "cache_creation": 3.75,  "cache_read": 0.30},
     "claude-sonnet-4-6":  {"input": 3.0,  "output": 15.0, "cache_creation": 3.75,  "cache_read": 0.30},
+    "claude-sonnet-4-5":  {"input": 3.0,  "output": 15.0, "cache_creation": 3.75,  "cache_read": 0.30},
+    "claude-sonnet-4":    {"input": 3.0,  "output": 15.0, "cache_creation": 3.75,  "cache_read": 0.30},
     "claude-haiku-4-5":   {"input": 1.0,  "output": 5.0,  "cache_creation": 1.25,  "cache_read": 0.10},
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cache_creation": 1.25, "cache_read": 0.10},
 }
