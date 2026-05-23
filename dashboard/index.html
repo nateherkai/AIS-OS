@@ -3163,7 +3163,20 @@ async function loadUsage() {
   const dq = (d.data_quality || []).map(x =>
     `<div style="font-size:12px;color:#facc15;margin-top:6px;">${escapeHtml(x.source)}: ${escapeHtml(x.message || x.status || '')}</div>`
   ).join('');
-  if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + dq;
+  const openrouter = (d.provider_accounts || {}).openrouter || {};
+  let openrouterHtml = '';
+  if (openrouter.configured) {
+    openrouterHtml = openrouter.ok
+      ? `<div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:7px 0;">
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <strong style="color:#fff;">OpenRouter Account</strong>
+            <span>$${Number(openrouter.balance_usd||0).toFixed(2)} balance</span>
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.38);">total usage $${Number(openrouter.total_usage_usd||0).toFixed(2)} · key usage ${openrouter.key_usage_usd == null ? 'unknown' : '$' + Number(openrouter.key_usage_usd).toFixed(2)}</div>
+        </div>`
+      : `<div style="font-size:12px;color:#f87171;margin-top:6px;">OpenRouter account check failed: ${escapeHtml(openrouter.error || 'unknown error')}</div>`;
+  }
+  if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + openrouterHtml + dq;
 
   const budgetEl = document.getElementById('usage-budget-status');
   const budgets = d.budget_status || {};

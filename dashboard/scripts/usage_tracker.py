@@ -21,6 +21,7 @@ import os
 import sqlite3
 import sys
 import time
+import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -39,6 +40,7 @@ HERMES_STATE_DB = Path(
     or os.environ.get("AIOS_HERMES_STATE_DB")
     or str(HOME / ".hermes" / "state.db")
 ).expanduser()
+OPENROUTER_API_BASE = os.environ.get("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1").rstrip("/")
 
 # ── Subscriptions ───────────────────────────────────────────────
 # plan_tokens = None means "no hard ceiling, rate-limited"
@@ -269,6 +271,57 @@ def _iter_hermes_sessions(days: int = 30):
     finally:
         if conn is not None:
             conn.close()
+
+
+def _fetch_openrouter_account_usage() -> dict | None:
+    """Fetch OpenRouter account/key spend if OPENROUTER_API_KEY is configured."""
+    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not key:
+        return None
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Accept": "application/json",
+    }
+
+    def get_json(path: str) -> dict:
+        req = urllib.request.Request(f"{OPENROUTER_API_BASE}{path}", headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    try:
+        credits = (get_json("/credits") or {}).get("data") or {}
+        try:
+            key_data = (get_json("/key") or {}).get("data") or {}
+        except Exception:
+            key_data = {}
+    except Exception as exc:
+        return {
+            "configured": True,
+            "ok": False,
+            "error": str(exc)[:200],
+            "base_url": OPENROUTER_API_BASE,
+        }
+
+    total_credits = float(credits.get("total_credits") or 0.0)
+    total_usage = float(credits.get("total_usage") or 0.0)
+    limit = key_data.get("limit")
+    remaining = key_data.get("limit_remaining")
+    usage = key_data.get("usage")
+    return {
+        "configured": True,
+        "ok": True,
+        "base_url": OPENROUTER_API_BASE,
+        "total_credits_usd": round(total_credits, 4),
+        "total_usage_usd": round(total_usage, 4),
+        "balance_usd": round(max(0.0, total_credits - total_usage), 4),
+        "key_limit_usd": limit if isinstance(limit, (int, float)) else None,
+        "key_remaining_usd": remaining if isinstance(remaining, (int, float)) else None,
+        "key_usage_usd": round(float(usage), 4) if isinstance(usage, (int, float)) else None,
+        "usage_daily_usd": round(float(key_data.get("usage_daily")), 4) if isinstance(key_data.get("usage_daily"), (int, float)) else None,
+        "usage_weekly_usd": round(float(key_data.get("usage_weekly")), 4) if isinstance(key_data.get("usage_weekly"), (int, float)) else None,
+        "usage_monthly_usd": round(float(key_data.get("usage_monthly")), 4) if isinstance(key_data.get("usage_monthly"), (int, float)) else None,
+        "limit_reset": key_data.get("limit_reset"),
+    }
 
 
 def _five_hour_window_stats() -> dict:
@@ -621,6 +674,9 @@ def usage_stats() -> dict:
                 "actual_cost_usd": round(value.get("actual_cost_usd", 0.0), 4),
             }
             for key, value in source_breakdown.items()
+        },
+        "provider_accounts": {
+            "openrouter": _fetch_openrouter_account_usage() or {"configured": False, "ok": False},
         },
         "budget_status": _build_budget_status(total_tokens, total_actual_or_estimated_cost, daily_tokens, daily_cost),
         "data_quality": data_quality,
