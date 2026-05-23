@@ -45,3 +45,19 @@ Keep it terse. Future-you will thank present-you for capturing the *why*, not ju
 **Commit:** `a556f944` on `ag-coach-app:main`, deployed to project `nkoyotdafqllgbpuklva`.
 
 **Owner:** Bryan
+
+---
+
+## 2026-05-22 — Switch AIOS↔Hermes bridge to push model
+
+**Decision:** Replace HTTP pull bridge with file-based push. AIOS cron writes daily snapshot JSON files into `hermes-claw/hermes/state/`, commits to repo, Railway auto-redeploys. Hermes reads files instead of calling AIOS API.
+
+**Why:** Current pull bridge dead — `aios.agcoachos.com` returns Cloudflare Access 403 to Railway. Even if unblocked, laptop sleep/offline silently breaks Hermes context. Push survives laptop-offline (stale snapshot still valid).
+
+**Alternatives considered:** Cloudflare bypass (papers over wrong arch), move AIOS to Railway ($5/mo, overkill for a dev dashboard), tunnel/ngrok (fragile).
+
+**Spec:** `decisions/0001-aios-hermes-push-model.md`
+
+**Status:** proposed — not yet built.
+
+**Owner:** Bryan
