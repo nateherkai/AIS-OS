@@ -305,10 +305,14 @@ def analyze() -> dict:
         if 2 <= v < 3 and any(q in k for q in ("what is", "where is", "how do i", "remind me"))
     ][:5]
 
-    # Dimension 5: Skill underuse
+    # Dimension 5: Skill underuse — skip snoozed/dismissed skills
+    cfg = _load_config()
+    snoozed = set(cfg.get("snoozed_dream_headlines", []))
     skills_doc = json.loads(SKILLS_FILE.read_text())
     underused = [{"skill": s["name"], "reason": "never invoked"}
-                 for s in skills_doc["skills"] if s["run_count"] == 0][:5]
+                 for s in skills_doc["skills"]
+                 if s["run_count"] == 0
+                 and f'{s["name"]} never invoked' not in snoozed][:5]
 
     # Dimension 6: Skill overuse — manual tool repetition (Bash >100 calls)
     tool_counter = Counter(tool_calls)

@@ -32,8 +32,19 @@ SKILLS_INSTALL_DIR = Path.home() / ".claude" / "skills"
 QUARANTINE_DIR = SKILLS_INSTALL_DIR / "_quarantine"
 
 DIM_TO_KIND = {
+    # Only dims with a concrete, repeatable user-typed trigger become skills.
     "repeated-task": "skill",
     "workflow": "skill",
+    # Everything else routes to non-skill kinds (not yet implemented → returns
+    # a clean "needs-fix" rather than shipping a junk stub skill).
+    "slow-workflow": "memo",
+    "skill-underuse": "doc",
+    "tool-overuse": "memo",
+    "knowledge-silo": "memo",
+    "cross-tool-friction": "memo",
+    "memory-gap": "memory",
+    "token-waste": "doc",
+    "external-opp": "doc",
     "skill-perf": "skill",
     "memory-health": "memory",
     "session-hygiene": "hook",
@@ -198,12 +209,14 @@ def promote(card_id: str, kind_override: str | None, force: bool) -> int:
 
     kind = infer_kind(card, kind_override)
     if kind != "skill":
-        msg = f"kind={kind!r} not yet supported by promote.py (only skill). Card: {card.get('title')}"
+        msg = (f"dim={card.get('dim')!r} not promotable to skill (would create junk trigger). "
+               f"Suggested kind={kind!r} — not yet implemented. Use Accept / Turn into task instead.")
         log_verdict(card_id, "needs-fix", None, msg)
         print(msg)
         return 3
 
-    name = slugify(card.get("title", card_id))
+    trigger = (card.get("skill_trigger") or card.get("title") or card_id).strip()
+    name = slugify(trigger)
     rendered = render_skill(rc, name)
     passed, smoke_report = smoke_test_skill(rendered)
     artifact = install_skill(name, rendered, passed, smoke_report)

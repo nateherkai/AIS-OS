@@ -420,6 +420,20 @@ def api_dreams_action(body: DreamAction):
     }
     card["status"] = status_map[action]
     card["updated_at"] = datetime.now().isoformat()
+    # Dismiss → snooze headline so dream_machine won't resurface it
+    if action == "dismiss":
+        headline = card.get("insight") or card.get("title", "")
+        cfg_path = BASE / "config.json"
+        if headline and cfg_path.exists():
+            try:
+                cfg = json.loads(cfg_path.read_text())
+                snoozed = cfg.get("snoozed_dream_headlines", [])
+                if headline not in snoozed:
+                    snoozed.append(headline)
+                    cfg["snoozed_dream_headlines"] = snoozed[-200:]
+                    cfg_path.write_text(json.dumps(cfg, indent=2))
+            except Exception:
+                pass
     task_id = None
     if action == "task":
         tasks = read_json("tasks.json")

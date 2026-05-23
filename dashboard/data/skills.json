@@ -1,13 +1,47 @@
 {
   "skills": [
-    {"name": "/onboard", "value_saved_per_run": 60, "run_count": 1, "last_run": "2026-05-10", "model_tier": "opus"},
-    {"name": "/audit", "value_saved_per_run": 30, "run_count": 2, "last_run": "2026-05-13", "model_tier": "sonnet"},
-    {"name": "/level-up", "value_saved_per_run": 45, "run_count": 1, "last_run": "2026-05-11", "model_tier": "opus"},
-    {"name": "/weekly-pipeline-check", "value_saved_per_run": 20, "run_count": 1, "last_run": "2026-05-12", "model_tier": "sonnet"},
-    {"name": "/trial-follow-up", "value_saved_per_run": 90, "run_count": 0, "last_run": null, "model_tier": "sonnet"},
-    {"name": "/draft-reply", "value_saved_per_run": 15, "run_count": 0, "last_run": null, "model_tier": "haiku"},
-    {"name": "/graphify", "value_saved_per_run": 30, "run_count": 0, "last_run": null, "model_tier": "opus"},
-    {"name": "/notebooklm", "value_saved_per_run": 60, "run_count": 0, "last_run": null, "model_tier": "sonnet"}
+    {
+      "name": "/onboard",
+      "value_saved_per_run": 60,
+      "run_count": 1,
+      "last_run": "2026-05-10",
+      "model_tier": "opus"
+    },
+    {
+      "name": "/audit",
+      "value_saved_per_run": 30,
+      "run_count": 2,
+      "last_run": "2026-05-13",
+      "model_tier": "sonnet"
+    },
+    {
+      "name": "/level-up",
+      "value_saved_per_run": 45,
+      "run_count": 1,
+      "last_run": "2026-05-11",
+      "model_tier": "opus"
+    },
+    {
+      "name": "/weekly-pipeline-check",
+      "value_saved_per_run": 20,
+      "run_count": 1,
+      "last_run": "2026-05-12",
+      "model_tier": "sonnet"
+    },
+    {
+      "name": "/graphify",
+      "value_saved_per_run": 30,
+      "run_count": 0,
+      "last_run": null,
+      "model_tier": "opus"
+    },
+    {
+      "name": "/notebooklm",
+      "value_saved_per_run": 60,
+      "run_count": 0,
+      "last_run": null,
+      "model_tier": "sonnet"
+    }
   ],
   "hourly_rate": 75
 }
