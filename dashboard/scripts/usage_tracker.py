@@ -480,7 +480,7 @@ def usage_stats() -> dict:
         })
 
     days_left = _days_left_in_cycle()
-    days_elapsed = max(1, 30 - days_left)
+    rolling_window_days = 30
 
     # Five-hour window for Claude Pro Max
     five_h = _five_hour_window_stats()
@@ -555,7 +555,7 @@ def usage_stats() -> dict:
         else:
             pct = None  # No plan ceiling — rate-limited
 
-        daily_rate = used_billable / days_elapsed if days_elapsed > 0 else 0
+        daily_rate = used_billable / rolling_window_days
 
         entry = {
             "name": sub["name"],
