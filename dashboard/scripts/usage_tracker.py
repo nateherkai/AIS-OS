@@ -51,8 +51,8 @@ SUBSCRIPTIONS = [
         "rate_limit_note": "Rate-limited per 5-hour window; set CLAUDE_MAX_MONTHLY_USD=200 for Max 20x",
     },
     {
-        "name": "ChatGPT Pro",
-        "monthly_usd": 200,
+        "name": "ChatGPT Plus",
+        "monthly_usd": float(os.environ.get("CHATGPT_MONTHLY_USD", "20")),
         "model_family": "openai",
         "plan_tokens": None,          # subscription, no API events tracked here
         "rate_limit_note": "Subscription — track usage in ChatGPT",
