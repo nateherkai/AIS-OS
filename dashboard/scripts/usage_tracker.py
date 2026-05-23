@@ -45,10 +45,10 @@ HERMES_STATE_DB = Path(
 SUBSCRIPTIONS = [
     {
         "name": "Claude Pro Max",
-        "monthly_usd": 200,
+        "monthly_usd": float(os.environ.get("CLAUDE_MAX_MONTHLY_USD", "100")),
         "model_family": "claude",
         "plan_tokens": None,          # rate-limited per 5h window, not monthly
-        "rate_limit_note": "Rate-limited per 5-hour window",
+        "rate_limit_note": "Rate-limited per 5-hour window; set CLAUDE_MAX_MONTHLY_USD=200 for Max 20x",
     },
     {
         "name": "ChatGPT Pro",

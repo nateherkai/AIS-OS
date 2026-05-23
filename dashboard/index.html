@@ -3096,10 +3096,10 @@ async function loadUsage() {
   subCards.innerHTML = (d.subscriptions || []).map(sub => {
     const hasPct = sub.pct !== null && sub.pct !== undefined;
     const color = hasPct ? usageBarColor(sub.pct) : 'green';
-    const savings = sub.net_savings_usd;
-    const savingsHtml = savings >= 0
-      ? `<span class="save">saving $${savings.toFixed(2)}</span>`
-      : `<span class="cost">overpaying $${Math.abs(savings).toFixed(2)}</span>`;
+    const subscriptionDelta = (sub.api_equivalent_usd || 0) - (sub.monthly_usd || 0);
+    const savingsHtml = subscriptionDelta >= 0
+      ? `<span class="save">subscription advantage $${subscriptionDelta.toFixed(2)}</span>`
+      : `<span class="cost">subscription premium $${Math.abs(subscriptionDelta).toFixed(2)}</span>`;
 
     // Per-token breakdown
     const cacheInfo = sub.cache_read_tokens > 0
@@ -3139,8 +3139,8 @@ async function loadUsage() {
   savPanel.innerHTML = `
     Total subscriptions: <strong style="color:#D4A574;">$${d.total_subscription_usd}/mo</strong><br>
     API equivalent (at standard rates): <strong style="color:#D4A574;">$${d.total_api_equivalent_usd}</strong><br>
-    Net ${netSav >= 0 ? '<span style="color:#4ade80;">savings</span>' : '<span style="color:#f87171;">overspend</span>'}:
-      <strong style="${netSav >= 0 ? 'color:#4ade80;' : 'color:#f87171;'}">$${Math.abs(netSav).toFixed(2)}/mo</strong><br>
+    Subscription ${netSav >= 0 ? '<span style="color:#f87171;">premium</span>' : '<span style="color:#4ade80;">advantage</span>'}:
+      <strong style="${netSav >= 0 ? 'color:#f87171;' : 'color:#4ade80;'}">$${Math.abs(netSav).toFixed(2)}/mo</strong><br>
     Sessions (30d): <strong style="color:#D4A574;">${d.total_sessions_30d}</strong> ·
     Tokens (30d): <strong style="color:#D4A574;">${(d.total_tokens_30d||0).toLocaleString()}</strong>
   `;
@@ -3185,7 +3185,7 @@ async function loadUsage() {
 
   // Savings badge on mini-card
   const badge = document.getElementById('usage-savings-badge');
-  if (badge) badge.textContent = netSav >= 0 ? `saving $${netSav.toFixed(0)}/mo` : `overpaying $${Math.abs(netSav).toFixed(0)}/mo`;
+  if (badge) badge.textContent = netSav >= 0 ? `premium $${netSav.toFixed(0)}/mo` : `advantage $${Math.abs(netSav).toFixed(0)}/mo`;
 
   // Daily burn chart (canvas)
   drawBurnChart(d.daily_burn_14d || []);
