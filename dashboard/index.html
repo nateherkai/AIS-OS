@@ -709,14 +709,30 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 
   <!-- ══ USAGE VIEW ══ -->
   <div id="view-usage" class="view">
-    <div class="panel-title">Token Usage <span id="usage-gen-ts">—</span></div>
+    <div class="panel-title">AI Spend Ledger <span id="usage-gen-ts">—</span></div>
+
+    <div class="panel glass" id="usage-spend-panel" style="padding:18px 22px;">
+      <div class="panel-title" style="margin-bottom:12px;">Known Cash Spend</div>
+      <div id="usage-spend-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;"></div>
+      <div id="usage-spend-note" style="font-size:12px;color:rgba(255,255,255,0.38);margin-top:10px;"></div>
+    </div>
+
+    <div class="panel glass" style="padding:18px 22px;">
+      <div class="panel-title" style="margin-bottom:12px;">Provider Breakdown</div>
+      <div id="usage-provider-table" style="overflow-x:auto;"></div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title" style="margin-bottom:12px;">Imported AI Cash Charges</div>
+      <canvas id="usage-spend-chart" height="120" style="width:100%;max-width:900px;display:block;"></canvas>
+    </div>
 
     <!-- Subscription bar cards -->
     <div id="usage-sub-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
 
     <!-- Savings summary -->
     <div class="panel glass" id="usage-savings-panel" style="padding:18px 22px;">
-      <div class="panel-title" style="margin-bottom:12px;">Monthly Savings Summary</div>
+      <div class="panel-title" style="margin-bottom:12px;">API-Equivalent Value (Not A Bill)</div>
       <div id="usage-savings-detail" style="font-size:15px;color:rgba(255,255,255,0.65);line-height:2;"></div>
     </div>
 
@@ -729,6 +745,11 @@ body { background:#050510; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
         <div class="panel-title" style="margin-bottom:12px;">Budget Limits</div>
         <div id="usage-budget-status" style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.8;"></div>
       </div>
+    </div>
+
+    <div class="panel glass" style="padding:18px 22px;">
+      <div class="panel-title" style="margin-bottom:12px;">Keys & Accounts Found</div>
+      <div id="usage-key-inventory" style="overflow-x:auto;"></div>
     </div>
 
     <!-- Daily burn line chart (14d) -->
@@ -3081,6 +3102,18 @@ function renderUsageMiniBar(sub) {
   </div>`;
 }
 
+function money(v, digits=2) {
+  return `$${Number(v || 0).toFixed(digits)}`;
+}
+
+function renderPlainTable(headers, rows) {
+  if (!rows || rows.length === 0) return '<div class="loading" style="font-size:14px;">No data yet</div>';
+  return `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:720px;">
+    <thead><tr>${headers.map(h => `<th style="text-align:left;color:rgba(255,255,255,0.45);font-weight:600;padding:8px;border-bottom:1px solid rgba(255,255,255,0.08);">${escapeHtml(h)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(row => `<tr>${row.map(cell => `<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.72);vertical-align:top;">${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+}
+
 async function loadUsage() {
   let d;
   try {
@@ -3090,6 +3123,47 @@ async function loadUsage() {
     return;
   }
   document.getElementById('usage-gen-ts').textContent = (d.generated_at || '').slice(0,16);
+
+  const actual = d.actual_spend || {};
+  const spendSummary = document.getElementById('usage-spend-summary');
+  if (spendSummary) {
+    const cardWindow = actual.card_window || {};
+    const metrics = [
+      ['Known monthly cash', money(actual.known_monthly_usd), 'subs + imported API/top-ups'],
+      ['Subscriptions', money(actual.subscription_usd), 'Claude Max 5x, ChatGPT Plus, Gemini'],
+      ['Imported API charges', money(actual.imported_api_charges_usd), cardWindow.window_label || 'card import'],
+      ['Token logs found', (d.total_tokens_30d||0).toLocaleString(), `${d.total_sessions_30d || 0} local sessions/events`],
+    ];
+    spendSummary.innerHTML = metrics.map(([label, value, sub]) => `
+      <div style="border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);border-radius:8px;padding:12px 14px;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.42);">${escapeHtml(label)}</div>
+        <div style="font-size:24px;color:#fff;font-weight:700;margin-top:3px;">${escapeHtml(value)}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.34);margin-top:3px;">${escapeHtml(sub)}</div>
+      </div>`).join('');
+  }
+  const spendNote = document.getElementById('usage-spend-note');
+  if (spendNote) {
+    const cw = (actual.card_window || {});
+    spendNote.textContent = `${actual.note || ''} Card window: ${cw.window_start || 'n/a'} to ${cw.window_end || 'n/a'}.`;
+  }
+
+  const providerTable = document.getElementById('usage-provider-table');
+  if (providerTable) {
+    const rows = (actual.providers || []).map(p => [
+      `<strong style="color:#fff;">${escapeHtml(p.label || p.provider)}</strong>`,
+      `<strong style="color:#D4A574;">${money(p.known_cash_usd)}</strong>`,
+      money(p.subscription_usd),
+      money(p.card_charges_usd),
+      p.account_usage_usd ? money(p.account_usage_usd, 4) : '<span style="color:rgba(255,255,255,0.35);">—</span>',
+      (p.local_tokens || 0).toLocaleString(),
+      money(p.local_estimated_cost_usd, 4),
+      `<span style="color:${p.status === 'tracked' ? '#4ade80' : '#facc15'};">${escapeHtml(p.status || 'gap')}</span>`,
+    ]);
+    providerTable.innerHTML = renderPlainTable(
+      ['Provider', 'Known cash', 'Subscription', 'Card/API charges', 'Provider account', 'Local tokens', 'API equiv', 'Status'],
+      rows
+    );
+  }
 
   // Sub cards
   const subCards = document.getElementById('usage-sub-cards');
@@ -3128,7 +3202,7 @@ async function loadUsage() {
         <span class="usage-sub-meta">${metaLabel}</span>
       </div>
       ${hasPct ? `<div class="usage-bar-wrap"><div class="usage-bar-fill ${color}" style="width:${Math.min(sub.pct,100)}%"></div></div><div class="usage-bar-label"><span>${sub.pct}% used</span><span>${(sub.daily_burn||0).toLocaleString()} tok/day avg</span></div>` : `<div class="usage-bar-label"><span>${(sub.daily_burn||0).toLocaleString()} billable tok/day avg (30d)</span></div>`}
-      <div class="usage-api-line">$${sub.monthly_usd}/mo sub · $${sub.api_equivalent_usd} API equivalent · ${savingsHtml}</div>
+      <div class="usage-api-line">$${sub.monthly_usd}/mo subscription · $${sub.api_equivalent_usd} API-equivalent value (not charged) · ${savingsHtml}</div>
       ${cacheInfo}${windowHtml}${manualHtml}
     </div>`;
   }).join('');
@@ -3137,12 +3211,13 @@ async function loadUsage() {
   const savPanel = document.getElementById('usage-savings-detail');
   const netSav = d.net_savings_usd || 0;
   savPanel.innerHTML = `
-    Total subscriptions: <strong style="color:#D4A574;">$${d.total_subscription_usd}/mo</strong><br>
-    API equivalent (at standard rates): <strong style="color:#D4A574;">$${d.total_api_equivalent_usd}</strong><br>
-    Subscription ${netSav >= 0 ? '<span style="color:#f87171;">premium</span>' : '<span style="color:#4ade80;">advantage</span>'}:
+    Subscription baseline: <strong style="color:#D4A574;">$${d.total_subscription_usd}/mo</strong><br>
+    Same token volume at standard API rates: <strong style="color:#D4A574;">$${d.total_api_equivalent_usd}</strong><br>
+    Subscription ${netSav >= 0 ? '<span style="color:#f87171;">premium vs logs</span>' : '<span style="color:#4ade80;">advantage vs API</span>'}:
       <strong style="${netSav >= 0 ? 'color:#f87171;' : 'color:#4ade80;'}">$${Math.abs(netSav).toFixed(2)}/mo</strong><br>
     Sessions (30d): <strong style="color:#D4A574;">${d.total_sessions_30d}</strong> ·
-    Tokens (30d): <strong style="color:#D4A574;">${(d.total_tokens_30d||0).toLocaleString()}</strong>
+    Tokens (30d): <strong style="color:#D4A574;">${(d.total_tokens_30d||0).toLocaleString()}</strong><br>
+    <span style="font-size:12px;color:rgba(255,255,255,0.38);">This section is for comparison only. The cash ledger above is the spend number.</span>
   `;
 
   const sourceEl = document.getElementById('usage-source-breakdown');
@@ -3178,6 +3253,19 @@ async function loadUsage() {
   }
   if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + openrouterHtml + dq;
 
+  const keyEl = document.getElementById('usage-key-inventory');
+  if (keyEl) {
+    const keyRows = (d.key_inventory || []).map(k => [
+      `<strong style="color:#fff;">${escapeHtml(k.source || '')}</strong>`,
+      escapeHtml(k.provider || ''),
+      escapeHtml(k.kind || ''),
+      `<span style="color:${k.status === 'found' ? '#4ade80' : k.status === 'missing' ? 'rgba(255,255,255,0.35)' : '#facc15'};">${escapeHtml(k.status || '')}</span>`,
+      escapeHtml(k.detail || ''),
+      `<span style="font-family:monospace;font-size:11px;color:rgba(255,255,255,0.38);">${escapeHtml(k.path || '')}</span>`,
+    ]);
+    keyEl.innerHTML = renderPlainTable(['Source', 'Provider', 'Kind', 'Status', 'What found', 'Path'], keyRows);
+  }
+
   const budgetEl = document.getElementById('usage-budget-status');
   const budgets = d.budget_status || {};
   const budgetRows = ['daily_tokens','monthly_tokens','daily_cost','monthly_cost'].map(k => {
@@ -3202,6 +3290,7 @@ async function loadUsage() {
 
   // Daily burn chart (canvas)
   drawBurnChart(d.daily_burn_14d || []);
+  drawSpendChart((d.actual_spend || {}).daily_card_spend || []);
 
   // Top sessions
   const sessEl = document.getElementById('usage-top-sessions');
@@ -3219,6 +3308,48 @@ async function loadUsage() {
         <div class="expense-amt" style="color:#D4A574;">${s.tokens.toLocaleString()}</div>
       </div>`).join('');
   }
+}
+
+function drawSpendChart(data) {
+  const canvas = document.getElementById('usage-spend-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 800;
+  const H = 120;
+  canvas.width = W;
+  canvas.height = H;
+  const values = data.map(d => d.usd || 0);
+  const maxVal = Math.max(...values, 1);
+  const pad = { top: 10, right: 16, bottom: 28, left: 56 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + cH - (i / 4) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('$' + (maxVal * i / 4).toFixed(0), pad.left - 4, y + 4);
+  }
+  const barW = Math.max(3, cW / Math.max(values.length, 1) * 0.62);
+  values.forEach((v, i) => {
+    const x = pad.left + (i / Math.max(values.length - 1, 1)) * cW - barW / 2;
+    const h = (v / maxVal) * cH;
+    ctx.fillStyle = v > 0 ? 'rgba(74,222,128,0.65)' : 'rgba(255,255,255,0.08)';
+    ctx.fillRect(x, pad.top + cH - h, barW, Math.max(h, 1));
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  data.forEach((d, i) => {
+    if (i % 4 === 0) {
+      const x = pad.left + (i / Math.max(values.length - 1, 1)) * cW;
+      ctx.fillText((d.date || '').slice(5), x, H - 6);
+    }
+  });
 }
 
 function drawBurnChart(data) {

@@ -18,6 +18,7 @@ Budget: ~5s typical. Safe to call on every /api/usage hit.
 """
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -34,7 +35,13 @@ if str(_HERE) not in sys.path:
 from pricing import compute_api_cost
 
 HOME = Path.home()
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
 PROJECTS_ROOT = HOME / ".claude" / "projects"
+CODEX_LOGS_DB = HOME / ".codex" / "logs_2.sqlite"
+CODEX_AUTH_FILE = HOME / ".codex" / "auth.json"
+CODEX_CONFIG_FILE = HOME / ".codex" / "config.toml"
+GEMINI_ROOT = HOME / ".gemini"
 HERMES_STATE_DB = Path(
     os.environ.get("HERMES_STATE_DB")
     or os.environ.get("AIOS_HERMES_STATE_DB")
@@ -46,7 +53,7 @@ OPENROUTER_API_BASE = os.environ.get("OPENROUTER_API_BASE", "https://openrouter.
 # plan_tokens = None means "no hard ceiling, rate-limited"
 SUBSCRIPTIONS = [
     {
-        "name": "Claude Pro Max",
+        "name": "Claude Max 5x",
         "monthly_usd": float(os.environ.get("CLAUDE_MAX_MONTHLY_USD", "100")),
         "model_family": "claude",
         "plan_tokens": None,          # rate-limited per 5h window, not monthly
@@ -61,11 +68,29 @@ SUBSCRIPTIONS = [
     },
     {
         "name": "Gemini Advanced",
-        "monthly_usd": 20,
+        "monthly_usd": float(os.environ.get("GEMINI_MONTHLY_USD", "21.31")),
         "model_family": "gemini",
         "plan_tokens": None,
         "rate_limit_note": "Subscription — track usage in Gemini",
     },
+]
+
+AI_VENDOR_PATTERNS = [
+    ("anthropic", re.compile(r"anthropic|claude", re.I)),
+    ("openrouter", re.compile(r"openrouter", re.I)),
+    ("openai", re.compile(r"openai|chatgpt", re.I)),
+    ("google_gemini", re.compile(r"google|gemini", re.I)),
+]
+
+KNOWN_AI_CONFIGS = [
+    ("AIS-OS .env", BASE_DIR.parent / ".env"),
+    ("AgCoach local .env", HOME / ".agcoach" / ".env"),
+    ("Hermes config", HOME / ".hermes" / "config.yaml"),
+    ("Hermes repo .env", Path("/Volumes/Samsung PSSD T7/hermes-claw/.env")),
+    ("Codex auth", CODEX_AUTH_FILE),
+    ("Codex config", CODEX_CONFIG_FILE),
+    ("Gemini OAuth", GEMINI_ROOT / "oauth_creds.json"),
+    ("Gemini accounts", GEMINI_ROOT / "google_accounts.json"),
 ]
 
 # ── API pricing per 1M tokens (in/out) ────────────────────────
@@ -182,6 +207,239 @@ def _build_daily_burn(daily_tokens: dict, days: int = 14) -> list:
         d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
         result.append({"date": d, "tokens": daily_tokens.get(d, 0)})
     return result
+
+
+def _safe_float(value, default=0.0) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_card_date(value: str) -> datetime | None:
+    if not value:
+        return None
+    for fmt in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _load_expense_doc() -> dict:
+    path = DATA_DIR / "expenses.json"
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _provider_for_merchant(merchant: str) -> str | None:
+    for provider, pattern in AI_VENDOR_PATTERNS:
+        if pattern.search(merchant or ""):
+            return provider
+    return None
+
+
+def _build_ai_card_spend(days: int = 30) -> dict:
+    """Actual imported card charges for AI vendors.
+
+    Apple Card imports are not always current to today's date, so the rolling
+    window is anchored to the newest imported transaction date. That keeps the
+    table honest instead of showing $0 just because May has not been imported.
+    """
+    doc = _load_expense_doc()
+    rows = doc.get("expenses_full") or []
+    parsed = []
+    for row in rows:
+        dt = _parse_card_date(row.get("date", ""))
+        provider = _provider_for_merchant(row.get("merchant", ""))
+        if not dt or not provider:
+            continue
+        parsed.append((dt, provider, row))
+
+    if not parsed:
+        return {
+            "window_label": "No card import",
+            "window_start": None,
+            "window_end": None,
+            "total_usd": 0.0,
+            "by_provider": {},
+            "charges": [],
+        }
+
+    newest = max(dt for dt, _, _ in parsed)
+    cutoff = newest - timedelta(days=days)
+    by_provider = defaultdict(float)
+    charges = []
+    for dt, provider, row in parsed:
+        if dt < cutoff:
+            continue
+        amount = _safe_float(row.get("amount"))
+        by_provider[provider] += amount
+        charges.append({
+            "date": dt.strftime("%Y-%m-%d"),
+            "provider": provider,
+            "merchant": row.get("merchant", ""),
+            "amount_usd": round(amount, 2),
+            "business": row.get("business", ""),
+        })
+
+    charges.sort(key=lambda r: r["date"], reverse=True)
+    by_provider = {k: round(v, 2) for k, v in sorted(by_provider.items(), key=lambda x: -x[1])}
+    return {
+        "window_label": f"Last {days} days in imported card data",
+        "window_start": cutoff.strftime("%Y-%m-%d"),
+        "window_end": newest.strftime("%Y-%m-%d"),
+        "total_usd": round(sum(by_provider.values()), 2),
+        "by_provider": by_provider,
+        "charges": charges[:40],
+    }
+
+
+def _build_daily_card_spend(card_window: dict) -> list:
+    start = card_window.get("window_start")
+    end = card_window.get("window_end")
+    if not start or not end:
+        return []
+    try:
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+        end_dt = datetime.strptime(end, "%Y-%m-%d")
+    except ValueError:
+        return []
+    by_day = defaultdict(float)
+    for charge in card_window.get("charges", []):
+        by_day[charge.get("date", "")] += _safe_float(charge.get("amount_usd"))
+    out = []
+    cur = start_dt
+    while cur <= end_dt:
+        key = cur.strftime("%Y-%m-%d")
+        out.append({"date": key, "usd": round(by_day.get(key, 0.0), 2)})
+        cur += timedelta(days=1)
+    return out
+
+
+def _scan_key_inventory() -> list:
+    """List AI auth material that exists locally without returning secret values."""
+    inventory = []
+
+    def add(source, path, kind, provider, status="found", detail=""):
+        inventory.append({
+            "source": source,
+            "path": str(path),
+            "kind": kind,
+            "provider": provider,
+            "status": status,
+            "detail": detail,
+        })
+
+    env_key_re = re.compile(r"^\s*([A-Z0-9_]*(?:API_KEY|TOKEN|ACCESS_TOKEN|AUTH_TOKEN|SECRET)[A-Z0-9_]*)\s*=")
+    provider_re = re.compile(r"(OPENAI|ANTHROPIC|CLAUDE|OPENROUTER|GEMINI|GOOGLE|HERMES|CODEX|PINECONE)", re.I)
+    for label, path in KNOWN_AI_CONFIGS:
+        path = Path(path).expanduser()
+        if not path.exists():
+            add(label, path, "config", "unknown", "missing", "file not present")
+            continue
+        if path.suffix == ".json":
+            try:
+                data = json.loads(path.read_text())
+            except Exception:
+                data = {}
+            if "tokens" in data or "oauth" in path.name.lower() or "accounts" in path.name.lower():
+                provider = "codex/openai" if "codex" in label.lower() else "gemini/google"
+                add(label, path, "oauth", provider, "found", "OAuth/account file present")
+            elif any(provider_re.search(str(k)) for k in data.keys()):
+                add(label, path, "config", "ai", "found", "AI config keys present")
+            else:
+                add(label, path, "config", "unknown", "found", "file present")
+            continue
+        try:
+            text = path.read_text(errors="ignore")
+        except Exception:
+            add(label, path, "config", "unknown", "unreadable", "could not read file")
+            continue
+        keys = []
+        for line in text.splitlines():
+            match = env_key_re.match(line)
+            if match and provider_re.search(match.group(1)):
+                keys.append(match.group(1))
+        if keys:
+            for key_name in sorted(set(keys)):
+                provider_match = provider_re.search(key_name)
+                provider = provider_match.group(1).lower() if provider_match else "ai"
+                add(label, path, "api_key", provider, "found", key_name)
+        elif provider_re.search(text):
+            add(label, path, "config", "ai", "found", "AI provider config present")
+        else:
+            add(label, path, "config", "unknown", "found", "file present")
+    return inventory
+
+
+def _iter_codex_response_usage(days: int = 30):
+    if not CODEX_LOGS_DB.exists():
+        return
+    cutoff = int(time.time() - days * 86400)
+    conn = None
+    seen = set()
+    try:
+        conn = sqlite3.connect(f"file:{CODEX_LOGS_DB}?mode=ro", uri=True, timeout=1.0)
+        rows = conn.execute(
+            """
+            SELECT ts, feedback_log_body
+            FROM logs
+            WHERE ts >= ? AND feedback_log_body LIKE '%response.completed%'
+            ORDER BY ts DESC
+            """,
+            (cutoff,),
+        )
+        for ts, body in rows:
+            if not body:
+                continue
+            idx = body.find("{")
+            if idx < 0:
+                continue
+            try:
+                payload = json.loads(body[idx:])
+            except Exception:
+                continue
+            response = payload.get("response") or {}
+            usage = response.get("usage") or {}
+            response_id = response.get("id") or f"{ts}:{json.dumps(usage, sort_keys=True)}"
+            if response_id in seen:
+                continue
+            seen.add(response_id)
+            if usage:
+                yield {
+                    "timestamp": ts,
+                    "response_id": response_id,
+                    "model": response.get("model") or payload.get("model") or "codex/openai",
+                    "usage": usage,
+                }
+    except Exception:
+        return
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _gemini_local_status() -> dict:
+    history_root = GEMINI_ROOT / "history"
+    project_count = 0
+    file_count = 0
+    if history_root.exists():
+        for p in history_root.iterdir():
+            if p.is_dir():
+                project_count += 1
+        for p in history_root.rglob("*"):
+            if p.is_file() and not p.name.startswith("."):
+                file_count += 1
+    return {
+        "sessions": project_count,
+        "files": file_count,
+        "oauth_present": (GEMINI_ROOT / "oauth_creds.json").exists(),
+    }
 
 
 def _per_session_top(session_tokens: dict, top_n: int = 10) -> list:
@@ -460,6 +718,81 @@ def usage_stats() -> dict:
                         pass
                 session_tokens[sid] += billable
 
+    codex_events = list(_iter_codex_response_usage(days=30) or [])
+    if CODEX_LOGS_DB.exists():
+        source_breakdown["codex"]["db_path"] = str(CODEX_LOGS_DB)
+        source_breakdown["codex"]["sessions"] = len(codex_events)
+    else:
+        data_quality.append({
+            "source": "codex",
+            "status": "missing",
+            "message": f"Codex local log DB not found at {CODEX_LOGS_DB}",
+        })
+
+    for ev in codex_events:
+        usage = ev.get("usage") or {}
+        inp = int(usage.get("input_tokens") or 0)
+        out = int(usage.get("output_tokens") or 0)
+        details_in = usage.get("input_tokens_details") or {}
+        details_out = usage.get("output_tokens_details") or {}
+        cached = int(details_in.get("cached_tokens") or 0)
+        reasoning = int(details_out.get("reasoning_tokens") or 0)
+        model = ev.get("model") or "codex/openai"
+        billable = inp + out
+        family = "openai"
+        call_cost = compute_api_cost(
+            input_tokens=max(0, inp - cached),
+            output_tokens=out,
+            cache_creation_tokens=0,
+            cache_read_tokens=cached,
+            model_str=model,
+        )
+
+        family_input[family] += inp
+        family_output[family] += out
+        family_cache_read[family] += cached
+        family_models[family].add(model)
+        model_key = (model or "codex/openai")[:48]
+        model_tokens[model_key]["input"] += inp
+        model_tokens[model_key]["output"] += out
+        model_tokens[model_key]["cache_read"] += cached
+        source_breakdown["codex"]["input_tokens"] += inp
+        source_breakdown["codex"]["output_tokens"] += out
+        source_breakdown["codex"]["cache_read_tokens"] += cached
+        source_breakdown["codex"]["reasoning_tokens"] += reasoning
+        source_breakdown["codex"]["billable_tokens"] += billable
+        source_breakdown["codex"]["estimated_cost_usd"] += call_cost
+        source_breakdown["codex"]["api_calls"] += 1
+
+        if billable > 0:
+            day = datetime.fromtimestamp(int(ev.get("timestamp") or time.time())).strftime("%Y-%m-%d")
+            daily_tokens[day] += billable
+            daily_cost[day] += call_cost
+            session_tokens[_session_key("codex", ev.get("response_id", "unknown"))] += billable
+
+    if CODEX_LOGS_DB.exists() and not codex_events:
+        data_quality.append({
+            "source": "codex",
+            "status": "zero_tokens",
+            "message": "Codex auth/logs are present, but no recent response usage rows were found in the local log DB.",
+        })
+
+    gemini_status = _gemini_local_status()
+    source_breakdown["gemini_cli"]["sessions"] = gemini_status["sessions"]
+    source_breakdown["gemini_cli"]["api_calls"] = 0
+    if gemini_status["oauth_present"]:
+        data_quality.append({
+            "source": "gemini",
+            "status": "manual",
+            "message": "Gemini OAuth/history files are present, but local Gemini history does not expose token or dollar usage. Use imported Google/Gemini card charges for spend.",
+        })
+    else:
+        data_quality.append({
+            "source": "gemini",
+            "status": "missing",
+            "message": "No Gemini OAuth file found locally.",
+        })
+
     hermes_rows = list(_iter_hermes_sessions(days=30) or [])
     if HERMES_STATE_DB.exists():
         source_breakdown["hermes"]["db_path"] = str(HERMES_STATE_DB)
@@ -657,6 +990,94 @@ def usage_stats() -> dict:
         reverse=True,
     )[:10]
 
+    provider_accounts = {
+        "openrouter": _fetch_openrouter_account_usage() or {"configured": False, "ok": False},
+    }
+    key_inventory = _scan_key_inventory()
+    card_spend = _build_ai_card_spend(days=30)
+    subscription_by_provider = {
+        "anthropic": float(os.environ.get("CLAUDE_MAX_MONTHLY_USD", "100")),
+        "openai": float(os.environ.get("CHATGPT_MONTHLY_USD", "20")),
+        "google_gemini": float(os.environ.get("GEMINI_MONTHLY_USD", "21.31")),
+        "openrouter": 0.0,
+    }
+    source_tokens_by_provider = {
+        "anthropic": source_breakdown["claude_code"]["billable_tokens"],
+        "openai": source_breakdown["codex"]["billable_tokens"],
+        "google_gemini": source_breakdown["gemini_cli"]["billable_tokens"],
+        "openrouter": 0,
+        "hermes": source_breakdown["hermes"]["billable_tokens"],
+    }
+    source_cost_by_provider = {
+        "anthropic": source_breakdown["claude_code"]["estimated_cost_usd"],
+        "openai": source_breakdown["codex"]["estimated_cost_usd"],
+        "google_gemini": source_breakdown["gemini_cli"]["estimated_cost_usd"],
+        "openrouter": 0.0,
+        "hermes": source_breakdown["hermes"]["actual_cost_usd"] or source_breakdown["hermes"]["estimated_cost_usd"],
+    }
+    provider_labels = {
+        "anthropic": "Claude / Anthropic",
+        "openai": "ChatGPT / Codex / OpenAI",
+        "google_gemini": "Gemini / Google AI",
+        "openrouter": "OpenRouter",
+        "hermes": "Hermes",
+    }
+    provider_rows = []
+    all_providers = sorted(set(provider_labels) | set(card_spend["by_provider"]) | set(subscription_by_provider))
+    for provider in all_providers:
+        account = provider_accounts.get(provider) or {}
+        account_spend = 0.0
+        if provider == "openrouter" and account.get("ok"):
+            account_spend = _safe_float(account.get("usage_monthly_usd") or account.get("key_usage_usd") or 0.0)
+        provider_subscription = round(subscription_by_provider.get(provider, 0.0), 2)
+        provider_card = round(card_spend["by_provider"].get(provider, 0.0), 2)
+        provider_known_cash = provider_subscription
+        if provider in {"anthropic", "openrouter", "openai"}:
+            provider_known_cash += provider_card
+        elif provider not in subscription_by_provider:
+            provider_known_cash += provider_card
+        provider_rows.append({
+            "provider": provider,
+            "label": provider_labels.get(provider, provider),
+            "known_cash_usd": round(provider_known_cash, 2),
+            "subscription_usd": provider_subscription,
+            "card_charges_usd": provider_card,
+            "account_usage_usd": round(account_spend, 4),
+            "local_tokens": int(source_tokens_by_provider.get(provider, 0) or 0),
+            "local_estimated_cost_usd": round(source_cost_by_provider.get(provider, 0.0) or 0.0, 4),
+            "status": "tracked" if (
+                card_spend["by_provider"].get(provider)
+                or subscription_by_provider.get(provider)
+                or source_tokens_by_provider.get(provider)
+                or account_spend
+            ) else "gap",
+        })
+    actual_subscription_usd = round(sum(subscription_by_provider.values()), 2)
+    # This is a practical "cash I know about" number: configured subscriptions
+    # plus imported provider top-ups/API charges. Google/Gemini is already in
+    # the subscription bucket, so do not double-count the same card charge.
+    actual_known_usd = round(
+        actual_subscription_usd
+        + card_spend["by_provider"].get("anthropic", 0.0)
+        + card_spend["by_provider"].get("openrouter", 0.0)
+        + card_spend["by_provider"].get("openai", 0.0),
+        2,
+    )
+    actual_spend = {
+        "known_monthly_usd": actual_known_usd,
+        "subscription_usd": actual_subscription_usd,
+        "imported_api_charges_usd": round(
+            card_spend["by_provider"].get("anthropic", 0.0)
+            + card_spend["by_provider"].get("openrouter", 0.0)
+            + card_spend["by_provider"].get("openai", 0.0),
+            2,
+        ),
+        "card_window": card_spend,
+        "daily_card_spend": _build_daily_card_spend(card_spend),
+        "providers": provider_rows,
+        "note": "Cash spend is subscriptions you configured plus imported Apple Card AI API/top-up charges. API-equivalent token value is separate and is not money charged by Claude Max/ChatGPT Plus.",
+    }
+
     return {
         "subscriptions": subs_out,
         "total_tokens_30d": total_tokens,
@@ -675,9 +1096,9 @@ def usage_stats() -> dict:
             }
             for key, value in source_breakdown.items()
         },
-        "provider_accounts": {
-            "openrouter": _fetch_openrouter_account_usage() or {"configured": False, "ok": False},
-        },
+        "provider_accounts": provider_accounts,
+        "key_inventory": key_inventory,
+        "actual_spend": actual_spend,
         "budget_status": _build_budget_status(total_tokens, total_actual_or_estimated_cost, daily_tokens, daily_cost),
         "data_quality": data_quality,
         "limit_guidance": [
