@@ -26,7 +26,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pathlib import Path as _Path
 
@@ -578,9 +578,71 @@ def _iter_hermes_sessions(days: int = 30):
             conn.close()
 
 
+def _fetch_openrouter_activity_tokens(mgmt_key: str, days: int = 30) -> dict | None:
+    """Aggregate recent OpenRouter generations into token + cost totals.
+
+    Requires a *provisioning/management* key (sk-or-prov-…) — the regular
+    inference key (sk-or-v1-…) gets 403 on /activity.
+
+    Returns None on failure (caller decides whether to show a gap).
+    """
+    headers = {
+        "Authorization": f"Bearer {mgmt_key}",
+        "Accept": "application/json",
+    }
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    page = 1
+    total_in   = 0
+    total_out  = 0
+    total_cost = 0.0
+    seen_gens  = 0
+    try:
+        while True:
+            url = f"{OPENROUTER_API_BASE}/activity?page={page}&limit=200"
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            rows = (payload or {}).get("data") or []
+            if not rows:
+                break
+            stop = False
+            for row in rows:
+                ts_raw = row.get("created_at") or row.get("generation_time") or row.get("date")
+                try:
+                    ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")) if ts_raw else None
+                except Exception:
+                    ts = None
+                if ts and ts < cutoff:
+                    stop = True
+                    continue
+                total_in   += int(row.get("tokens_prompt") or row.get("native_tokens_prompt") or 0)
+                total_out  += int(row.get("tokens_completion") or row.get("native_tokens_completion") or 0)
+                total_cost += float(row.get("usage") or row.get("total_cost") or 0.0)
+                seen_gens  += 1
+            if stop or len(rows) < 200 or page >= 50:
+                break
+            page += 1
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
+
+    return {
+        "ok": True,
+        "window_days": days,
+        "generations": seen_gens,
+        "input_tokens": total_in,
+        "output_tokens": total_out,
+        "billable_tokens": total_in + total_out,
+        "estimated_cost_usd": round(total_cost, 4),
+    }
+
+
 def _fetch_openrouter_account_usage() -> dict | None:
-    """Fetch OpenRouter account/key spend if OPENROUTER_API_KEY is configured."""
-    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    """Fetch OpenRouter account/key spend if OPENROUTER_API_KEY is configured.
+
+    Reads from process env first, then falls back to the scanned .env files
+    (KNOWN_AI_CONFIGS) so the dashboard finds the key without a shell export.
+    """
+    key, source = _read_env_value("OPENROUTER_API_KEY")
     if not key:
         return None
     headers = {
@@ -612,10 +674,19 @@ def _fetch_openrouter_account_usage() -> dict | None:
     limit = key_data.get("limit")
     remaining = key_data.get("limit_remaining")
     usage = key_data.get("usage")
+
+    # Optional: management/provisioning key unlocks /activity for token counts.
+    mgmt_key, mgmt_source = _read_env_value("OPENROUTER_MANAGEMENT_KEY")
+    activity = _fetch_openrouter_activity_tokens(mgmt_key, days=30) if mgmt_key else None
+
     return {
         "configured": True,
         "ok": True,
+        "key_source": source,
         "base_url": OPENROUTER_API_BASE,
+        "mgmt_key_present": bool(mgmt_key),
+        "mgmt_key_source": mgmt_source if mgmt_key else None,
+        "activity_30d": activity,
         "total_credits_usd": round(total_credits, 4),
         "total_usage_usd": round(total_usage, 4),
         "balance_usd": round(max(0.0, total_credits - total_usage), 4),
@@ -1030,6 +1101,35 @@ def usage_stats() -> dict:
                 daily_tokens[day] += billable
                 daily_cost[day] += cost_for_rollup
             session_tokens[_session_key("hermes", sid)] += billable
+
+    # ── OpenRouter activity (requires provisioning key) ──────────────────
+    or_mgmt_key, or_mgmt_source = _read_env_value("OPENROUTER_MANAGEMENT_KEY")
+    if or_mgmt_key:
+        or_activity = _fetch_openrouter_activity_tokens(or_mgmt_key, days=30)
+        if or_activity and or_activity.get("ok"):
+            source_breakdown["openrouter"]["sessions"]       = or_activity["generations"]
+            source_breakdown["openrouter"]["api_calls"]      = or_activity["generations"]
+            source_breakdown["openrouter"]["input_tokens"]   = or_activity["input_tokens"]
+            source_breakdown["openrouter"]["output_tokens"]  = or_activity["output_tokens"]
+            source_breakdown["openrouter"]["billable_tokens"] = or_activity["billable_tokens"]
+            source_breakdown["openrouter"]["estimated_cost_usd"] = or_activity["estimated_cost_usd"]
+            source_breakdown["openrouter"]["actual_cost_usd"]    = or_activity["estimated_cost_usd"]
+        elif or_activity and not or_activity.get("ok"):
+            data_quality.append({
+                "source": "openrouter",
+                "status": "activity_fetch_failed",
+                "message": f"OpenRouter /activity error: {or_activity.get('error')}",
+            })
+    else:
+        data_quality.append({
+            "source": "openrouter",
+            "status": "no_management_key",
+            "message": (
+                "OpenRouter token counts require a provisioning key. Create one at "
+                "https://openrouter.ai/settings/provisioning-keys and add as "
+                "OPENROUTER_MANAGEMENT_KEY in AIS-OS .env."
+            ),
+        })
 
     if hermes_rows and source_breakdown["hermes"]["billable_tokens"] == 0:
         data_quality.append({
