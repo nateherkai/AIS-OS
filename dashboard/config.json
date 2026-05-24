@@ -9,18 +9,18 @@
   "skill_suggestions": "./skill-suggestions.md",
   "subscriptions": [
     {
-      "name": "Claude Pro Max",
-      "monthly_usd": 200,
+      "name": "Claude Max 5x",
+      "monthly_usd": 100,
       "model": "claude"
     },
     {
-      "name": "ChatGPT Pro",
-      "monthly_usd": 200,
+      "name": "ChatGPT Plus",
+      "monthly_usd": 20,
       "model": "openai"
     },
     {
       "name": "Gemini Advanced",
-      "monthly_usd": 20,
+      "monthly_usd": 21.31,
       "model": "gemini"
     }
   ],

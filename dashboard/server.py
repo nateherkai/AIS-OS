@@ -212,8 +212,8 @@ def kpis():
     summary = get_pipeline_summary(schools)
     expenses = read_json("expenses.json")
     debt = read_json("debt.json")
-    # R3c: use real full card burn if available, fallback to curated AI subset sum
-    total_burn = expenses.get("monthly_charges_full") or sum(e["amount"] for e in expenses["expenses"])
+    # R3c: curated AI/dev burn only — full card total shown separately in finances
+    total_burn = expenses.get("monthly_charges_curated") or sum(e["amount"] for e in expenses["expenses"])
     rev = compute_monthly_revenue(summary["paid"])
     monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
@@ -294,7 +294,7 @@ def pipeline_check():
     schools = get_schools()
     summary = get_pipeline_summary(schools)
     expenses = read_json("expenses.json")
-    total_burn = expenses.get("monthly_charges_full") or sum(e["amount"] for e in expenses["expenses"])
+    total_burn = expenses.get("monthly_charges_curated") or sum(e["amount"] for e in expenses["expenses"])
     rev = compute_monthly_revenue(summary["paid"])
     monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
@@ -314,7 +314,7 @@ def pipeline_check():
         f"Gap:     {summary['school_goal'] - summary['paid_count']} schools to close",
         "",
         "REVENUE",
-        f"MRR: ${monthly_revenue:.2f}  |  Burn: ${total_burn:.2f}  |  Net: ${net:.2f}",
+        f"MRR: ${monthly_revenue:.2f}  |  Burn (AI/dev): ${total_burn:.2f}  |  Net: ${net:.2f}",
         "",
         "TRIALS GOING COLD (>14 days)",
     ]

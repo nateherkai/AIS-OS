@@ -1204,7 +1204,7 @@ async function loadKPIs() {
   document.getElementById('prog-schools').style.width = paidPct + '%';
 
   document.getElementById('kpi-burn').textContent = `$${burn.toFixed(0)}`;
-  document.getElementById('kpi-burn-sub').innerHTML = `<span style="color:rgba(255,255,255,0.5);font-size:13px;">real card avg</span>`;
+  document.getElementById('kpi-burn-sub').innerHTML = `<span style="color:rgba(255,255,255,0.5);font-size:13px;">AI/dev only</span>`;
   // Business split beneath burn card
   const bizEl = document.getElementById('kpi-burn-biz');
   if (bizEl && d.burn_by_business && Object.keys(d.burn_by_business).length) {
