@@ -610,15 +610,17 @@ def _fetch_openrouter_activity_tokens(mgmt_key: str, days: int = 30) -> dict | N
                 ts_raw = row.get("created_at") or row.get("generation_time") or row.get("date")
                 try:
                     ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")) if ts_raw else None
+                    if ts and ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
                 except Exception:
                     ts = None
                 if ts and ts < cutoff:
                     stop = True
                     continue
-                total_in   += int(row.get("tokens_prompt") or row.get("native_tokens_prompt") or 0)
-                total_out  += int(row.get("tokens_completion") or row.get("native_tokens_completion") or 0)
+                total_in   += int(row.get("prompt_tokens") or row.get("tokens_prompt") or row.get("native_tokens_prompt") or 0)
+                total_out  += int(row.get("completion_tokens") or row.get("tokens_completion") or row.get("native_tokens_completion") or 0)
                 total_cost += float(row.get("usage") or row.get("total_cost") or 0.0)
-                seen_gens  += 1
+                seen_gens  += int(row.get("requests") or 1)
             if stop or len(rows) < 200 or page >= 50:
                 break
             page += 1
