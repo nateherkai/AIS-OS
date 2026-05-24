@@ -58,6 +58,6 @@ Keep it terse. Future-you will thank present-you for capturing the *why*, not ju
 
 **Spec:** `decisions/0001-aios-hermes-push-model.md`
 
-**Status:** proposed — not yet built.
+**Status:** shipped (2026-05-23). Launchd cron active.
 
 **Owner:** Bryan

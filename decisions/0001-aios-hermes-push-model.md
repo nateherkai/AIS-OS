@@ -1,7 +1,7 @@
 # 0001 — AIOS ↔ Hermes: switch to push model
 
 **Date:** 2026-05-22
-**Status:** proposed
+**Status:** shipped (2026-05-23). Launchd cron active.
 **Owner:** Bryan
 
 ## Context
