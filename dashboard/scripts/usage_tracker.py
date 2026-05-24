@@ -23,6 +23,8 @@ import sqlite3
 import sys
 import time
 import urllib.request
+import urllib.parse
+import urllib.error
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -48,6 +50,7 @@ HERMES_STATE_DB = Path(
     or str(HOME / ".hermes" / "state.db")
 ).expanduser()
 OPENROUTER_API_BASE = os.environ.get("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1").rstrip("/")
+OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
 
 # ── Subscriptions ───────────────────────────────────────────────
 # plan_tokens = None means "no hard ceiling, rate-limited"
@@ -214,6 +217,50 @@ def _safe_float(value, default=0.0) -> float:
         return float(value or 0)
     except (TypeError, ValueError):
         return default
+
+
+def _read_env_value(name: str) -> tuple[str, str] | tuple[None, None]:
+    val = os.environ.get(name, "").strip()
+    if val:
+        return val, "environment"
+    for _, path in KNOWN_AI_CONFIGS:
+        path = Path(path).expanduser()
+        if not path.exists() or path.suffix == ".json":
+            continue
+        try:
+            for line in path.read_text(errors="ignore").splitlines():
+                if not line.strip() or line.lstrip().startswith("#") or "=" not in line:
+                    continue
+                key, raw = line.split("=", 1)
+                if key.strip() == name:
+                    raw = raw.strip().strip('"').strip("'")
+                    if raw:
+                        return raw, str(path)
+        except Exception:
+            continue
+    return None, None
+
+
+def _http_get_json(base_url: str, path: str, key: str, params: dict | None = None, extra_headers: dict | None = None) -> dict:
+    query = urllib.parse.urlencode(params or {}, doseq=True)
+    url = f"{base_url}{path}" + (f"?{query}" if query else "")
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Accept": "application/json",
+    }
+    if extra_headers:
+        headers.update({k: v for k, v in extra_headers.items() if v})
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = ""
+        try:
+            body = exc.read().decode("utf-8")[:500]
+        except Exception:
+            pass
+        raise RuntimeError(f"HTTP {exc.code}: {body or exc.reason}") from exc
 
 
 def _parse_card_date(value: str) -> datetime | None:
@@ -579,6 +626,136 @@ def _fetch_openrouter_account_usage() -> dict | None:
         "usage_weekly_usd": round(float(key_data.get("usage_weekly")), 4) if isinstance(key_data.get("usage_weekly"), (int, float)) else None,
         "usage_monthly_usd": round(float(key_data.get("usage_monthly")), 4) if isinstance(key_data.get("usage_monthly"), (int, float)) else None,
         "limit_reset": key_data.get("limit_reset"),
+    }
+
+
+def _fetch_openai_account_usage(days: int = 30) -> dict:
+    """Fetch actual OpenAI Platform costs/usage when an Admin key is available.
+
+    OpenAI's Costs endpoint is the authoritative billing figure. Normal project
+    API keys may be able to run model calls but can be denied organization-level
+    costs; when that happens, return a visible dashboard gap instead of $0.
+    """
+    key, source = _read_env_value("OPENAI_ADMIN_KEY")
+    key_name = "OPENAI_ADMIN_KEY"
+    if not key:
+        key, source = _read_env_value("OPENAI_API_KEY")
+        key_name = "OPENAI_API_KEY"
+    if not key:
+        return {"configured": False, "ok": False, "source": None}
+
+    end_ts = int(time.time())
+    start_ts = end_ts - days * 86400
+    extra_headers = {
+        "OpenAI-Organization": os.environ.get("OPENAI_ORG_ID", "").strip(),
+        "OpenAI-Project": os.environ.get("OPENAI_PROJECT_ID", "").strip(),
+    }
+
+    account = {
+        "configured": True,
+        "ok": False,
+        "source": source,
+        "key_name": key_name,
+        "key_scope": "admin" if key.startswith("sk-admin") else "project_or_user",
+        "base_url": OPENAI_API_BASE,
+    }
+
+    def bucket_results(doc: dict) -> list:
+        out = []
+        for bucket in doc.get("data", []) or []:
+            for result in bucket.get("results", []) or []:
+                out.append((bucket, result))
+        return out
+
+    try:
+        costs_doc = _http_get_json(
+            OPENAI_API_BASE,
+            "/organization/costs",
+            key,
+            {
+                "start_time": start_ts,
+                "end_time": end_ts,
+                "bucket_width": "1d",
+                "group_by": ["line_item"],
+            },
+            extra_headers,
+        )
+    except Exception as exc:
+        account["error"] = str(exc)[:260]
+        account["message"] = (
+            "OpenAI key found, but organization cost lookup failed. "
+            "Use an OpenAI Admin key with Usage/Costs read access as OPENAI_ADMIN_KEY."
+        )
+        return account
+
+    total_cost = 0.0
+    by_line_item = defaultdict(float)
+    daily_cost = defaultdict(float)
+    for bucket, result in bucket_results(costs_doc):
+        amount = result.get("amount") or {}
+        cost = _safe_float(amount.get("value"))
+        total_cost += cost
+        label = result.get("line_item") or "OpenAI API"
+        by_line_item[label] += cost
+        start = bucket.get("start_time")
+        if start:
+            daily_cost[datetime.fromtimestamp(int(start)).strftime("%Y-%m-%d")] += cost
+
+    usage_summary = {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "requests": 0,
+        "by_model": {},
+    }
+    try:
+        usage_doc = _http_get_json(
+            OPENAI_API_BASE,
+            "/organization/usage/completions",
+            key,
+            {
+                "start_time": start_ts,
+                "end_time": end_ts,
+                "bucket_width": "1d",
+                "group_by": ["model"],
+            },
+            extra_headers,
+        )
+        model_totals = defaultdict(lambda: {"input_tokens": 0, "output_tokens": 0, "cached_tokens": 0, "requests": 0})
+        for _, result in bucket_results(usage_doc):
+            model = result.get("model") or "unknown"
+            inp = int(result.get("input_tokens") or 0)
+            out = int(result.get("output_tokens") or 0)
+            cached = int(result.get("input_cached_tokens") or result.get("cached_tokens") or 0)
+            reqs = int(result.get("num_model_requests") or 0)
+            usage_summary["input_tokens"] += inp
+            usage_summary["output_tokens"] += out
+            usage_summary["cached_tokens"] += cached
+            usage_summary["requests"] += reqs
+            model_totals[model]["input_tokens"] += inp
+            model_totals[model]["output_tokens"] += out
+            model_totals[model]["cached_tokens"] += cached
+            model_totals[model]["requests"] += reqs
+        usage_summary["by_model"] = {
+            k: v for k, v in sorted(
+                model_totals.items(),
+                key=lambda item: item[1]["input_tokens"] + item[1]["output_tokens"],
+                reverse=True,
+            )[:12]
+        }
+    except Exception as exc:
+        usage_summary["error"] = str(exc)[:260]
+
+    return {
+        **account,
+        "ok": True,
+        "total_cost_usd": round(total_cost, 4),
+        "by_line_item": {k: round(v, 4) for k, v in sorted(by_line_item.items(), key=lambda x: -x[1])},
+        "daily_cost_usd": [
+            {"date": k, "usd": round(v, 4)}
+            for k, v in sorted(daily_cost.items())
+        ],
+        "usage": usage_summary,
     }
 
 
@@ -992,6 +1169,7 @@ def usage_stats() -> dict:
 
     provider_accounts = {
         "openrouter": _fetch_openrouter_account_usage() or {"configured": False, "ok": False},
+        "openai": _fetch_openai_account_usage(days=30),
     }
     key_inventory = _scan_key_inventory()
     card_spend = _build_ai_card_spend(days=30)
@@ -1029,11 +1207,13 @@ def usage_stats() -> dict:
         account_spend = 0.0
         if provider == "openrouter" and account.get("ok"):
             account_spend = _safe_float(account.get("usage_monthly_usd") or account.get("key_usage_usd") or 0.0)
+        if provider == "openai" and account.get("ok"):
+            account_spend = _safe_float(account.get("total_cost_usd"))
         provider_subscription = round(subscription_by_provider.get(provider, 0.0), 2)
         provider_card = round(card_spend["by_provider"].get(provider, 0.0), 2)
         provider_known_cash = provider_subscription
         if provider in {"anthropic", "openrouter", "openai"}:
-            provider_known_cash += provider_card
+            provider_known_cash += max(provider_card, account_spend)
         elif provider not in subscription_by_provider:
             provider_known_cash += provider_card
         provider_rows.append({
@@ -1043,6 +1223,8 @@ def usage_stats() -> dict:
             "subscription_usd": provider_subscription,
             "card_charges_usd": provider_card,
             "account_usage_usd": round(account_spend, 4),
+            "account_ok": bool(account.get("ok")),
+            "account_error": account.get("message") or account.get("error") or "",
             "local_tokens": int(source_tokens_by_provider.get(provider, 0) or 0),
             "local_estimated_cost_usd": round(source_cost_by_provider.get(provider, 0.0) or 0.0, 4),
             "status": "tracked" if (
@@ -1059,8 +1241,8 @@ def usage_stats() -> dict:
     actual_known_usd = round(
         actual_subscription_usd
         + card_spend["by_provider"].get("anthropic", 0.0)
-        + card_spend["by_provider"].get("openrouter", 0.0)
-        + card_spend["by_provider"].get("openai", 0.0),
+        + max(card_spend["by_provider"].get("openrouter", 0.0), _safe_float(provider_accounts["openrouter"].get("usage_monthly_usd") or provider_accounts["openrouter"].get("key_usage_usd") or 0.0))
+        + max(card_spend["by_provider"].get("openai", 0.0), _safe_float(provider_accounts["openai"].get("total_cost_usd"))),
         2,
     )
     actual_spend = {
@@ -1068,8 +1250,8 @@ def usage_stats() -> dict:
         "subscription_usd": actual_subscription_usd,
         "imported_api_charges_usd": round(
             card_spend["by_provider"].get("anthropic", 0.0)
-            + card_spend["by_provider"].get("openrouter", 0.0)
-            + card_spend["by_provider"].get("openai", 0.0),
+            + max(card_spend["by_provider"].get("openrouter", 0.0), _safe_float(provider_accounts["openrouter"].get("usage_monthly_usd") or provider_accounts["openrouter"].get("key_usage_usd") or 0.0))
+            + max(card_spend["by_provider"].get("openai", 0.0), _safe_float(provider_accounts["openai"].get("total_cost_usd"))),
             2,
         ),
         "card_window": card_spend,

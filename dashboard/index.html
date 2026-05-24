@@ -3154,7 +3154,9 @@ async function loadUsage() {
       `<strong style="color:#D4A574;">${money(p.known_cash_usd)}</strong>`,
       money(p.subscription_usd),
       money(p.card_charges_usd),
-      p.account_usage_usd ? money(p.account_usage_usd, 4) : '<span style="color:rgba(255,255,255,0.35);">—</span>',
+      p.account_usage_usd
+        ? money(p.account_usage_usd, 4)
+        : (p.account_error ? `<span title="${escapeHtml(p.account_error)}" style="color:#facc15;">key found, no billing access</span>` : '<span style="color:rgba(255,255,255,0.35);">—</span>'),
       (p.local_tokens || 0).toLocaleString(),
       money(p.local_estimated_cost_usd, 4),
       `<span style="color:${p.status === 'tracked' ? '#4ade80' : '#facc15'};">${escapeHtml(p.status || 'gap')}</span>`,
@@ -3239,6 +3241,7 @@ async function loadUsage() {
     `<div style="font-size:12px;color:#facc15;margin-top:6px;">${escapeHtml(x.source)}: ${escapeHtml(x.message || x.status || '')}</div>`
   ).join('');
   const openrouter = (d.provider_accounts || {}).openrouter || {};
+  const openaiAccount = (d.provider_accounts || {}).openai || {};
   let openrouterHtml = '';
   if (openrouter.configured) {
     openrouterHtml = openrouter.ok
@@ -3251,7 +3254,19 @@ async function loadUsage() {
         </div>`
       : `<div style="font-size:12px;color:#f87171;margin-top:6px;">OpenRouter account check failed: ${escapeHtml(openrouter.error || 'unknown error')}</div>`;
   }
-  if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + openrouterHtml + dq;
+  let openaiHtml = '';
+  if (openaiAccount.configured) {
+    openaiHtml = openaiAccount.ok
+      ? `<div style="border-bottom:1px solid rgba(255,255,255,0.05);padding:7px 0;">
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <strong style="color:#fff;">OpenAI API Account</strong>
+            <span>${money(openaiAccount.total_cost_usd, 4)} actual API cost</span>
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.38);">${(openaiAccount.usage?.requests||0).toLocaleString()} requests · ${((openaiAccount.usage?.input_tokens||0)+(openaiAccount.usage?.output_tokens||0)).toLocaleString()} tokens</div>
+        </div>`
+      : `<div style="font-size:12px;color:#facc15;margin-top:6px;">OpenAI key found, but billing lookup is blocked: ${escapeHtml(openaiAccount.message || openaiAccount.error || 'use OPENAI_ADMIN_KEY')}</div>`;
+  }
+  if (sourceEl) sourceEl.innerHTML = (sourceRows || '<div class="loading" style="font-size:14px;">No source data yet</div>') + openrouterHtml + openaiHtml + dq;
 
   const keyEl = document.getElementById('usage-key-inventory');
   if (keyEl) {
