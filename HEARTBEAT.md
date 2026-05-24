@@ -24,6 +24,6 @@ Last updated: 2026-05-24
 
 1. ~~NLM auth~~ Fixed 2026-05-24.
 2. ~~FAL_KEY~~ Deferred. Low priority.
-3. 4 dormant notebooks need triage (Higgsfield, Antigravity, Pairstart, Cow Lot).
-4. 3 AI notebooks (Hermes Agentic OS, Agentic Systems, AI Agent Frameworks) — merge/cross-ref decision pending.
+3. ~~Dormant notebooks~~ Triaged 2026-05-24. Deleted 3, kept Antigravity.
+4. ~~AI notebooks~~ Consolidated 2026-05-24. Merged to "AI Agents & Hermes" + kept "AI Agent Frameworks".
 5. Hermes push bridge (decision 2026-05-22) not yet built.
