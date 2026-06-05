@@ -13,3 +13,9 @@ plans/
 # Superpower generated specs and plans
 .superpowers/
 **/superpowers/
+
+# Job-discovery runtime data (local-only, personal signals)
+projects/job-search/discovery/seen.json
+projects/job-search/discovery/queue/
+projects/job-search/discovery/core/node_modules/
+projects/job-search/discovery/core/dist/
