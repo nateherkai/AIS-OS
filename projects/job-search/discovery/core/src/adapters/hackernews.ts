@@ -4,7 +4,9 @@ import { defaultFetchJson } from './types'
 
 const strip = (html: string) =>
   html.replace(/<[^>]+>/g, ' ').replace(/&#x2F;/g, '/').replace(/&amp;/g, '&')
-      .replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/\s+/g, ' ').trim()
+      .replace(/&gt;/g, '>').replace(/&lt;/g, '<')
+      .replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ').trim()
 
 export function parseHnThread(thread: any): RawJob[] {
   const children = Array.isArray(thread?.children) ? thread.children : []
