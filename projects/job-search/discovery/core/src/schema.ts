@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// Shared so RawJob.remoteHint and Job.remote can't drift out of sync.
+const REMOTE_VALUES = ['remote', 'hybrid', 'onsite', 'unknown'] as const
+
 export const RawJob = z.object({
   source: z.string(),
   sourceId: z.string().optional(),
@@ -10,7 +13,7 @@ export const RawJob = z.object({
   postedAt: z.string().optional(),          // ISO 8601
   tags: z.array(z.string()).default([]),
   descriptionText: z.string().default(''),
-  remoteHint: z.enum(['remote', 'hybrid', 'onsite', 'unknown']).default('unknown'),
+  remoteHint: z.enum(REMOTE_VALUES).default('unknown'),
 })
 export type RawJob = z.infer<typeof RawJob>
 
@@ -21,7 +24,7 @@ export const Job = z.object({
   title: z.string(),
   company: z.string(),
   location: z.string(),
-  remote: z.enum(['remote', 'hybrid', 'onsite', 'unknown']),
+  remote: z.enum(REMOTE_VALUES),
   employmentType: z.enum(['permanent', 'contract', 'unknown']),
   seniority: z.enum(['junior', 'mid', 'senior', 'lead', 'manager', 'unknown']),
   salary: z.object({
