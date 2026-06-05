@@ -6,3 +6,10 @@ __pycache__/
 node_modules/
 .claude/settings.local.json
 audits/
+
+# Internal planning docs (not version-controlled)
+plans/
+
+# Superpower generated specs and plans
+.superpowers/
+**/superpowers/
