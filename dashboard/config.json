@@ -1,0 +1,102 @@
+{
+  "hourly_value_usd": 120.0,
+  "vault_path": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master",
+  "wiki_path": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master/wiki",
+  "dreams_dir": "./data/dreams",
+  "skills_global": "~/.claude/skills",
+  "skills_project": "../.claude/skills",
+  "lint_report": "./lint-report.md",
+  "skill_suggestions": "./skill-suggestions.md",
+  "subscriptions": [
+    {
+      "name": "Claude Max 5x",
+      "monthly_usd": 100,
+      "model": "claude"
+    },
+    {
+      "name": "ChatGPT Plus",
+      "monthly_usd": 20,
+      "model": "openai"
+    },
+    {
+      "name": "Gemini Advanced",
+      "monthly_usd": 21.31,
+      "model": "gemini"
+    }
+  ],
+  "dream_cron": "0 22 * * *",
+  "dream_prefs": {},
+  "memory": {
+    "obsidian": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master",
+    "pinecone": {
+      "index": "gravityclaw-vector",
+      "namespace": "knowledge"
+    },
+    "supabase": {
+      "project_id": ""
+    }
+  },
+  "storage": [
+    {
+      "path": "/Users/aaronfamilylivestock/Library/Mobile Documents/com~apple~CloudDocs/Bryan-Aaron-Master",
+      "label": "Bryan-Aaron-Master vault",
+      "detected": true,
+      "enabled": true
+    },
+    {
+      "path": "/Users/aaronfamilylivestock/.claude",
+      "label": "Claude config",
+      "detected": true,
+      "enabled": true
+    },
+    {
+      "path": "/Volumes/Samsung PSSD T7/hermes-claw",
+      "label": "Hermes",
+      "detected": true,
+      "enabled": true
+    },
+    {
+      "path": "/Volumes/Samsung PSSD T7/ag-coach-app",
+      "label": "Ag Coach App",
+      "detected": true,
+      "enabled": true
+    }
+  ],
+  "models": [
+    {
+      "name": "claude",
+      "label": "Claude Code",
+      "detected": false,
+      "path": "~/.claude",
+      "enabled": true
+    },
+    {
+      "name": "codex",
+      "label": "Codex CLI",
+      "detected": true,
+      "path": "/Users/aaronfamilylivestock/.claude/plugins/cache/openai-codex",
+      "enabled": true
+    },
+    {
+      "name": "gemini",
+      "label": "Gemini CLI",
+      "detected": true,
+      "path": "/Users/aaronfamilylivestock/.claude/plugins/cache/cc-gemini-plugin",
+      "enabled": true
+    },
+    {
+      "name": "openrouter",
+      "label": "OpenRouter",
+      "detected": true,
+      "path": "env",
+      "enabled": true
+    },
+    {
+      "name": "chatgpt",
+      "label": "ChatGPT (manual)",
+      "detected": false,
+      "path": "manual",
+      "enabled": false
+    }
+  ]
+}

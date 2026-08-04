@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ag Coach Pro — OS Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050510;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Glass effect */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .glass-gold {
+    background: rgba(212,165,116,0.08);
+    border: 1px solid rgba(212,165,116,0.25);
+    backdrop-filter: blur(20px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    height: 100vh;
+    background: rgba(0,0,0,0.4);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 4px;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 12px;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #D4A574, #c4855a);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px; color: #001F4D;
+  }
+  .logo-text { font-size: 13px; font-weight: 600; color: #fff; line-height: 1.2; }
+  .logo-sub { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .nav-item.active {
+    background: rgba(212,165,116,0.12);
+    color: #D4A574;
+    border: 1px solid rgba(212,165,116,0.2);
+  }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-label { flex: 1; }
+  .nav-badge {
+    background: #D4A574; color: #001F4D;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px;
+  }
+
+  .sidebar-section {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.25); text-transform: uppercase;
+    padding: 16px 12px 6px;
+  }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-bottom {
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    padding: 12px 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .burn-indicator { color: #f87171; font-weight: 600; }
+
+  /* Main content */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .page-title { font-size: 22px; font-weight: 700; color: #fff; }
+  .page-date { font-size: 12px; color: rgba(255,255,255,0.3); }
+
+  /* KPI Row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .kpi-card {
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .kpi-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 28px; font-weight: 700; color: #fff;
+    line-height: 1;
+  }
+  .kpi-value.gold { color: #D4A574; }
+  .kpi-value.red { color: #f87171; }
+  .kpi-value.green { color: #4ade80; }
+  .kpi-sub {
+    font-size: 11px; color: rgba(255,255,255,0.35);
+    margin-top: 6px;
+  }
+  .kpi-progress {
+    height: 3px; background: rgba(255,255,255,0.08);
+    border-radius: 2px; margin-top: 10px;
+  }
+  .kpi-progress-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #D4A574, #c4855a);
+  }
+
+  /* Grid sections */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .panel {
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: rgba(255,255,255,0.4);
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title span { color: #D4A574; font-size: 10px; }
+
+  /* School pipeline */
+  .pipeline-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .pipeline-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-paid { background: #4ade80; }
+  .dot-trial { background: #facc15; }
+  .dot-seed { background: rgba(255,255,255,0.2); }
+  .pipeline-name { flex: 1; color: rgba(255,255,255,0.8); }
+  .pipeline-tier {
+    font-size: 10px; padding: 2px 7px; border-radius: 6px;
+    background: rgba(212,165,116,0.15); color: #D4A574;
+  }
+  .pipeline-tier.trial {
+    background: rgba(250,204,21,0.1); color: #facc15;
+  }
+
+  /* Expense breakdown */
+  .expense-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .expense-bar-wrap { flex: 1; }
+  .expense-name { color: rgba(255,255,255,0.7); margin-bottom: 3px; font-size: 11px; }
+  .expense-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; }
+  .expense-bar-fill { height: 100%; border-radius: 2px; background: rgba(212,165,116,0.5); }
+  .expense-amt { font-size: 12px; color: #f87171; font-weight: 600; min-width: 36px; text-align: right; }
+
+  /* Inbox */
+  .inbox-item {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .inbox-dot { width: 7px; height: 7px; border-radius: 50%; background: #D4A574; flex-shrink: 0; margin-top: 4px; }
+  .inbox-from { font-size: 12px; color: #fff; font-weight: 500; }
+  .inbox-preview { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .inbox-time { font-size: 10px; color: rgba(255,255,255,0.25); margin-left: auto; white-space: nowrap; }
+
+  /* Tasks */
+  .task-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .task-check {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid rgba(212,165,116,0.4);
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .task-text { color: rgba(255,255,255,0.75); flex: 1; }
+  .task-tag {
+    font-size: 10px; padding: 2px 6px; border-radius: 5px;
+    background: rgba(212,165,116,0.1); color: #D4A574;
+  }
+
+  /* Debt tracker */
+  .debt-goal {
+    text-align: center; padding: 10px 0 16px;
+  }
+  .debt-amount { font-size: 32px; font-weight: 700; color: #4ade80; }
+  .debt-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+  .debt-progress { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-top: 12px; }
+  .debt-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #4ade80, #22c55e); width: 12%; }
+  .debt-stats { display: flex; justify-content: space-between; margin-top: 8px; font-size: 10px; color: rgba(255,255,255,0.3); }
+
+  /* Credit usage */
+  .credit-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 11px;
+  }
+  .credit-school { flex: 1; color: rgba(255,255,255,0.7); }
+  .credit-bar-wrap { width: 80px; }
+  .credit-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; }
+  .credit-bar-fill { height: 100%; border-radius: 2px; background: rgba(212,165,116,0.6); }
+  .credit-pct { font-size: 10px; color: rgba(255,255,255,0.4); min-width: 30px; text-align: right; }
+
+  /* Net income banner */
+  .net-banner {
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.2);
+  }
+  .net-label { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .net-value { font-size: 20px; font-weight: 700; color: #f87171; }
+  .net-note { font-size: 11px; color: rgba(255,255,255,0.3); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">AC</div>
+    <div>
+      <div class="logo-text">Ag Coach Pro</div>
+      <div class="logo-sub">Business OS</div>
+    </div>
+  </div>
+
+  <div class="nav-item active">
+    <span class="nav-icon">⌂</span>
+    <span class="nav-label">Dashboard</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">$</span>
+    <span class="nav-label">Revenue</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">🏫</span>
+    <span class="nav-label">Schools</span>
+    <span class="nav-badge">5</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">↓</span>
+    <span class="nav-label">Expenses</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">✉</span>
+    <span class="nav-label">Inbox</span>
+    <span class="nav-badge">3</span>
+  </div>
+
+  <div class="sidebar-section">Tools</div>
+  <div class="nav-item">
+    <span class="nav-icon">▶</span>
+    <span class="nav-label">Run Pipeline Check</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">✍</span>
+    <span class="nav-label">Draft Reply</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">↑</span>
+    <span class="nav-label">Trial Follow-Up</span>
+  </div>
+
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-bottom">
+    Monthly burn: <span class="burn-indicator">$229</span><br>
+    Revenue: <span style="color:#4ade80;">$125</span><br>
+    Net: <span class="burn-indicator">-$104</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">Good morning, Bryan</div>
+    <div class="page-date">Monday · May 12, 2026</div>
+  </div>
+
+  <!-- Net income warning -->
+  <div class="net-banner">
+    <div>
+      <div class="net-label">Current Net Income</div>
+      <div class="net-note">Revenue – Expenses. Close 2 more schools to break even.</div>
+    </div>
+    <div class="net-value">-$104/mo</div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi-card glass-gold">
+      <div class="kpi-label">Monthly Revenue</div>
+      <div class="kpi-value gold">$125</div>
+      <div class="kpi-sub">$1,495/yr · 1 school paid</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" style="width:10%;"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">School Goal</div>
+      <div class="kpi-value">1<span style="font-size:16px;color:rgba(255,255,255,0.3);">/50</span></div>
+      <div class="kpi-sub">49 schools to go · Aug 2026</div>
+      <div class="kpi-progress"><div class="kpi-progress-fill" style="width:2%;"></div></div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Monthly Burn</div>
+      <div class="kpi-value red">$229</div>
+      <div class="kpi-sub">11 services tracked</div>
+    </div>
+    <div class="kpi-card glass">
+      <div class="kpi-label">Active Trials</div>
+      <div class="kpi-value" style="color:#facc15;">5</div>
+      <div class="kpi-sub">Rowlett · Ness City · +3 more</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Schools + Expenses -->
+  <div class="grid-2">
+
+    <div class="panel glass">
+      <div class="panel-title">School Pipeline <span>LIVE · SUPABASE</span></div>
+      <div class="pipeline-item">
+        <div class="pipeline-dot dot-paid"></div>
+        <div class="pipeline-name">Athens ISD FFA</div>
+        <div class="pipeline-tier">Lone Star Elite</div>
+      </div>
+      <div class="pipeline-item">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Rowlett FFA — Erica Browne</div>
+        <div class="pipeline-tier trial">Trial · 12d</div>
+      </div>
+      <div class="pipeline-item">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Comfort FFA — Lauren Kitchens</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+      <div class="pipeline-item">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Borger FFA — Shanee Osborn</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+      <div class="pipeline-item">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Ness City FFA</div>
+        <div class="pipeline-tier trial">Trial · 12d</div>
+      </div>
+      <div class="pipeline-item" style="border:none">
+        <div class="pipeline-dot dot-trial"></div>
+        <div class="pipeline-name">Merritt FFA — Justin Sam</div>
+        <div class="pipeline-tier trial">Trial · 13d</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Monthly Expenses <span>$229 TOTAL</span></div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">Claude Max</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:57%;"></div></div>
+        </div>
+        <div class="expense-amt">$130</div>
+      </div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">Supabase</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:11%;"></div></div>
+        </div>
+        <div class="expense-amt">$25</div>
+      </div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">Vercel</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:9%;"></div></div>
+        </div>
+        <div class="expense-amt">$20</div>
+      </div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">Google Workspace</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:9%;"></div></div>
+        </div>
+        <div class="expense-amt">$20</div>
+      </div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">ChatGPT Plus</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:9%;"></div></div>
+        </div>
+        <div class="expense-amt">$20</div>
+      </div>
+      <div class="expense-item">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">Firecrawl</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:8%;"></div></div>
+        </div>
+        <div class="expense-amt">$19</div>
+      </div>
+      <div class="expense-item" style="border:none">
+        <div class="expense-bar-wrap">
+          <div class="expense-name">MailerLite</div>
+          <div class="expense-bar"><div class="expense-bar-fill" style="width:7%;"></div></div>
+        </div>
+        <div class="expense-amt">$15</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 3: Inbox + Tasks + Debt -->
+  <div class="grid-3">
+
+    <div class="panel glass">
+      <div class="panel-title">Inbox <span>GMAIL</span></div>
+      <div class="inbox-item">
+        <div class="inbox-dot"></div>
+        <div>
+          <div class="inbox-from">Trinity Desselles · Athens ISD</div>
+          <div class="inbox-preview">Love the livestock drill, can we add...</div>
+        </div>
+        <div class="inbox-time">2h ago</div>
+      </div>
+      <div class="inbox-item">
+        <div class="inbox-dot"></div>
+        <div>
+          <div class="inbox-from">Erica Browne · Rowlett FFA</div>
+          <div class="inbox-preview">Question about the quiz builder...</div>
+        </div>
+        <div class="inbox-time">5h ago</div>
+      </div>
+      <div class="inbox-item" style="border:none">
+        <div class="inbox-dot" style="background:rgba(255,255,255,0.2)"></div>
+        <div>
+          <div class="inbox-from" style="color:rgba(255,255,255,0.5);">Shanee Osborn · Borger FFA</div>
+          <div class="inbox-preview">Thanks for getting us set up!</div>
+        </div>
+        <div class="inbox-time">1d ago</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Today's Focus</div>
+      <div class="task-item">
+        <div class="task-check"></div>
+        <div class="task-text">Follow up with 5 trial schools</div>
+        <div class="task-tag">Sales</div>
+      </div>
+      <div class="task-item">
+        <div class="task-check"></div>
+        <div class="task-text">Reply to Trinity — livestock feedback</div>
+        <div class="task-tag">Support</div>
+      </div>
+      <div class="task-item" style="border:none">
+        <div class="task-check"></div>
+        <div class="task-text">Send MailerLite blast to 560 teachers</div>
+        <div class="task-tag">Marketing</div>
+      </div>
+    </div>
+
+    <div class="panel glass">
+      <div class="panel-title">Debt Payoff Goal <span>DEC 2026</span></div>
+      <div class="debt-goal">
+        <div class="debt-amount">$0</div>
+        <div class="debt-label">paid off this year · tracking manually</div>
+      </div>
+      <div class="debt-progress">
+        <div class="debt-progress-fill"></div>
+      </div>
+      <div class="debt-stats">
+        <span>$0 paid</span>
+        <span>Goal: Dec 31</span>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="kpi-label" style="margin-bottom:8px;">AI Credit Usage</div>
+        <div class="credit-row">
+          <div class="credit-school">Athens ISD</div>
+          <div class="credit-bar-wrap"><div class="credit-bar"><div class="credit-bar-fill" style="width:8%;"></div></div></div>
+          <div class="credit-pct">8%</div>
+        </div>
+        <div class="credit-row" style="border:none">
+          <div class="credit-school">Trial pool</div>
+          <div class="credit-bar-wrap"><div class="credit-bar"><div class="credit-bar-fill" style="width:2%;"></div></div></div>
+          <div class="credit-pct">2%</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,202 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "text": "Follow up with 5 trial schools",
+      "tag": "Sales",
+      "done": false
+    },
+    {
+      "id": 2,
+      "text": "Reply to Trinity \u2014 livestock feedback",
+      "tag": "Support",
+      "done": false
+    },
+    {
+      "id": 3,
+      "text": "Send MailerLite blast to 560 teachers",
+      "tag": "Marketing",
+      "done": false
+    },
+    {
+      "id": 4,
+      "text": "Add structured dream feedback: accepted, dismissed, completed",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 5,
+      "text": "Convert accepted dreams automatically into tasks or skills",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 6,
+      "text": "Tighten Ag Coach Pro action loops: leads, outreach, churn, content, product fixes",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 7,
+      "text": "Build weekly executive rhythm: dreams \u2192 priorities \u2192 actions \u2192 results",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 8,
+      "text": "Dream: Saw similar prompt 9x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 9,
+      "text": "Dream: Saw similar prompt 8x (hash:8ed6fc18) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 10,
+      "text": "Dream: Saw similar prompt 8x (hash:c22c4711) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 11,
+      "text": "Dream: Saw similar prompt 5x (hash:c7493121) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 12,
+      "text": "Dream: Saw similar prompt 4x (hash:e844f8e8) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 13,
+      "text": "Dream: Session 05690617 ran 436 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 14,
+      "text": "Dream: Saw similar prompt 31x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 15,
+      "text": "Dream: Saw similar prompt 30x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 16,
+      "text": "Dream: Saw similar prompt 10x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 17,
+      "text": "Dream: Saw similar prompt 10x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 18,
+      "text": "Dream: Saw similar prompt 5x (hash:3263c936) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 19,
+      "text": "Dream: Saw similar prompt 10x (hash:85b3db63) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 20,
+      "text": "Dream: Saw similar prompt 3x (hash:9a14eabc) \u2014 promote to skill",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 21,
+      "text": "Dream: Session 0ee8b3fa ran 230 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 22,
+      "text": "Dream: Session 504d6aba ran 333 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 23,
+      "text": "Dream: Session c343c9c8 ran 272 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 24,
+      "text": "Dream: Session 8f49e063 ran 134 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 25,
+      "text": "Dream: Session 0104b464 ran 248 tool calls \u2014 review for batching",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 26,
+      "text": "Dream: /trial-follow-up never invoked",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 27,
+      "text": "Dream: Asked about external store (pinecone)",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 28,
+      "text": "Dream: Edit called 100x \u2014 wrap in skill or hook",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 29,
+      "text": "Dream: Read called 151x \u2014 wrap in skill or hook",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 30,
+      "text": "Dream: Bash called 660x \u2014 wrap in skill or hook",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 31,
+      "text": "Dream: /notebooklm never invoked",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 32,
+      "text": "Dream: /graphify never invoked",
+      "tag": "AIOS",
+      "done": false
+    },
+    {
+      "id": 33,
+      "text": "Dream: /draft-reply never invoked",
+      "tag": "AIOS",
+      "done": false
+    }
+  ]
+}

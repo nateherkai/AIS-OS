@@ -126,6 +126,24 @@ See `EXPANSIONS.md` for what to add as you grow (`projects/`, `templates/`, `scr
 
 ## License + attribution
 
+## AIOS Dashboard
+
+Local business dashboard — revenue, school pipeline, expenses, tasks, debt tracker.
+
+**Launch:**
+```bash
+bash dashboard/launch.sh
+```
+
+Opens at http://localhost:8080.
+
+**Expense sync (monthly):**
+1. Export CSV from Apple Card (Wallet app → Card → Export Transactions)
+2. Drop CSV into `dashboard/imports/`
+3. Click "Sync Receipts" in the dashboard sidebar
+
+---
+
 MIT License. © 2026 Nate Herk.
 
 The Three Ms of AI™ and The Four Cs of an AIOS™ are trademarks of Nate Herk. Both frameworks ship in this repo with attribution. Use freely; don't repackage as your own.

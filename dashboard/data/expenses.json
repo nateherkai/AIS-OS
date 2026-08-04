@@ -1,0 +1,423 @@
+{
+  "expenses": [
+    {
+      "name": "Claude Max",
+      "category": "AI Tools",
+      "amount": 130,
+      "vendor_match": []
+    },
+    {
+      "name": "Anthropic API",
+      "category": "AI API",
+      "amount": 47.43,
+      "vendor_match": [
+        "ANTHROPIC"
+      ]
+    },
+    {
+      "name": "Supabase",
+      "category": "Infrastructure",
+      "amount": 25.0,
+      "vendor_match": [
+        "SUPABASE"
+      ]
+    },
+    {
+      "name": "Vercel",
+      "category": "Infrastructure",
+      "amount": 20,
+      "vendor_match": [
+        "VERCEL"
+      ]
+    },
+    {
+      "name": "Google One",
+      "category": "Productivity",
+      "amount": 21.31,
+      "vendor_match": [
+        "GOOGLE"
+      ]
+    },
+    {
+      "name": "ChatGPT Plus",
+      "category": "AI Tools",
+      "amount": 20,
+      "vendor_match": [
+        "OPENAI"
+      ]
+    },
+    {
+      "name": "Firecrawl",
+      "category": "AI API",
+      "amount": 19,
+      "vendor_match": [
+        "FIRECRAWL"
+      ]
+    },
+    {
+      "name": "MailerLite",
+      "category": "Marketing",
+      "amount": 15,
+      "vendor_match": [
+        "MAILERLITE"
+      ]
+    },
+    {
+      "name": "ElevenLabs",
+      "category": "AI API",
+      "amount": 5.27,
+      "vendor_match": [
+        "ELEVENLABS"
+      ]
+    },
+    {
+      "name": "OpenRouter",
+      "category": "AI API",
+      "amount": 34.14,
+      "vendor_match": [
+        "OPENROUTER"
+      ]
+    },
+    {
+      "name": "n8n Cloud",
+      "category": "Automation",
+      "amount": 25.58,
+      "vendor_match": [
+        "N8N",
+        "PADDLE.NET* N8N"
+      ]
+    },
+    {
+      "name": "Fal.ai",
+      "category": "AI API",
+      "amount": 10.66,
+      "vendor_match": [
+        "FAL"
+      ]
+    },
+    {
+      "name": "Pinecone",
+      "category": "AI Infrastructure",
+      "amount": 0,
+      "vendor_match": [
+        "PINECONE"
+      ]
+    }
+  ],
+  "last_updated": "2026-05-17T00:31:54.518805",
+  "monthly_charges_full": 1781.48,
+  "monthly_charges_curated": 373.39,
+  "monthly_interest": 77.24,
+  "monthly_avg_full": 1437.56,
+  "top_vendors_30d": [
+    {
+      "merchant": "Show Circuit Online Sales",
+      "amount": 1397.25,
+      "business": "afl"
+    },
+    {
+      "merchant": "Apple Services",
+      "amount": 194.59,
+      "business": "personal"
+    },
+    {
+      "merchant": "Anthropic",
+      "amount": 47.43,
+      "business": "ag-coach-pro"
+    },
+    {
+      "merchant": "Openrouter, Inc",
+      "amount": 34.14,
+      "business": "ag-coach-pro"
+    },
+    {
+      "merchant": "Paddle.Net* N8n Cloud1",
+      "amount": 25.58,
+      "business": "ag-coach-pro"
+    },
+    {
+      "merchant": "Supabase",
+      "amount": 25.0,
+      "business": "ag-coach-pro"
+    },
+    {
+      "merchant": "Google",
+      "amount": 21.31,
+      "business": "personal"
+    },
+    {
+      "merchant": "Peacock",
+      "amount": 11.73,
+      "business": "personal"
+    },
+    {
+      "merchant": "Fal Features Labels",
+      "amount": 10.66,
+      "business": "ag-coach-pro"
+    },
+    {
+      "merchant": "Tiktok Shop",
+      "amount": 8.52,
+      "business": "personal"
+    },
+    {
+      "merchant": "elevenlabs.io",
+      "amount": 5.27,
+      "business": "ag-coach-pro"
+    }
+  ],
+  "by_category_30d": {
+    "Other": 1769.75,
+    "Utilities": 11.73
+  },
+  "period_summaries": [
+    {
+      "month": "2026-01",
+      "month_name": "January 2026",
+      "full": 748.71,
+      "interest": 47.68,
+      "installments": 8.29,
+      "txn_count": 27,
+      "by_business": {
+        "afl": 335.78,
+        "ag-coach-pro": 224.84,
+        "personal": 188.09
+      }
+    },
+    {
+      "month": "2026-02",
+      "month_name": "February 2026",
+      "full": 312.41,
+      "interest": 45.68,
+      "installments": 8.29,
+      "txn_count": 17,
+      "by_business": {
+        "ag-coach-pro": 167.64,
+        "personal": 144.77
+      }
+    },
+    {
+      "month": "2026-03",
+      "month_name": "March 2026",
+      "full": 2907.63,
+      "interest": 29.74,
+      "installments": 8.29,
+      "txn_count": 21,
+      "by_business": {
+        "personal": 2805.63,
+        "ag-coach-pro": 102.0
+      }
+    },
+    {
+      "month": "2026-04",
+      "month_name": "April 2026",
+      "full": 1781.48,
+      "interest": 77.24,
+      "installments": 8.29,
+      "txn_count": 23,
+      "by_business": {
+        "afl": 1397.25,
+        "personal": 236.15,
+        "ag-coach-pro": 148.08
+      }
+    }
+  ],
+  "expenses_full": [
+    {
+      "date": "04/29/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/29/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 9.99,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/29/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 11.73,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/28/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 42.68,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/27/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/27/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/26/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 10.54,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/26/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/25/2026",
+      "merchant": "Fal Features Labels",
+      "category": "Other",
+      "amount": 10.66,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/23/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 18.12,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/22/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 21.08,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/22/2026",
+      "merchant": "Paddle.Net* N8n Cloud1",
+      "category": "Other",
+      "amount": 25.58,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/21/2026",
+      "merchant": "Anthropic",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/19/2026",
+      "merchant": "Google",
+      "category": "Other",
+      "amount": 21.31,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/18/2026",
+      "merchant": "Openrouter, Inc",
+      "category": "Other",
+      "amount": 11.38,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/17/2026",
+      "merchant": "Show Circuit Online Sales",
+      "category": "Other",
+      "amount": 1397.25,
+      "type": "purchase",
+      "business": "afl"
+    },
+    {
+      "date": "04/13/2026",
+      "merchant": "Peacock",
+      "category": "Utilities",
+      "amount": 11.73,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/11/2026",
+      "merchant": "Tiktok Shop",
+      "category": "Other",
+      "amount": 8.52,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/10/2026",
+      "merchant": "elevenlabs.io",
+      "category": "Other",
+      "amount": 5.27,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/09/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 48.03,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/08/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 42.7,
+      "type": "purchase",
+      "business": "personal"
+    },
+    {
+      "date": "04/07/2026",
+      "merchant": "Supabase",
+      "category": "Other",
+      "amount": 25.0,
+      "type": "purchase",
+      "business": "ag-coach-pro"
+    },
+    {
+      "date": "04/06/2026",
+      "merchant": "Apple Services",
+      "category": "Other",
+      "amount": 21.34,
+      "type": "purchase",
+      "business": "personal"
+    }
+  ],
+  "last_csv_date": "2026-04",
+  "by_business_30d": {
+    "afl": 1397.25,
+    "personal": 236.15,
+    "ag-coach-pro": 148.08
+  },
+  "by_business_4mo_avg": {
+    "afl": 433.26,
+    "ag-coach-pro": 160.64,
+    "personal": 843.66
+  },
+  "unmapped_vendors": []
+}
