@@ -1456,10 +1456,9 @@ async function loadFinances() {
     }
   }
 
-  // ROI line — updated after bizData fetch with ACP bucket value
+  // ROI line — uses the same curated AI/dev burn as the dashboard KPI
   const kpisD = await api('/api/kpis').catch(() => null);
   const rev = kpisD?.monthly_revenue || 0;
-  // Preliminary render with curated AI subset; gets overwritten once bizData loads
   document.getElementById('fin-rev-label').textContent = `$${rev.toFixed(2)}`;
 
   // ── By-Business KPI row ──────────────────────────────────────
@@ -1480,26 +1479,20 @@ async function loadFinances() {
       }).join('');
     }
 
-    // ── ROI ribbon — ACP bucket ──────────────────────────────
-    const acpBurn = (bizData.by_business_30d || {})['ag-coach-pro'] || 0;
+    // ── ROI ribbon — curated AI/dev burn ─────────────────────
+    const curatedBurn = kpisD?.monthly_burn || 0;
     const revForRibbon = kpisD?.monthly_revenue || 0;
-    const netAcp = revForRibbon - acpBurn;
+    const netCurated = revForRibbon - curatedBurn;
     const finAiLbl = document.getElementById('fin-ai-label');
     const finNetLbl = document.getElementById('fin-net-label');
-    if (finAiLbl) finAiLbl.textContent = `$${acpBurn.toFixed(0)}`;
+    if (finAiLbl) finAiLbl.textContent = `$${curatedBurn.toFixed(0)}`;
     if (finNetLbl) {
-      finNetLbl.textContent = `${netAcp >= 0 ? '+' : ''}$${netAcp.toFixed(0)}`;
-      finNetLbl.style.color = netAcp >= 0 ? '#4ade80' : '#f87171';
+      finNetLbl.textContent = `${netCurated >= 0 ? '+' : ''}$${netCurated.toFixed(0)}`;
+      finNetLbl.style.color = netCurated >= 0 ? '#4ade80' : '#f87171';
     }
-    // Second line: include Claude Pro Max sub
-    const claudeProMax = 200;
-    const trueAcp = acpBurn + claudeProMax;
-    const gapBreakeven = trueAcp - revForRibbon;
-    const gapGreenhand = Math.ceil(gapBreakeven / 495);
-    const gapBlueGold  = Math.ceil(gapBreakeven / 895);
     const roiSub = document.getElementById('fin-roi-sub');
     if (roiSub) {
-      roiSub.textContent = `Including Claude Pro Max sub ($${claudeProMax}): true ACP cost $${trueAcp.toFixed(0)}, gap to break-even: $${Math.max(0, gapBreakeven).toFixed(0)}/mo (≈${gapGreenhand} more Greenhand or ${gapBlueGold} Blue & Gold)`;
+      roiSub.textContent = 'Curated AI/dev burn matches the dashboard KPI; full card spend is shown above.';
       roiSub.style.display = '';
     }
 

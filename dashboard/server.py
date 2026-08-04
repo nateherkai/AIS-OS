@@ -84,6 +84,15 @@ def read_json(name: str) -> dict:
     with open(DATA / name) as f:
         return json.load(f)
 
+
+def curated_monthly_burn(expenses: dict) -> float:
+    """Return the curated AI/dev burn, preserving an explicit zero value."""
+    curated = expenses.get("monthly_charges_curated")
+    if curated is not None:
+        return round(float(curated), 2)
+    return round(sum(float(e.get("amount", 0)) for e in expenses.get("expenses", [])), 2)
+
+
 def write_json(name: str, data: dict):
     with open(DATA / name, "w") as f:
         json.dump(data, f, indent=2)
@@ -155,8 +164,14 @@ def pipeline():
 @app.get("/api/expenses")
 def expenses():
     data = read_json("expenses.json")
-    total = sum(e["amount"] for e in data["expenses"])
-    return {"expenses": data["expenses"], "total": total, "last_updated": data.get("last_updated")}
+    total = curated_monthly_burn(data)
+    return {
+        "expenses": data["expenses"],
+        "total": total,
+        "curated_total": total,
+        "full_total": round(float(data.get("monthly_charges_full", 0)), 2),
+        "last_updated": data.get("last_updated"),
+    }
 
 @app.post("/api/expenses/sync")
 def sync_expenses():
@@ -213,7 +228,7 @@ def kpis():
     expenses = read_json("expenses.json")
     debt = read_json("debt.json")
     # R3c: curated AI/dev burn only — full card total shown separately in finances
-    total_burn = expenses.get("monthly_charges_curated") or sum(e["amount"] for e in expenses["expenses"])
+    total_burn = curated_monthly_burn(expenses)
     rev = compute_monthly_revenue(summary["paid"])
     monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
@@ -294,7 +309,7 @@ def pipeline_check():
     schools = get_schools()
     summary = get_pipeline_summary(schools)
     expenses = read_json("expenses.json")
-    total_burn = expenses.get("monthly_charges_curated") or sum(e["amount"] for e in expenses["expenses"])
+    total_burn = curated_monthly_burn(expenses)
     rev = compute_monthly_revenue(summary["paid"])
     monthly_revenue = rev["total"]
     net = monthly_revenue - total_burn
