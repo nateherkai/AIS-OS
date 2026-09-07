@@ -61,11 +61,17 @@ real samples to fill this in.
 
 ## Connections
 
-None wired yet. Known systems from onboarding: Discord/Gmail/Outlook (communication),
-Outlook Calendar, per-repo `PROJECT-STATE.md` files (task tracking, no central board),
-Obsidian vault at `C:\Users\roman\Claude Main\content-brand\Obsidian Vault`
-(knowledge/files — canonical, see above), and YouTube Studio as the de facto
-revenue-proxy metric. Full table in `connections.md`. Run `/audit` to see freshness.
+**Live:** Gmail (`roman.brandon503@gmail.com`, see `references/gmail-api.md`), Google
+Calendar (same account, see `references/google-calendar-api.md`), Obsidian vault at
+`C:\Users\roman\Claude Main\content-brand\Obsidian Vault` (canonical knowledge, see
+above), per-repo `PROJECT-STATE.md` files (task tracking, no central board).
+**Not yet connected:** Discord, Outlook, revenue tracking (none exists — YouTube
+Studio subs/watch-hours are the de facto proxy metric).
+
+Sending email, creating/editing calendar events, or responding to invites all need
+Brandon's explicit in-the-moment approval — never act on standing/past approval.
+
+Full table in `connections.md`. Run `/audit` to see freshness.
 
 ## How you work with me
 

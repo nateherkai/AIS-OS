@@ -5,10 +5,10 @@ Registry of every system your AIOS can reach. Filled by `/onboard` from Q4-Q7 an
 | # | Domain | Tool | Mechanism | Auth | Last checked |
 |---|---|---|---|---|---|
 | 1 | Revenue / Financials | None yet — YouTube Studio (subs/watch-hours) as proxy metric | not yet connected | — | — |
-| 2 | Customer interactions | Discord | not yet connected | — | — |
-| 3 | Calendar | Outlook Calendar (inferred from Outlook) | not yet connected | — | — |
-| 4 | Communication | Discord, Gmail, Outlook | not yet connected | — | — |
-| 5 | Project / task tracking | Per-repo `PROJECT-STATE.md` (no central board) | not yet connected | — | — |
+| 2 | Customer interactions | Discord | not yet connected — no MCP connector available in this environment | — | — |
+| 3 | Calendar | Google Calendar (`roman.brandon503@gmail.com`) | mcp | OAuth (session-scoped) | 2026-09-06 |
+| 4 | Communication | Gmail (`roman.brandon503@gmail.com`) — connected; Outlook and Discord not yet | mcp | OAuth (session-scoped) | 2026-09-06 |
+| 5 | Project / task tracking | Per-repo `PROJECT-STATE.md` — e.g. `C:\Users\roman\main-bro\PROJECT-STATE.md` | filesystem (direct path, read-only) | none needed — local files | 2026-09-06 |
 | 6 | Meeting intelligence | None — no separate tool | not yet connected | — | — |
 | 7 | Knowledge / files | Obsidian vault (`C:\Users\roman\Claude Main\content-brand\Obsidian Vault`) | filesystem (direct path, read-only) | none needed — local files | 2026-09-06 |
 
