@@ -64,7 +64,9 @@ real samples to fill this in.
 **Live:** Gmail (`roman.brandon503@gmail.com`, see `references/gmail-api.md`), Google
 Calendar (same account, see `references/google-calendar-api.md`), Obsidian vault at
 `C:\Users\roman\Claude Main\content-brand\Obsidian Vault` (canonical knowledge, see
-above), per-repo `PROJECT-STATE.md` files (task tracking, no central board).
+above), per-repo `PROJECT-STATE.md` files (task tracking, no central board — **Home
+Base's own state is `main-bro\apps\home-base\PROJECT-STATE.md`, not `main-bro`'s root
+PROJECT-STATE.md**, which tracks the separate Main Rig harness project instead).
 **Not yet connected:** Discord, Outlook, revenue tracking (none exists — YouTube
 Studio subs/watch-hours are the de facto proxy metric).
 
