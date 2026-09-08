@@ -11,7 +11,14 @@ This is the source-of-truth file for your AIOS. Fill it in by typing, voice-past
 Identity, offer, ICP. One paragraph each is fine.
 
 ```
-[Your answer here]
+Brandon "Broman" Roman, North Las Vegas. Solo full-stack developer, content creator,
+music producer/songwriter, streamer, and digital-product builder. Currently between
+jobs, working toward sustainable income through content. Primary vehicle is YouTube:
+rebranding @xbroman_ (1,298 subs) into NOT A WORK BRO, long-form led, with Shorts/
+TikTok/Reels for discovery only (not monetization). Also runs LYTW (older tech-focused
+channel) and side dev projects (Home Base, SLASH, Loop, Portfolio). No paying customers
+yet — audience is the current ICP, future ICP is viewers/subscribers who convert to
+Fan Funding/YPP revenue, plus potential freelance dev/music clients down the line.
 ```
 
 ---
@@ -21,11 +28,8 @@ Identity, offer, ICP. One paragraph each is fine.
 An email, a LinkedIn post, a DM, a doc — anything that sounds like you when you're not trying. **Paste verbatim.** Do not type these mid-conversation with Claude — chat-shaped samples are worse than no samples (voice contamination).
 
 ```
-[Sample 1 — paste raw]
-```
-
-```
-[Sample 2 — paste raw]
+[Skipped for now, 2026-09-06 — Brandon opted to defer this. Re-run /onboard after
+pasting real samples (email/LinkedIn/DM) to fill references/voice.md.]
 ```
 
 ---
@@ -35,9 +39,12 @@ An email, a LinkedIn post, a DM, a doc — anything that sounds like you when yo
 Quarterly priorities. Not yearly aspirations. Things that, if not done by July, would make you say "I wasted Q2."
 
 ```
-1. [Priority 1]
-2. [Priority 2]
-3. [Priority 3]
+1. Hit YouTube watch-hour thresholds — Fan Funding (3,000 hrs) then full YPP (4,000
+   hrs) on NOT A WORK BRO, hard deadline 2027-02-01.
+2. Ship Home Base — the dev/creator/ADHD productivity hub — to actually support the
+   content pipeline (script → record → edit → publish).
+3. Fix the real bottleneck: finishing/publishing and idea→script (editing is not the
+   bottleneck).
 ```
 
 ---
@@ -47,7 +54,10 @@ Quarterly priorities. Not yearly aspirations. Things that, if not done by July, 
 Multiple answers OK. Stripe? Skool? GoHighLevel? QuickBooks? A spreadsheet?
 
 ```
-[Your answer here]
+No revenue source yet other than family support. Goal is income from content-related
+work: dev work, music, and general content creation. Progress currently tracked via
+YouTube Studio (subs/watch-hours) toward Fan Funding/YPP thresholds, not a financial
+tool.
 ```
 
 ---
@@ -57,7 +67,7 @@ Multiple answers OK. Stripe? Skool? GoHighLevel? QuickBooks? A spreadsheet?
 Email (which one — Gmail / Outlook)? Slack? Teams? DMs (Skool / Discord / iMessage)? Phone?
 
 ```
-[Your answer here]
+Discord, Gmail, Outlook.
 ```
 
 ---
@@ -67,7 +77,10 @@ Email (which one — Gmail / Outlook)? Slack? Teams? DMs (Skool / Discord / iMes
 Granola? Otter? Fireflies? Google Drive? Notion? Dropbox? A folder on your desktop you keep meaning to organize?
 
 ```
-[Your answer here]
+No separate tool — everything routes to the Obsidian vault at
+"C:\Users\roman\Claude Main\content-brand\Obsidian Vault". That vault is the durable
+knowledge system (decisions, architecture notes, session digests); all future
+knowledge about Brandon and his projects should reference/connect there.
 ```
 
 ---
@@ -77,7 +90,10 @@ Granola? Otter? Fireflies? Google Drive? Notion? Dropbox? A folder on your deskt
 The single biggest time-suck or recurring drudgery. Plus where tasks/projects live (ClickUp / Asana / Linear / Notion / a notebook).
 
 ```
-[Your answer here]
+Biggest time-suck: finishing/publishing and idea→script (editing is not the
+bottleneck — gets pulled into creative/visual decisions mid-edit instead). Tasks live
+per-project in each repo's own PROJECT-STATE.md (no central board); durable
+cross-project decisions live in the Obsidian vault.
 ```
 
 ---
