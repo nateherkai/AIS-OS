@@ -2,8 +2,8 @@
 # Sync canonical Claude skills (.claude/skills) into the Codex skill mirror (.agents/skills).
 #
 # Run this AFTER creating or editing any skill under .claude/skills/ so Codex sees the
-# same content. .claude/skills is canonical. Codex reads .agents/skills (per
-# references/tool-agnostic-setup.md), so the two must stay in sync. Pass one or more
+# same content. .claude/skills is canonical. Codex reads .agents/skills, so the two must
+# stay in sync. Pass one or more
 # skill names to sync only those skills; omit arguments to sync everything.
 #
 # What it does: copies every canonical skill forward (overwrite) and applies the Codex
